@@ -1,22 +1,16 @@
 ﻿using Celeste.Mod.Entities;
-using Celeste.Mod.ReverseHelper.Library;
+using Celeste.Mod.ReverseHelper.Libraries;
 using Microsoft.Xna.Framework;
 using Monocle;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Celeste.Mod.ReverseHelper.Triggers
 {
     [CustomEntity("ReverseHelper/OnlyStrawberryCollectTrigger")]
     public class OnlyStrawberryCollectTrigger : Trigger
     {
-        TypeMatch type;
-        bool delayBetweenBerries;
+        private TypeMatch type;
+        private bool delayBetweenBerries;
         private float collectTimer;
 
         public OnlyStrawberryCollectTrigger(EntityData data, Vector2 offset) : base(data, offset)
@@ -24,6 +18,7 @@ namespace Celeste.Mod.ReverseHelper.Triggers
             type = data.Attr("type", "");
             delayBetweenBerries = data.Bool("delayBetweenBerries", false);
         }
+
         public override void OnStay(Player player)
         {
             base.OnStay(player);
@@ -31,17 +26,11 @@ namespace Celeste.Mod.ReverseHelper.Triggers
             {
                 if (collectTimer < 0)
                 {
-                    try
-                    {
-                        (player.Leader.Followers
-                            .First(x => type.Contains(x.Entity.GetType()))
-                            .Entity as IStrawberry)
-                            .OnCollect();
-                        collectTimer = 0.3f;
-                    }
-                    catch (InvalidOperationException)
-                    {
-                    }
+                    (player.Leader.Followers
+                        .FirstOrDefault(x => type.Contains(x.Entity.GetType()))
+                        ?.Entity as IStrawberry)
+                        ?.OnCollect();
+                    collectTimer = 0.3f;
                 }
             }
             else
@@ -52,14 +41,13 @@ namespace Celeste.Mod.ReverseHelper.Triggers
                     .Select(x => x.Entity as IStrawberry)
                     .ToArray();
 
-                ///
-
                 foreach (var v in list)
                 {
                     v?.OnCollect();
                 }
             }
         }
+
         public override void Update()
         {
             base.Update();

@@ -32,16 +32,18 @@ namespace Celeste.Mod.ReverseHelper.Entities
         private static int normalupd(On.Celeste.Player.orig_NormalUpdate orig, Player self)
         {
             int result = orig(self);
-            bool flag = self.Holding?.Entity is HoldableRefill href && self.CanDash && href.dashable;
-            if (flag)
+            if (self.Holding?.Entity is HoldableRefill href)
             {
-                //self.Drop();
-                return self.StartDash();
+                bool flag =   self.CanDash && href.dashable;
+                if (flag)
+                {
+                    //self.Drop();
+                    return self.StartDash();
+                }
+
+                
             }
-            else
-            {
-                return result;
-            }
+            return result;
         }
 
         private bool refillOnHolding;

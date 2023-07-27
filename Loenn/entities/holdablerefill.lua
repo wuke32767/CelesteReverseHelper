@@ -14,19 +14,20 @@ HoldableRefill.maximumSize = {16, 16}
 
 
 HoldableRefill.placements = {}
-    HoldableRefill.placements = {
-        name = "Holdable Refill",
-        data = {
-            twoDash=false,
-            oneUse=false,
-            refillOnHolding=true,
-            floaty=false,
-            slowFall=true,
-            dashable=false,
-            stillRefillOnNoDash=false,
-            refilltime=2.5
-        }
-    }
+HoldableRefill.placements = {
+    name = "Holdable Refill",
+    data = {
+        twoDash=false,
+        oneUse=false,
+        floaty=false,
+        slowFall=true,
+        refilltime=2.5,
+        refillOnHolding=true,
+        stillRefillOnNoDash=false,
+        dashable=false,
+    },
+}
+HoldableRefill.fieldOrder = { "x", "y", "twoDash","oneUse","floaty","slowFall","refilltime","refillOnHolding","stillRefillOnNoDash","dashable",}
 
 local getTexture = function(t)
     if not t then 

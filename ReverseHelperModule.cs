@@ -1,50 +1,51 @@
 using System;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Celeste.Mod.ReverseHelper.Entities;
 using Microsoft.Xna.Framework.Graphics;
+using Monocle;
+using YamlDotNet.Serialization;
 
 namespace Celeste.Mod.ReverseHelper 
 {
     public class ReverseHelperModule : EverestModule 
     {
-        //class img
-        //{
-        //    //public byte[] data = new byte[1024*16*1024];
-        //    //public int col, row;
 
-        //}
-        //bool debug = true;
         public static ReverseHelperModule Instance;
+        public static int AnotherPurpleBoosterDashState;
+        public static int AnotherPurpleBoosterState;
         public ReverseHelperModule() 
         {
             Instance = this;
-            //Task.Run(() =>
-            //{
-            //    while (debug)
-            //    {
-            //        Thread.Sleep(1000);
-            //        if(!debug)
-            //        {
-            //            img img=new img();
-            //            string s="";
-            //            var i=GFX.Game[s];
-            //            var tx=i.Texture.Texture_Safe;
-            //            tx.GetData(img.data);
-            //            img.col=tx.Width;
-            //            img.row=tx.Height;
-            //        }
-            //    }
-            //});
+        }
+
+
+        public override void LoadContent(bool firstLoad)
+        {
+            base.LoadContent(firstLoad);
+
         }
 
         public override void Load()
         {
-            //Entities.HoldableRefill.Load();
+            AnotherPurpleBooster.Hooks.Hook();
+
+            HoldableRefill.Load();
+            LongDashRefill.Load();
+            ForceyHoldables.Load();
         }
 
         public override void Unload() 
         {
-            //Entities.HoldableRefill.Unload();
+            AnotherPurpleBooster.Hooks.Unhook();
+
+            HoldableRefill.Unload();
+            LongDashRefill.Unload();
+            ForceyHoldables.Unload();
         }
 
     }
