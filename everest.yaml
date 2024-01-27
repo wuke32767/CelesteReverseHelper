@@ -1,8 +1,17 @@
 - Name: ReverseHelper
-  Version: 1.3.0
+  Version: 1.6.0
   DLL: bin/Debug/net452/ReverseHelper.dll
   Dependencies:
     - Name: Everest
       Version: 1.3164.0
+  OptionalDependencies:
     - Name: ExtendedVariantMode
       Version: 0.27.0
+    - Name: VortexHelper
+      Version: 1.2.11
+    - Name: GravityHelper
+      Version: 1.1.45
+    - Name: IsaGrabBag
+      Version: 1.6.0
+
+

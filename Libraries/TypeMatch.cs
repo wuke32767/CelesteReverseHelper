@@ -1,11 +1,13 @@
-﻿using System;
+﻿using Celeste.Mod.Entities;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace Celeste.Mod.ReverseHelper.Libraries
 {
-    public struct TypeMatch 
+    public struct TypeMatch
     {
         private HashSet<string> typesSet;
 
@@ -16,7 +18,18 @@ namespace Celeste.Mod.ReverseHelper.Libraries
 
         public bool IsMatch(Type type)
         {
-            return typesSet.Contains(type.FullName) || typesSet.Contains(type.Name);
+            var typesSet_cp = typesSet;
+            return
+                typesSet.Contains(type.FullName)
+                || (typesSet.Contains(type.Name)
+                || (type
+                    .CustomAttributes
+                    .FirstOrDefault(x => x.AttributeType == typeof(CustomEntityAttribute))?
+                    .ConstructorArguments
+                    .First()
+                    .Value as System.Collections.ObjectModel.ReadOnlyCollection<CustomAttributeTypedArgument>)
+                    .Select(x => (x.Value as string)!.Split('=')[0].Trim())
+                    .Any(x => typesSet_cp.Contains(x!)));
         }
         public void Add(TypeMatch other)
         {

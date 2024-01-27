@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Celeste.Mod.ReverseHelper.Entities
+﻿namespace Celeste.Mod.ReverseHelper.Entities.Histroy
 {
     using FMOD.Studio;
     using global::Celeste.Mod.Entities;
@@ -8,14 +6,28 @@ namespace Celeste.Mod.ReverseHelper.Entities
     using Monocle;
     using System;
 
+
     // Token: 0x020002D9 RID: 729
     [CustomEntity("ReverseHelper/RecordedSwapBlock")]
-    public class RecordedSwapBlock : Solid
+    public class HistroySwapBlock : Solid
     {
-        // Token: 0x06001687 RID: 5767 RVA: 0x00084FAC File Offset: 0x000831AC
-        public RecordedSwapBlock(Vector2 position, float width, float height, Vector2 node, Themes theme) : base(position, width, height, false)
+        public new void MoveTo(Vector2 position, Vector2 liftSpeed)
         {
-            recorded.AddLast(new Recorded(float.MinValue, Recorded.Stat.notwork, 0));
+            if(Engine.DeltaTime>0)
+            {
+                base.MoveToX(position.X, liftSpeed.X);
+                base.MoveToY(position.Y, liftSpeed.Y);
+            }
+            else
+            {
+                base.MoveToX(position.X, -liftSpeed.X);
+                base.MoveToY(position.Y, -liftSpeed.Y);
+            }
+        }
+
+        // Token: 0x06001687 RID: 5767 RVA: 0x00084FAC File Offset: 0x000831AC
+        public HistroySwapBlock(Vector2 position, float width, float height, Vector2 node, Themes theme) : base(position, width, height, false)
+        {
             Theme = theme;
             start = Position;
             end = node;
@@ -71,10 +83,151 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             Add(new LightOcclude(0.2f));
             Depth = -9999;
-        }
 
+            hsm.SetCallbacks(stStatic,
+            onUpdate: () =>
+            {
+                if(start!=Position)
+                {
+                    float num = lerp;
+                    lerp = Calc.Approach(lerp, target, speed * Engine.DeltaTime);
+                    if (lerp != num)
+                    {
+                        Vector2 position = Position;
+                        MoveTo(Vector2.Lerp(start, end, lerp), (end - start) * -maxBackwardSpeed);
+                        //if (position != Position)
+                        {
+                            Audio.Position(moveSfx, Center);
+                            Audio.Position(returnSfx, Center);
+                            if (Position == start && target == 0)
+                            {
+                                Audio.SetParameter(returnSfx, "end", 1f);
+                                Audio.Play("event:/game/05_mirror_temple/swapblock_return_end", Center);
+                            }
+                        }
+                    }
+                }
+                return stStatic;
+            }, null, null, null,
+            begin: () =>
+            {
+                target = 0;
+                if (returnTimer > 0.0001f)
+                {
+                    //Logger.Log(LogLevel.Warn,"","")
+                }
+            }, null, null,
+            rend: () =>
+            {
+                target = 0;
+            });
+
+            //hsm.SetCallbacks(stStaticAcc,
+            //onUpdate: ()=> 
+            //{
+            //    speed = Calc.Approach(speed, maxBackwardSpeed, maxBackwardSpeed / 1.5f * Engine.DeltaTime);
+            //    float num = lerp;
+            //    lerp = Calc.Approach(lerp, target, speed * Engine.DeltaTime);
+            //    if (lerp != num)
+            //    {
+            //        Vector2 vector = (end - start) * speed;
+            //        Vector2 position = Position;
+            //        if (lerp < num)
+            //        {
+            //            vector *= -1f;
+            //        }
+            //        MoveTo(Vector2.Lerp(start, end, lerp), vector);
+            //        if (position != Position)
+            //        {
+            //            Audio.Position(moveSfx, Center);
+            //            Audio.Position(returnSfx, Center);
+            //            if (Position == start && target == 0)
+            //            {
+            //                Audio.SetParameter(returnSfx, "end", 1f);
+            //                Audio.Play("event:/game/05_mirror_temple/swapblock_return_end", Center);
+            //            }
+            //            else if (Position == end && target == 1)
+            //            {
+            //                Audio.Play("event:/game/05_mirror_temple/swapblock_move_end", Center);
+            //            }
+            //        }
+            //    }
+            //    if(lerp==0)
+            //    {
+            //        return stStatic;
+            //    }
+            //    if(speed==maxBackwardSpeed)
+            //    {
+            //        return stStatic;
+            //    }
+            //    return stStaticAcc;
+            //},
+            //ronUpdate: () =>
+            //{
+
+            //},
+            //null, null,
+            //begin: () =>
+            //{
+            //    target = 0;
+            //    speed = 0;
+            //},
+            //rbegin: null,
+            //end: () =>
+            //{
+            //    hsm.PushMessage(speed);
+            //},
+            //rend: () =>
+            //{
+            //    speed = hsm.PopMessage();
+            //});
+            void rswapacin()
+            {
+                target = 1;
+                returnTimer = 0;
+
+            }
+            void swapacin()
+            {
+                target = 1;
+                returnTimer = ReturnTime;
+
+            }
+            void swapout()
+            {
+                //speed = 0;
+                returnSfx = Audio.Play("event:/game/05_mirror_temple/swapblock_return", Center);
+            }
+            hsm.SetCallbacks(stSwap,
+            onUpdate: () =>
+            {
+                returnTimer -= Engine.DeltaTime;
+                return stSwap;
+            },
+            ronUpdate: () =>
+            {
+                returnTimer -= Engine.DeltaTime;
+                return stSwap;
+            }, null, null,
+            begin: swapacin,
+            rbegin: swapout,
+            end: swapout,
+            rend: rswapacin);
+            hsm.SetCallbacks(stNotMoving,()=>stNotMoving);
+            //hsm.SetCallbacks(stRNotMoving, () =>
+            //{
+
+            //});
+        }
+        public const int stStatic = 0;
+        public const int stSwap = 1;
+        public const int stStaticAcc = 2;
+        public const int stSwapAcc = 3;
+        public const int stNotMoving = 4;
+        public const int stRNotMoving = 5;
+        HistroyStateMachine<float> hsm = new(2);
         // Token: 0x06001688 RID: 5768 RVA: 0x000852E4 File Offset: 0x000834E4
-        public RecordedSwapBlock(EntityData data, Vector2 offset) : this(data.Position + offset, data.Width, data.Height, data.Nodes[0] + offset, data.Enum("theme", Themes.Normal))
+        public HistroySwapBlock(EntityData data, Vector2 offset) : this(data.Position + offset, data.Width, data.Height, data.Nodes[0] + offset, data.Enum("theme", Themes.Normal))
         {
         }
 
@@ -102,39 +255,14 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
 
         // Token: 0x0600168C RID: 5772 RVA: 0x00085390 File Offset: 0x00083590
-        private struct Recorded
-        {
-            public float time;
-            public Stat status;
-            public float speed;
 
-            public enum Stat
-            {
-                notwork,
-                beginswap,
-                swaplimit,
-                stop,
-                endswap,
-            }
-
-            public Recorded(float time, Stat status, float speed)
-            {
-                this.time = time;
-                this.status = status;
-                this.speed = speed;
-            }
-        }
-
-        private LinkedList<Recorded> recorded = new LinkedList<Recorded>();
-        private float recordTimer = 0f;
-        private bool tmp_isdash=false;
         private void OnDash(Vector2 direction)
         {
-            tmp_isdash = true;
+            hsm.ExternalState(stSwapAcc);
             Swapping = lerp < 1f;
             target = 1;
             returnTimer = ReturnTime;
-            burst = (Scene as Level).Displacement.AddBurst(Center, 0.2f, 0f, 16f, 1f, null, null);
+            burst = (Scene as Level)!.Displacement.AddBurst(Center, 0.2f, 0f, 16f, 1f, null, null);
             if (lerp >= 0.2f)
             {
                 speed = maxForwardSpeed;
@@ -154,93 +282,77 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
 
         // Token: 0x0600168D RID: 5773 RVA: 0x00085488 File Offset: 0x00083688
-
+        //Can we cut it by frames?
         public override void Update()
         {
-            recordTimer += Engine.DeltaTime;
-
             base.Update();
-            if (Engine.DeltaTime < 0)
+            //if (returnTimer > 0f)
+            //{
+            //    returnTimer -= Engine.DeltaTime;
+            //    if (returnTimer <= 0f)
+            //    {
+            //        target = 0;
+            //        speed = 0f;
+            //        returnSfx = Audio.Play("event:/game/05_mirror_temple/swapblock_return", Center);
+            //    }
+            //}
+            if (burst != null)
             {
-                tmp_isdash = false;
+                burst.Position = Center;
+            }
+            redAlpha = Calc.Approach(redAlpha, (target == 1) ? 0 : 1, Math.Abs(Engine.DeltaTime * 32f));
+            if (target == 0 && lerp == 0f)
+            {
+                middleRed.SetAnimationFrame(0);
+                middleGreen.SetAnimationFrame(0);
+            }
+            if (target == 1)
+            {
+                speed = Calc.Approach(speed, maxForwardSpeed, maxForwardSpeed / 0.2f * Engine.DeltaTime);
             }
             else
             {
-                if (tmp_isdash)
-                {
-                    recorded.AddLast(new Recorded(recordTimer, Recorded.Stat.beginswap, 0));
-                }
-                tmp_isdash = false;
-                if (returnTimer > 0f)
-                {
-                    returnTimer -= Engine.DeltaTime;
-                    if (returnTimer <= 0f)
-                    {
-                        target = 0;
-                        speed = 0f;
-                        returnSfx = Audio.Play("event:/game/05_mirror_temple/swapblock_return", Center);
-                    }
-                }
-                if (burst != null)
-                {
-                    burst.Position = Center;
-                }
-                redAlpha = Calc.Approach(redAlpha, (target == 1) ? 0 : 1, Engine.DeltaTime * 32f);
-                if (target == 0 && lerp == 0f)
-                {
-                    middleRed.SetAnimationFrame(0);
-                    middleGreen.SetAnimationFrame(0);
-                }
+                //speed = Calc.Approach(speed, maxBackwardSpeed, maxBackwardSpeed / 1.5f * Engine.DeltaTime);
+            }
+            float num = lerp;
+            lerp = Calc.Approach(lerp, target, speed * Engine.DeltaTime);
+            if (lerp != num)
+            {
+                Vector2 vector = (end - start) * speed;
+                Vector2 position = Position;
                 if (target == 1)
                 {
-                    speed = Calc.Approach(speed, maxForwardSpeed, maxForwardSpeed / 0.2f * Engine.DeltaTime);
+                    vector = (end - start) * maxForwardSpeed;
                 }
-                else
+                if (lerp < num)
                 {
-                    speed = Calc.Approach(speed, maxBackwardSpeed, maxBackwardSpeed / 1.5f * Engine.DeltaTime);
+                    vector *= -1f;
                 }
-                float num = lerp;
-                lerp = Calc.Approach(lerp, target, speed * Engine.DeltaTime);
-                if (lerp == target)
+                if (target == 1 && Scene.OnInterval(0.02f))
                 {
-                    Vector2 vector = (end - start) * speed;
-                    Vector2 position = Position;
-                    if (target == 1)
-                    {
-                        vector = (end - start) * maxForwardSpeed;
-                    }
-                    else
-                    //if (lerp < num)
-                    {
-                        vector *= -1f;
-                    }
-                    if (target == 1 && Scene.OnInterval(0.02f))
-                    {
-                        MoveParticles(end - start);
-                    }
-                    MoveTo(Vector2.Lerp(start, end, lerp), vector);
-                    if (position != Position)
-                    {
-                        Audio.Position(moveSfx, Center);
-                        Audio.Position(returnSfx, Center);
-                        if (Position == start && target == 0)
-                        {
-                            Audio.SetParameter(returnSfx, "end", 1f);
-                            Audio.Play("event:/game/05_mirror_temple/swapblock_return_end", Center);
-                        }
-                        else if (Position == end && target == 1)
-                        {
-                            Audio.Play("event:/game/05_mirror_temple/swapblock_move_end", Center);
-                        }
-                    }
+                    MoveParticles(end - start);
                 }
-                if (Swapping && lerp >= 1f)
+                MoveTo(Vector2.Lerp(start, end, lerp), vector);
+                if (position != Position)
                 {
-                    Swapping = false;
+                    Audio.Position(moveSfx, Center);
+                    Audio.Position(returnSfx, Center);
+                    if (Position == start && target == 0)
+                    {
+                        Audio.SetParameter(returnSfx, "end", 1f);
+                        Audio.Play("event:/game/05_mirror_temple/swapblock_return_end", Center);
+                    }
+                    else if (Position == end && target == 1)
+                    {
+                        Audio.Play("event:/game/05_mirror_temple/swapblock_move_end", Center);
+                    }
                 }
-                StopPlayerRunIntoAnimation = lerp <= 0f || lerp >= 1f;
-                recorded.AddLast(new Recorded(recordTimer, 0,0));
             }
+            if (Swapping && lerp >= 1f)
+            {
+                Swapping = false;
+            }
+            StopPlayerRunIntoAnimation = (lerp <= 0f || lerp >= 1f);
         }
 
         // Token: 0x0600168E RID: 5774 RVA: 0x00085788 File Offset: 0x00083988
@@ -438,11 +550,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
         private class PathRenderer : Entity
         {
             // Token: 0x06002BA4 RID: 11172 RVA: 0x00117C90 File Offset: 0x00115E90
-            public PathRenderer(RecordedSwapBlock block) : base(block.Position)
+            public PathRenderer(HistroySwapBlock block) : base(block.Position)
             {
                 this.block = block;
                 Depth = 8999;
-                pathTexture = GFX.Game["objects/swapblock/path" + ((block.start.X == block.end.X) ? "V" : "H")];
+                pathTexture = GFX.Game["objects/swapblock/path" + (block.start.X == block.end.X ? "V" : "H")];
                 timer = Calc.Random.NextFloat();
             }
 
@@ -472,7 +584,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
 
             // Token: 0x04002AD1 RID: 10961
-            private RecordedSwapBlock block;
+            private HistroySwapBlock block;
 
             // Token: 0x04002AD2 RID: 10962
             private MTexture pathTexture;

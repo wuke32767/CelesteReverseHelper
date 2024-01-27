@@ -1,10 +1,8 @@
 ﻿using Celeste.Mod.Entities;
-using ExtendedVariants.Module;
 using Microsoft.Xna.Framework;
 using Monocle;
 using System;
 using System.Collections;
-using System.IO;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
@@ -33,12 +31,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
             LongDashRefillInst.enable = false;
         }
 
-        private static ExtendedVariantsModule.Variant variant = (ExtendedVariantsModule.Variant)Enum.Parse(typeof(ExtendedVariantsModule.Variant), "DashLength");
+        //private static ExtendedVariantsModule.Variant variant = (ExtendedVariantsModule.Variant)Enum.Parse(typeof(ExtendedVariantsModule.Variant), "DashLength");
 
         private static IEnumerator what_after_dash_begin()
         {
             yield return 0.01f;
-            ExtendedVariantsModule.Instance.TriggerManager.OnExitedRevertOnLeaveTrigger(variant, LongDashRefillInst.dashTime, legacy: false);
+            //ExtendedVariantsModule.Instance.TriggerManager.OnExitedRevertOnLeaveTrigger(variant, LongDashRefillInst.dashTime, legacy: false);
+            ReverseHelperExtern.ExtendedVariantsModule.TriggerManager.LongDash_OnExitedRevertOnLeaveTrigger(LongDashRefillInst.dashTime, legacy: false);
         }
 
         private static System.Reflection.FieldInfo varJumpTimerRefl = typeof(Player).GetField("varJumpTimer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.GetField);
@@ -195,7 +194,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 LongDashRefillInst.enable = true;
                 LongDashRefillInst.dashTime = dashTime;
                 LongDashRefillInst.disableSpring = disableSpring;
-                ExtendedVariantsModule.Instance.TriggerManager.OnEnteredInTrigger(variant, LongDashRefillInst.dashTime, revertOnLeave: true, isFade: false, true, legacy: false);
+                ReverseHelperExtern.ExtendedVariantsModule.TriggerManager.LongDash_OnEnteredInTrigger(LongDashRefillInst.dashTime, revertOnLeave: true, isFade: false, true, legacy: false);
             }
         }
 

@@ -1,16 +1,32 @@
 mods.ReverseHelper.name=Reverse Helper
 
-# Dream Refill
 
 entities.ReverseHelper/ForceyHoldables.attributes.description.force=How many extra momentum you gain after you throw bound entities.\nIf it is -80(NOT 0, you still gain 80 by default), you will not gain momentum after throw.
-entities.ReverseHelper/ForceyHoldables.attributes.description.type=type of what you want to bind.\nFor example, Dream Jellyfish (from Communal Helper) is Celeste.Mod.CommunalHelper.Entities.DreamJellyfish or just DreamJellyfish\nYou can get any type you want in game. Just press "~", and left click the entity with your mouse, and it shows in the panel in the upper left corner of the screen.
+entities.ReverseHelper/ForceyHoldables.attributes.description.type=type of what you want to bind. Can be Entity Name or Type Name.\nFor example, name of Dream Jellyfish (from Communal Helper) is Celeste.Mod.CommunalHelper.Entities.DreamJellyfish or just DreamJellyfish, and entity name is CommunalHelper/DreamJellyfish.\nYou can get any type name you want in game. Just press "~", and left click on the entity with your mouse, and it shows in the panel in the upper left corner of the screen.\nEntity name can be found the Map Editor. Right click on the entity, and you could find entity name at the popup window title.(vanilla entity should have its first letter capitalized.)
 
 entities.ReverseHelper/ForceyJellyfish.attributes.description.force=How many extra momentum you gain after you throw it. \nIf it is -80(NOT 0, you still gain 80 by default), you will not gain momentum after throw.
 entities.ReverseHelper/ForceyJellyfish.attributes.description.bubble=Whether the entity should hover in the air before being grabbed.
 entities.ReverseHelper/ForceyJellyfish.attributes.description.tutorial=Whether the entity should show the usage tutorial.
 
-triggers.ReverseHelper/OnlyStrawberryCollectTrigger.attributes.description.type=What you want to collect.\nFor example, strawberry (from vanilla Celeste) is Celeste.Strawberry or Strawberry .
+triggers.ReverseHelper/OnlyStrawberryCollectTrigger.attributes.description.type=What you want to collect. Can be Entity Name or Type Name.\nFor example, strawberry (from vanilla Celeste) is Celeste.Strawberry or Strawberry.
 
 entities.ReverseHelper/HoldableRefill.attributes.description.dashable=Whether you can dash when holding it.
 entities.ReverseHelper/HoldableRefill.attributes.description.stillRefillOnNoDash=Not sure what will happen when refillOnHolding is checked.\nIf checked, you can still collect the refill when you have no dash.
 entities.ReverseHelper/HoldableRefill.attributes.description.slowFall=Whether it acts like a jellyfish.
+entities.ReverseHelper/AnotherPurpleBooster.attributes.description.redirect=if unchecked, it will move in the direction it came.\nif checked, it will move in the opposite direction as the player activated it.
+
+entities.ReverseHelper/SquareSpinner.attributes.description.colorCore=Only used in core mode, determines its color in hot core.
+
+entities.ReverseHelper/CornerBoostArea.attributes.description.cornerHyper=Warnings: Might Not Work As What You Thought. And Might Not Work Properly With Other Mods.\n\nConverts Hyperdash and Superdash to Cornerboosts.
+entities.ReverseHelper/CornerBoostArea.attributes.description.timesBeforeExit=How many times you can cornerboost. Reset after you exit this area.\n-1 for inf.
+entities.ReverseHelper/CornerBoostArea.attributes.description.totalTimes=How many times you can cornerboost.\n-1 for inf.
+entities.ReverseHelper/CornerBoostArea.attributes.description.cooldown=Intervals(seconds) between two cornerboosts.
+entities.ReverseHelper/CornerBoostArea.attributes.description.cooldownOnExit=If checked, it will be refilled after you leave it.
+entities.ReverseHelper/CornerBoostArea.attributes.description.onlyRCB=If checked, you can only cb when you're NOT facing the direction of your speed.
+
+entities.ReverseHelper/CustomInvisibleBarrier.attributes.description.type=type of what you want to block. Can be Entity Name or Type Name.\nFor example, name of Dream Jellyfish (from Communal Helper) is Celeste.Mod.CommunalHelper.Entities.DreamJellyfish or just DreamJellyfish, and entity name is CommunalHelper/DreamJellyfish.\nYou can get any type name you want in game. Just press "~", and left click on the entity with your mouse, and it shows in the panel in the upper left corner of the screen.\nEntity name can be found the Map Editor. Right click on the entity, and you could find entity name at the popup window title.(vanilla entity should have its first letter capitalized.)
+entities.ReverseHelper/CustomInvisibleBarrier.attributes.description.reversed=if checked, the barrier will NOT block entities you selected.
+
+entities.ReverseHelper/DashConductionJumpThru.attributes.description.overrideCollisionResult=DoNotOverride means keeps original result. others are vanilla option.\nNormalCollision and NormalOverride: as if madeline dashes to a wall.(still conduct dashes.) Seems to have no difference.\nIgnore: as if Madeline dashes to nothing. (still being blocked.)\nBounce: Madeline bounces up, as if Madeline dashes to Kevin.\nRebound: as if Madeline dashes to DashBlock.
+entities.ReverseHelper/DashConductionJumpThruUpsideDown.attributes.description.overrideCollisionResult=DoNotOverride means keeps original result. others are vanilla option.\nNormalCollision and NormalOverride: as if madeline dashes to a wall.(still conduct dashes.) Seems to have no difference.\nIgnore: as if Madeline dashes to nothing. (still being blocked.)\nBounce: Madeline bounces up, as if Madeline dashes to Kevin.\nRebound: as if Madeline dashes to DashBlock.
+entities.ReverseHelper/DashConductionJumpThruSideways.attributes.description.overrideCollisionResult=DoNotOverride means keeps original result. others are vanilla option.\nNormalCollision and NormalOverride: as if madeline dashes to a wall.(still conduct dashes.) Seems to have no difference.\nIgnore: as if Madeline dashes to nothing. (still being blocked.)\nBounce: Madeline bounces up, as if Madeline dashes to Kevin.\nRebound: as if Madeline dashes to DashBlock.

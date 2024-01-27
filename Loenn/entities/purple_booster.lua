@@ -4,13 +4,15 @@ local purpleBooster = {}
 
 purpleBooster.name = "ReverseHelper/AnotherPurpleBooster"
 purpleBooster.depth = -8500
-purpleBooster.associatedMods = { "VortexHelper","ReverseHelper" }
+purpleBooster.associatedMods = { "ReverseHelper","VortexHelper", }
 
 purpleBooster.placements = {
     
         name = "Another Purple Booster",
         data = {
-            --redirect=true,--not finished
+            redirect=true,
+            --addDashAttack=false,
+            --NewAction=false,
         }
     
 }

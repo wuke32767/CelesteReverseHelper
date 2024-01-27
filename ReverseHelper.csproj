@@ -5,11 +5,12 @@
     <TargetFrameworks>net452</TargetFrameworks>
     <AssemblyName>ReverseHelper</AssemblyName>
     <RootNamespace>Celeste.Mod.ReverseHelper</RootNamespace>
-    <LangVersion>7.3</LangVersion>
+    <LangVersion>latest</LangVersion>
     <CelesteGamePath Condition="'$(CELESTEGAMEPATH)' == ''">..\..</CelesteGamePath>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <Platforms>AnyCPU;x64</Platforms>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <!--Disable "Copy Local" for all references-->
@@ -25,23 +26,17 @@
 
   <ItemGroup>
     <Reference Include="Celeste">
-      <HintPath>..\..\Celeste.exe</HintPath>
-    </Reference>
-    <Reference Include="ExtendedVariantMode">
-      <HintPath>..\ExtendedVariantMode\bin\Debug\net452\ExtendedVariantMode.dll</HintPath>
+      <HintPath>..\..\legacyRef\Celeste.exe</HintPath>
     </Reference>
     <Reference Include="FNA">
-      <HintPath>..\..\FNA.dll</HintPath>
+      <HintPath>..\..\legacyRef\FNA.dll</HintPath>
     </Reference>
-    <Reference Include="MMHOOK_Celeste" HintPath="$(CELESTEGAMEPATH)\MMHOOK_Celeste.dll" />
+    <Reference Include="MMHOOK_Celeste" HintPath="$(CELESTEGAMEPATH)\legacyRef\MMHOOK_Celeste.dll" />
     <Reference Include="MonoMod.RuntimeDetour">
-      <HintPath>..\..\MonoMod.RuntimeDetour.dll</HintPath>
+      <HintPath>..\..\legacyRef\MonoMod.RuntimeDetour.dll</HintPath>
     </Reference>
     <Reference Include="System.ValueTuple">
-      <HintPath>..\..\System.ValueTuple.dll</HintPath>
-    </Reference>
-    <Reference Include="VortexHelper">
-      <HintPath>..\VortexHelper\source\bin\Debug\VortexHelper.dll</HintPath>
+      <HintPath>..\..\legacyRef\System.ValueTuple.dll</HintPath>
     </Reference>
     <Reference Include="YamlDotNet" HintPath="$(CELESTEGAMEPATH)\YamlDotNet.dll" />
   </ItemGroup>

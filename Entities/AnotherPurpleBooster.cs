@@ -3,12 +3,11 @@ using Celeste.Mod.Meta;
 using Celeste.Mod.ReverseHelper._From_Vortex_Helper;
 using Microsoft.Xna.Framework;
 using Monocle;
+using MonoMod.Cil;
 using MonoMod.Utils;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Reflection;
-using static Celeste.GaussianBlur;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
@@ -18,7 +17,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
     {
         internal const string POSSIBLE_EARLY_DASHSPEED = "purpleBoostPossibleEarlyDashSpeed";
 
-        private Sprite sprite;
+        private Sprite? sprite;
         private Wiggler wiggler;
         private Entity outline;
 
@@ -42,25 +41,45 @@ namespace Celeste.Mod.ReverseHelper.Entities
         private float actualLinkPercent = 1.0f;
         private float linkPercent = 1.0f;
 
-        public static readonly ParticleType P_Burst = new ParticleType(Booster.P_Burst);
-        public static readonly ParticleType P_Appear = new ParticleType(Booster.P_Appear);
-        public static readonly ParticleType P_BurstExplode = new ParticleType(Booster.P_Burst);
+        public static ParticleType P_Burst        ;//= new ParticleType(Booster.P_Burst);
+        public static ParticleType P_Appear       ;//= new ParticleType(Booster.P_Appear);
+        public static ParticleType P_BurstExplode ;// new ParticleType(Booster.P_Burst);
 
         private SoundSource loopingSfx;
-        public static bool AnotherRedirect = true;
+        //public static bool AnotherRedirect = true;
         public bool redirect = true;
-        public AnotherPurpleBooster(EntityData data, Vector2 offset)
-            : this(data.Position + offset,data.Bool("redirect",true)) { }
 
-        public AnotherPurpleBooster(Vector2 position,bool redirected)
+        //public static bool DashAtt = true;
+        public bool dashatt = false;
+        public const float usingDashAtt = 0.1f;
+
+        //public static bool FixSomething1 = true;
+        public bool fixsomething1 = false;
+
+        public AnotherPurpleBooster(EntityData data, Vector2 offset)
+            : this(data.Position + offset, data.Bool("redirect", true), data.Bool("addDashAttack", false), data.Bool("NewAction", false)) { }
+
+        public AnotherPurpleBooster(Vector2 position, bool redirected, bool dashattack, bool fix1)
             : base(position)
         {
+            if (P_Burst is null)
+            {
+                P_Burst = new ParticleType(Booster.P_Burst);
+                P_Appear = new ParticleType(Booster.P_Appear);
+                P_BurstExplode = new ParticleType(Booster.P_Burst);
+            }
+
+            fixsomething1 = fix1;
+            dashatt = dashattack;
             redirect = redirected;
+
             Depth = Depths.Above;
             Collider = new Circle(10f, 0f, 2f);
 
-            sprite = VortexHelper.VortexHelperModule.PurpleBoosterSpriteBank.Create("purpleBooster");
-            Add(sprite);
+            if ((sprite = ReverseHelperExtern.VortexHelperModule.PurpleBoosterSpriteBank?.Create("purpleBooster")) is not null)
+            {
+                Add(sprite);
+            }
 
             Add(new PlayerCollider(OnPlayer));
             Add(new VertexLight(Color.White, 1f, 16, 32));
@@ -131,12 +150,19 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public static void Boost(Player player, AnotherPurpleBooster booster)
         {
             //todo
-            AnotherRedirect = booster.redirect;
+            //AnotherRedirect = booster.redirect;
+            //DashAtt = booster.dashatt;
+            //FixSomething1 = booster.fixsomething1;
+
             player.StateMachine.State = ReverseHelperModule.AnotherPurpleBoosterState;
             player.Speed = Vector2.Zero;
             DynData<Player> playerData = player.GetData();
             playerData.Set("boostTarget", booster.Center);
             booster.StartedBoosting = true;
+
+            playerData.Set("USSRNAME_AnotherRedirect", booster.redirect);
+            playerData.Set("USSRNAME_DashAtt", booster.dashatt);
+            playerData.Set("USSRNAME_FixSomething1", booster.fixsomething1);
         }
 
         public void PlayerBoosted(Player player, Vector2 direction)
@@ -449,6 +475,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         public static int PurpleDashingUpdate()
         {
+            addDashAttack();
             if (Input.DashPressed || Input.CrouchDashPressed)
             {
                 Util.TryGetPlayer(out Player player);
@@ -472,38 +499,48 @@ namespace Celeste.Mod.ReverseHelper.Entities
             //player.MoveToX(origin.X);
             //player.MoveToY(origin.Y + 6f);
             Vector2 earlyExitBoost;
-            
+
             float mov = 0;
-            Vector2 dir=Vector2.Zero;
+            Vector2 dir = player.DashDir;
+            bool AnotherRedirect = playerData.Get<bool>("USSRNAME_AnotherRedirect");
             if (!AnotherRedirect)
             {
-                dir = player.DashDir;
-                while (t <= 0.5f)
+                player.Speed = player.DashDir;
+                while (t < 0.5f)
                 {
                     t = Calc.Approach(t, 1.0f, Engine.DeltaTime * 1.5f);
-                    dir = player.Speed.SafeNormalize(dir);
+
+                    dir = player.Speed.SafeNormalize(Vector2.Zero);
                     float oldmov = mov;
                     mov = (float)(60f * (float)Math.Sin(t * Math.PI));
                     Vector2 delta = (mov - oldmov) * dir;
-
-                    playerData.Set(POSSIBLE_EARLY_DASHSPEED, earlyExitBoost = (t > .6f) ? (t - .5f) * 200f * -dir : Vector2.Zero);
 
                     if (player.CollideCheck<Solid>(player.Position + delta))
                     {
                         player.StateMachine.State = Player.StNormal;
                         yield break;
                     }
-                
+
                     //player.MoveH(delta.X);
                     //player.MoveV(delta.Y);
                     player.Speed = delta * 60f;
+
                     yield return null;
                 }
-                while (t < 1.0f)
+                mov = 60f;
+                float oldmov_ = mov;
+                Vector2 delta_ = (mov - oldmov_) * dir;
+                //player.MoveH(delta_.X);
+                //player.MoveV(delta_.Y);
+                var backup = player.Speed;
+                player.Speed = delta_ * 60f;
+                yield return null; //what will happen if t == 0.5f ?
+                player.Speed = -backup; //why?
+                while (t < 1f)
                 {
                     t = Calc.Approach(t, 1.0f, Engine.DeltaTime * 1.5f);
+                    dir = (-player.Speed).SafeNormalize(Vector2.Zero);
 
-                    dir = (-player.Speed).SafeNormalize(dir);
                     float oldmov = mov;
                     mov = (float)(60f * (float)Math.Sin(t * Math.PI));
                     Vector2 delta = (mov - oldmov) * dir;
@@ -515,9 +552,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
                         player.StateMachine.State = Player.StNormal;
                         yield break;
                     }
-                
                     //player.MoveH(delta.X);
                     //player.MoveV(delta.Y);
+
                     player.Speed = delta * 60f;
                     yield return null;
                 }
@@ -528,19 +565,17 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 {
                     t = Calc.Approach(t, 1.0f, Engine.DeltaTime * 1.5f);
 
-                    dir = player.Speed.SafeNormalize(player.DashDir);
+                    dir = player.Speed.SafeNormalize(dir);
                     float oldmov = mov;
                     mov = (float)(60f * (float)Math.Sin(t * Math.PI));
                     Vector2 delta = (mov - oldmov) * dir;
-
-                    playerData.Set(POSSIBLE_EARLY_DASHSPEED, earlyExitBoost = (t > .6f) ? (t - .5f) * 200f * -dir : Vector2.Zero);
 
                     if (player.CollideCheck<Solid>(player.Position + delta))
                     {
                         player.StateMachine.State = Player.StNormal;
                         yield break;
                     }
-                
+
                     //player.MoveH(delta.X);
                     //player.MoveV(delta.Y);
                     player.Speed = delta * 60f;
@@ -551,11 +586,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 Vector2 delta_ = (mov - oldmov_) * dir;
                 player.MoveH(delta_.X);
                 player.MoveV(delta_.Y);
+                //player.Speed = Vector2.Zero;
+                //yield return null;
                 player.Speed = -player.DashDir;
                 while (t < 1f)
                 {
                     t = Calc.Approach(t, 1.0f, Engine.DeltaTime * 1.5f);
-                    dir = (-player.Speed).SafeNormalize(player.DashDir);
+                    dir = (-player.Speed).SafeNormalize(dir);
 
                     float oldmov = mov;
                     mov = (float)(60f * (float)Math.Sin(t * Math.PI));
@@ -573,11 +610,22 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
                     player.Speed = delta * 60f;
                     yield return null;
-
                 }
             }
             player.LiftSpeed += 120f * -dir;
             PurpleBoosterExplodeLaunch(player, playerData, player.Center - dir, origin);
+        }
+
+        private static void addDashAttack()
+        {
+            if(Util.TryGetPlayer(out Player player))
+            {
+                var data = player.GetData();
+                if (/*DashAtt*/data.Get<bool>("USSRNAME_DashAtt"))
+                {
+                    data.Set("dashAttackTimer", usingDashAtt);
+                }
+            }
         }
 
         public static void PurpleBoosterExplodeLaunch(Player player, DynData<Player> playerData, Vector2 from, Vector2? origin, float factor = 1f)
@@ -621,11 +669,44 @@ namespace Celeste.Mod.ReverseHelper.Entities
             public static void Hook()
             {
                 On.Celeste.Player.ctor += Player_ctor;
+
+                //IL.Celeste.Player.Update += Player_Update;
             }
+
+            //private static void Player_Update(MonoMod.Cil.ILContext il)
+            //{
+                
+            //    if (Util.TryGetPlayer(out Player pl)
+            //        && pl.StateMachine.State == ReverseHelperModule.AnotherPurpleBoosterDashState
+            //        && /*FixSomething1*/pl.GetData().Get<bool>("USSRNAME_FixSomething1"))
+            //    {
+            //        var ilc = new ILCursor(il);
+            //        while (ilc.TryGotoNext(x => x.MatchCall(typeof(Player), "DashCorrectCheck")))
+            //        {
+            //            //var ilc_last = ilc;
+            //            ilc.Index -= 6;
+            //            if (ilc.Instrs[ilc.Index].MatchCall(typeof(Actor), "MoveVExact"))
+            //            {
+            //                ilc.Instrs[ilc.Index].OpCode = Mono.Cecil.Cil.OpCodes.Pop;
+            //                ilc.Instrs[ilc.Index].Operand = null;
+            //                ilc.Index -= 1;
+            //                ilc.Instrs[ilc.Index].OpCode = Mono.Cecil.Cil.OpCodes.Pop;
+            //                ilc.Instrs[ilc.Index].Operand = null;
+            //                //ilc.()
+            //                return;
+            //            }
+            //        }
+            //        Logger.Log(LogLevel.Error, "ReverseHelper/AnotherPurpleBooster", il.ToString());
+            //        throw new RevverseHelperILHookException("IL Hooks failed! Method dump has been saved to log.");
+            //        //ilc.nex
+            //    }
+            //}
 
             public static void Unhook()
             {
                 On.Celeste.Player.ctor -= Player_ctor;
+
+                //IL.Celeste.Player.Update -= Player_Update;
             }
 
             private static void Player_ctor(On.Celeste.Player.orig_ctor orig, Player self, Vector2 position, PlayerSpriteMode spriteMode)
@@ -643,6 +724,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     new Func<int>(PurpleDashingUpdate),
                     PurpleDashingCoroutine,
                     PurpleDashingBegin);
+            }
+
+            internal static void LoadContent()
+            {
+                //AnotherPurpleBooster.P_Burst = new ParticleType(Booster.P_Burst);
+                //AnotherPurpleBooster.P_Appear = new ParticleType(Booster.P_Appear);
+                //AnotherPurpleBooster.P_BurstExplode = new ParticleType(Booster.P_Burst);
             }
         }
     }
@@ -701,7 +789,7 @@ namespace Celeste.Mod.ReverseHelper._From_Vortex_Helper
     public static class Util
     {
         // https://github.com/CommunalHelper/CommunalHelper/blob/dev/src/CommunalHelperModule.cs#L196
-        public static bool TryGetPlayer(out Player player)
+        public static bool TryGetPlayer(out Player? player)
         {
             player = Engine.Scene?.Tracker?.GetEntity<Player>();
             return player != null;

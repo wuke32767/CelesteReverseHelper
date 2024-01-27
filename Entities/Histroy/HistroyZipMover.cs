@@ -5,10 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Celeste.Mod.ReverseHelper.Entities
+namespace Celeste.Mod.ReverseHelper.Entities.Histroy
 {
     //[CustomEntity("ReverseHelper/RecordedMultiNodeZipMover")]
-    //class RecordedMultiNodeZipMover:
+    //class HistroyMultiNodeZipMover 
     //{
     //}
 }
