@@ -1,4 +1,4 @@
-Hmmm, a readme is necessary.
+Hmmm... a readme is necessary.
 
 # Celeste Reverse Helper
 ###### a helper, not for reverse.
