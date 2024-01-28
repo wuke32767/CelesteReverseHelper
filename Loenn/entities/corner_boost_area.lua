@@ -14,7 +14,13 @@ cbarea.fieldInformation = {
     timesBeforeExit = {
         fieldType = "integer",
     },
+    fillColor = {
+        fieldType = "color",
+    },
     color = {
+        fieldType = "color",
+    },
+    lineColor = {
         fieldType = "color",
     }
 }
@@ -32,7 +38,9 @@ cbarea.placements = {
         cooldownOnExit=false,
         onlyRCB=false,
         cornerHyper=false,
-        color="ffffff",
+        fillColor="ffffffff",
+        lineColor="ffffffff",
+        legacyTransparent=true,
     }
     
 }

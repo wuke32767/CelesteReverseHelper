@@ -1,4 +1,5 @@
 ﻿using Celeste.Mod.Entities;
+using Celeste.Mod.ReverseHelper.Libraries;
 using Microsoft.Xna.Framework;
 using Monocle;
 using System;
@@ -21,8 +22,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public bool cornerhyper;
 
         public Color mycol;
+        public Color Line;
 
-        public CornerBoostArea(Vector2 position, int width, int height, int depth, int totaltimes, float cooldown, int times, bool cooldownOnExit, bool onlyRCB, bool cornerhyper, Color mycol) : base(position)
+        public bool legacy;
+
+        public CornerBoostArea(Vector2 position, int width, int height, int depth, int totaltimes, float cooldown, int times, bool cooldownOnExit, bool onlyRCB, bool cornerhyper, Color mycol, Color line, bool transparent, Color old, bool legacy) : base(position)
         {
             Collider = new Hitbox(width, height);
             Add(playerCollider = new PlayerCollider((Player p) =>
@@ -41,12 +45,29 @@ namespace Celeste.Mod.ReverseHelper.Entities
             this.cooldownOnExit = cooldownOnExit;
             this.onlyRCB = onlyRCB;
             this.cornerhyper = cornerhyper;
-            this.mycol = mycol;
+            this.legacy = legacy;
+            if (legacy)
+            {
+                this.mycol = old * 0.125f;
+                Line = old * 0.625f;
+            }
+            else
+            {
+                if (transparent)
+                {
+                    line *= 0.625f;
+                    mycol *= 0.125f;
+                }
+                Line = line;
+                this.mycol = mycol;
+            }
         }
 
         public CornerBoostArea(EntityData e, Vector2 offset) : this(e.Position + offset, e.Width, e.Height,
             e.Int("depth", 1), e.Int("totalTimes", -1), e.Float("cooldown", 0), e.Int("timesBeforeExit", -1),
-            e.Bool("cooldownOnExit"), e.Bool("onlyRCB"), e.Bool("cornerHyper", false),e.HexColor("color",Color.White))
+            e.Bool("cooldownOnExit"), e.Bool("onlyRCB"), e.Bool("cornerHyper", false),
+            e.HexaColor("fillColor", Color.White), e.HexaColor("lineColor", Color.White), e.Bool("legacyTransparent", true),
+            e.HexColor("color"), e.Attr("color", null) is not null)
         {
         }
 
@@ -57,8 +78,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 Camera camera = level.Camera;
                 if (!(Right < camera.Left || Left > camera.Right || Bottom < camera.Top || Top > camera.Bottom))
                 {
-                    Draw.Rect(Collider, mycol*(0.128f));
-                    Draw.HollowRect(Collider, mycol*0.5f);
+                    Draw.HollowRect(Collider, Line);
+                    if (Collider.Width - 2 > 0 && Collider.Height - 2 > 0)
+                    {
+                        Draw.Rect(Collider.AbsoluteLeft + 1, Collider.AbsoluteTop + 1, Collider.Width - 2, Collider.Height - 2, mycol);
+                    }
                 }
             }
         }
@@ -149,7 +173,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             var com = self.Get<CBAreaComponent>();
             if (!(com is null) && com.Active)
             {
-                if(hyperjmped)
+                if (hyperjmped)
                 {
                     jmped = true;
                     if (com.src.cornerhyper)
