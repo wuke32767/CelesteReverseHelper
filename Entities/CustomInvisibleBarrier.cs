@@ -39,8 +39,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
         static bool has_actor;
         bool this_has_actor = false;
         bool killins_unused;
-        
-        public CustomInvisibleBarrier(Vector2 position, int width, int height, EntityData e, bool rev, bool climb, bool kill,bool attach) : base(position, width, height, true)
+
+        public CustomInvisibleBarrier(Vector2 position, int width, int height, EntityData e, bool rev, bool climb, bool kill, bool attach) : base(position, width, height, true)
         {
             if (e.Values.TryGetValue("_resttype", out var a))
             {
@@ -58,13 +58,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 Add(new ClimbBlocker(true));
             }
             killins_unused = kill;
-            if(attach)
+            if (attach)
             {
                 Add(new StaticMover());
             }
         }
 
-        public CustomInvisibleBarrier(EntityData e, Vector2 offset) : this(e.Position + offset, e.Width, e.Height, e, e.Bool("reversed"), e.Bool("climb"), e.Bool("killInside"),e.Bool("attach"))
+        public CustomInvisibleBarrier(EntityData e, Vector2 offset) : this(e.Position + offset, e.Width, e.Height, e, e.Bool("reversed"), e.Bool("climb"), e.Bool("killInside"), e.Bool("attach"))
         {
 
         }
@@ -76,36 +76,44 @@ namespace Celeste.Mod.ReverseHelper.Entities
             IL.Celeste.Solid.MoveVExact += UniversalBarrier;
             IL.Celeste.JumpThru.MoveHExact += UniversalBarrier;
             IL.Celeste.JumpThru.MoveVExact += UniversalBarrier;
-
-            //Everest.Events.Level.OnLoadEntity += Level_OnLoadEntity;
+        }
+        static ILHook AttachedJumpThru;
+        //workaround here
+        public static void LoadContent()
+        {
+            var mov = ReverseHelperExtern.VortexHelperModule.AttachedJumpThru.MoveHExact;
+            if (mov is not null)
+            {
+                AttachedJumpThru = new ILHook(mov, UniversalBarrier);
+            }
         }
 
         private static void UniversalBarrier(ILContext il)
         {
             ILCursor ic = new(il);
-            while(ic.TryGotoNext(MoveType.After,x=> { x.MatchCall(out var a); return a?.Name == "get_Current"; },
-                x=> { return x.MatchCastclass<Actor>(); }))
+            while (ic.TryGotoNext(MoveType.After, x => { x.MatchCall(out var a); return a?.Name == "get_Current"; },
+                x => { return x.MatchCastclass<Actor>(); }))
             {
-                ic.EmitDelegate((Actor a)=>
+                ic.EmitDelegate((Actor a) =>
                 {
-                    if(!has_actor)
+                    if (!has_actor)
                     {
                         return a;
                     }
                     var tar = Engine.Scene.Tracker.Entities[typeof(CustomInvisibleBarrier)].Cast<CustomInvisibleBarrier>();
                     foreach (var r in tar)
                     {
-                        r.Collidable = r.reversed!=r.typer.Contains(a.GetType());
+                        r.Collidable = r.reversed != r.typer.Contains(a.GetType());
                     }
                     return a;
                 });
             }
-            ic=new ILCursor(il);
-            while(ic.TryGotoNext(MoveType.Before,x=> x.MatchRet()))
+            ic = new ILCursor(il);
+            while (ic.TryGotoNext(MoveType.Before, x => x.MatchRet()))
             {
                 ic.EmitDelegate(() =>
                 {
-                    if(!has_actor)
+                    if (!has_actor)
                     {
                         return;
                     }
@@ -174,7 +182,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             {
             }
 
-            if(!has_actor)
+            if (!has_actor)
             {
                 has_actor = Scene.Tracker.Entities[typeof(CustomInvisibleBarrier)].Cast<CustomInvisibleBarrier>().Any(x => x.this_has_actor);
             }
@@ -215,9 +223,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
             foreach (var v in typer)
             {
                 var vx = v;
-                while(vx.BaseType != null)
+                while (vx.BaseType != null)
                 {
-                    if(vx==typeof(Actor))
+                    if (vx == typeof(Actor))
                     {
                         this_has_actor = true;
                         has_actor = true;
@@ -324,6 +332,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             IL.Celeste.JumpThru.MoveHExact -= UniversalBarrier;
             IL.Celeste.JumpThru.MoveVExact -= UniversalBarrier;
 
+            AttachedJumpThru?.Dispose();
             //Everest.Events.Level.OnLoadEntity -= Level_OnLoadEntity;
         }
         public override void Update()

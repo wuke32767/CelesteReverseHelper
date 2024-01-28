@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Celeste.Mod.ReverseHelper.Entities;
+using Microsoft.Xna.Framework;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Monocle;
@@ -38,6 +39,7 @@ namespace Celeste.Mod.ReverseHelper
             {
                 static Type? Type;
                 static ConstructorInfo? Ctor;
+                public static MethodInfo? MoveHExact;
                 public static JumpThru? ctor(EntityData data, Vector2 offset)
                 => Ctor?.Invoke([data, offset]) as JumpThru;
                 public static void LoadContent()
@@ -45,6 +47,7 @@ namespace Celeste.Mod.ReverseHelper
                     Type = VortexHelperAssembly?
                         .GetType("Celeste.Mod.VortexHelper.Entities.AttachedJumpThru");
                     Ctor = Type?.GetConstructor([typeof(EntityData), typeof(Vector2)]);
+                    MoveHExact = Type?.GetMethod("MoveHExact", bf);
                 }
             }
         }
@@ -336,6 +339,8 @@ namespace Celeste.Mod.ReverseHelper
             ExtendedVariantsModule.LoadContent();
             MaddieHelpingHandModule.LoadContent();
             GravityHelperModule.LoadContent();
+
+            CustomInvisibleBarrier.LoadContent();
         }
 
 

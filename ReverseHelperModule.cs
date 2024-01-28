@@ -78,6 +78,7 @@ namespace Celeste.Mod.ReverseHelper
             ReversedDreamBlock.Unload();
             CustomInvisibleBarrier.Unload();
 
+            ReverseHelperExtern.Unload();
             //Everest.Events.Level.OnLoadLevel -= Level_OnLoadLevel;
         }
         //public override void PrepareMapDataProcessors(MapDataFixup context)
