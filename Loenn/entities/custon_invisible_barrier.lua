@@ -14,7 +14,6 @@ cbarea.placements = {
 
     data = {
         width = 8, height = 8,
-        depth=8500,
         type="Player,TheoCrystal",
         reversed=false,
         climb=false,
