@@ -307,14 +307,24 @@ namespace Celeste.Mod.ReverseHelper
             {
                 static Type? Type;
 
-                static MethodInfo? Update;
-                static MethodInfo? Awake;
+                public static MethodInfo? Update;
+                static FieldInfo? color;
+                static FieldInfo? OneUse;
 
                 public static void LoadContent()
                 {
                     Type = Assembly?.GetType("Celeste.Mod.MaxHelpingHand.Entities.AttachedSidewaysJumpThru");
                     Update = Type?.GetMethod("Update",bf);
-                    Awake = Type?.GetMethod("Awake", bf);
+                    color = Type?.GetField("color",bf);
+                    OneUse = Type?.GetField("OneUse", bf);
+                }
+                public static void set_color(Entity e,Color c)
+                {
+                    color!.SetValue(e, c);
+                }
+                public static bool get_OneUse(Entity e)
+                {
+                    return (bool)OneUse!.GetValue(e);
                 }
             }
             public static class DreamSpinnerRenderer
@@ -341,6 +351,7 @@ namespace Celeste.Mod.ReverseHelper
             GravityHelperModule.LoadContent();
 
             CustomInvisibleBarrier.LoadContent();
+            ReversedDreamBlock.LoadContent();
         }
 
 

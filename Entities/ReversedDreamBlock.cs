@@ -2,6 +2,7 @@
 using Celeste.Mod.Helpers;
 using Celeste.Mod.ReverseHelper.Libraries;
 using Microsoft.Xna.Framework;
+using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
@@ -63,6 +64,44 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
 
         }
+        static ILHook grabbag_workaround;
+        public static void LoadContent()
+        {
+            var upd = ReverseHelperExtern.IsaGrabBag.DreamSpinner.Update;
+            if (upd is not null)
+            {
+                grabbag_workaround=new ILHook(upd, (ILContext il) =>
+                {
+                    ILCursor ic = new ILCursor(il);
+                    ic.Emit(OpCodes.Ldarg_0);
+                    ic.EmitDelegate((Entity e) =>
+                        {
+                            Color color;
+                            color = Color.Black;
+                            if (!dreamblock_enabled(e))
+                            {
+                                color = new Color(25, 25, 25);
+                            }
+                            else
+                            {
+                                if (ReverseHelperExtern.IsaGrabBag.DreamSpinner.get_OneUse(e))
+                                {
+                                    color = new Color(30, 22, 10);
+                                }
+                            }
+                            ReverseHelperExtern.IsaGrabBag.DreamSpinner.set_color(e, color);
+                        });
+                    while (ic.TryGotoNext(MoveType.After,  (i) => { i.MatchCallvirt(out var v); return v?.Name == "get_Inventory"; },
+                        (i) => { i.MatchLdfld(out var v);return v?.Name == "DreamDash"; }))
+                    {
+                        ic.Emit(OpCodes.Ldarg_0);
+                        ic.EmitDelegate((bool x,Entity self) => dreamblock_enabled(self));
+                    }
+                });
+
+            }
+        }
+
         public override void Render()
         {
             invalid_img?.Draw(Position);
@@ -206,6 +245,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             IL.Celeste.Player.DreamDashCheck -= Player_DreamDashCheck;
             //IL.Celeste.Player.DashCoroutine -= Player_DashCoroutine;
             dashcoroutine?.Dispose();
+            grabbag_workaround?.Dispose();
         }
         public override void Awake(Scene scene)
         {

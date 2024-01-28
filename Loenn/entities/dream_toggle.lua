@@ -15,23 +15,23 @@ bgModeToggle.placements = {
 }
 
 function bgModeToggle.texture(room, entity)
-    local onlyOn = entity.onlyOn
-    local onlyOff = entity.onlyOff
+    local onlyEnable = entity.onlyEnable
+    local onlyDisable = entity.onlyDisable
 
-    if onlyOff then
-        return "objects/BGswitch/bgflipswitch/switch13"
-    elseif onlyOn then
-        return "objects/BGswitch/bgflipswitch/switch15"
+    if onlyDisable then
+        return "objects/ReverseHelper/DreamToggleSwitch/switch13"
+    elseif onlyEnable then
+        return "objects/ReverseHelper/DreamToggleSwitch/switch15"
     else
-        return "objects/BGswitch/bgflipswitch/switch01"
+        return "objects/ReverseHelper/DreamToggleSwitch/switch01"
     end
 end
 
 function bgModeToggle.selection(room, entity)
     local x, y = entity.x or 0, entity.y or 0
-    local onlyOff = entity.onlyOff
+    local onlyDisable = entity.onlyDisable
     
-    if onlyOff then
+    if onlyDisable then
         return utils.rectangle(x - 8, y - 14, 16, 23)
     else
         return utils.rectangle(x - 8, y - 6, 16, 20)
