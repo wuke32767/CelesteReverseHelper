@@ -306,12 +306,13 @@ namespace Celeste.Mod.ReverseHelper
             }
             public static class DreamSpinner
             {
-                static Type? Type;
+                public static Type? Type;
 
                 public static MethodInfo? Update;
                 static FieldInfo? color;
                 static FieldInfo? OneUse;
                 static FieldInfo? block;
+                static MethodInfo? InViewr;
 
                 public static void LoadContent()
                 {
@@ -320,6 +321,7 @@ namespace Celeste.Mod.ReverseHelper
                     color = Type?.GetField("color",bf);
                     OneUse = Type?.GetField("OneUse", bf);
                     block = Type?.GetField("block", bf);
+                    InViewr = Type?.GetMethod("InView", bf);
                 }
                 public static void set_color(Entity e,Color c)
                 {
@@ -333,19 +335,26 @@ namespace Celeste.Mod.ReverseHelper
                 {
                     return (Entity)block!.GetValue(e);
                 }
+                public static bool InView(Entity e)
+                {
+                    return (bool)InViewr!.Invoke(e, []);
+                }
             }
             public static class DreamSpinnerRenderer
             {
                 static Type? Type;
 
                 // static FieldInfo? OnDashCollide;
-                static MethodInfo? BeforeHook;
-                public static ILHook? SomeLambdaHook;
+                public static MethodInfo? BeforeRender;
+                public static MethodInfo? Render;
+                public static MethodInfo? GetSpinnersToRender;
 
                 public static void LoadContent()
                 {
-                    Type = Assembly?.GetType("Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru");
-                    BeforeHook = Type?.GetMethod("BeforeRender", bf);
+                    Type = Assembly?.GetType("Celeste.Mod.IsaGrabBag.DreamSpinnerRenderer");
+                    BeforeRender = Type?.GetMethod("BeforeRender", bf);
+                    Render = Type?.GetMethod("Render", bf);
+                    GetSpinnersToRender = Type?.GetMethod("GetSpinnersToRender", bf);
                 }
             }
         }

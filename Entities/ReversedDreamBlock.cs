@@ -2,6 +2,7 @@
 using Celeste.Mod.Helpers;
 using Celeste.Mod.ReverseHelper.Libraries;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
@@ -11,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using static Celeste.Mod.ReverseHelper.ReverseHelperExtern.IsaGrabBag;
 using Component = Monocle.Component;
 
 namespace Celeste.Mod.ReverseHelper.Entities
@@ -65,12 +67,24 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         }
         static ILHook grabbag_workaround;
+        static ILHook grabbag_workaround_img_il;
+        static ILHook grabbag_workaround_img_gt;
+        static ILHook grabbag_workaround_img_rr;
+        static Hook grabbag_workaround_img_on;
+        static bool grabbag_on = false;
+        static int grabbag_clear = 2;
+        static List<Entity> grabbag_list;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static bool grabbag_enabled(Entity e)
+        {
+            return dreamblock_enabled(DreamSpinner.get_block(e));
+        }
         public static void LoadContent()
         {
-            var upd = ReverseHelperExtern.IsaGrabBag.DreamSpinner.Update;
+            var upd = DreamSpinner.Update;
             if (upd is not null)
             {
-                grabbag_workaround=new ILHook(upd, (ILContext il) =>
+                grabbag_workaround = new ILHook(upd, (ILContext il) =>
                 {
                     ILCursor ic = new ILCursor(il);
                     ic.Emit(OpCodes.Ldarg_0);
@@ -78,27 +92,109 @@ namespace Celeste.Mod.ReverseHelper.Entities
                         {
                             Color color;
                             color = Color.Black;
-                            if (!dreamblock_enabled(ReverseHelperExtern.IsaGrabBag.DreamSpinner.get_block(e)))
+                            if (!grabbag_enabled(e))
                             {
                                 color = new Color(25, 25, 25);
                             }
                             else
                             {
-                                if (ReverseHelperExtern.IsaGrabBag.DreamSpinner.get_OneUse(e))
+                                if (DreamSpinner.get_OneUse(e))
                                 {
                                     color = new Color(30, 22, 10);
                                 }
                             }
-                            ReverseHelperExtern.IsaGrabBag.DreamSpinner.set_color(e, color);
+                            DreamSpinner.set_color(e, color);
                         });
-                    while (ic.TryGotoNext(MoveType.After,  (i) => { i.MatchCallvirt(out var v); return v?.Name == "get_Inventory"; },
-                        (i) => { i.MatchLdfld(out var v);return v?.Name == "DreamDash"; }))
+                    while (ic.TryGotoNext(MoveType.After, (i) => { i.MatchCallvirt(out var v); return v?.Name == "get_Inventory"; },
+                        (i) => { i.MatchLdfld(out var v); return v?.Name == "DreamDash"; }))
                     {
                         ic.Emit(OpCodes.Ldarg_0);
-                        ic.EmitDelegate((bool x,Entity self) => dreamblock_enabled(ReverseHelperExtern.IsaGrabBag.DreamSpinner.get_block(self)));
+                        ic.EmitDelegate((bool x, Entity self) => grabbag_enabled(self));
                     }
                 });
+            }
+            var ren = DreamSpinnerRenderer.BeforeRender;
+            var get = DreamSpinnerRenderer.GetSpinnersToRender;
+            var rren = DreamSpinnerRenderer.Render;
+            if (ren is not null && get is not null && rren is not null)
+            {
+                grabbag_workaround_img_gt = new ILHook(get, (ILContext il) =>
+                {
+                    ILCursor ic = new ILCursor(il);
+                    if (ic.TryGotoNext(MoveType.Before, (i) => { i.MatchCallOrCallvirt(out var v); return v?.Name == "InView"; }))
+                    {
+                        ic.Emit(OpCodes.Dup);
+                        ic.Index++;
+                        ic.EmitDelegate((Entity e, bool b) =>
+                        {
+                            return b && (grabbag_enabled(e) == grabbag_on);
+                        });
+                    }
+                });
+                grabbag_workaround_img_il = new ILHook(ren, (ILContext il) =>
+                {
+                    ILCursor ic = new ILCursor(il);
+                    if (ic.TryGotoNext(MoveType.After,
+                        (i) => { i.MatchLdflda(out var v); return v?.Name == "Inventory"; },
+                        (i) => { i.MatchLdfld(out var v); return v?.Name == "DreamDash"; }))
+                    {
+                        ic.EmitDelegate((bool b) =>
+                        {
+                            return grabbag_on;
+                        });
+                        while (ic.TryGotoNext(MoveType.Before,
+                        (i) => { i.MatchCallOrCallvirt(out var v); return v?.Name == "Clear"; }))
+                        {
+                            ic.Remove();
+                            ic.EmitDelegate((GraphicsDevice geometrydash, Color c) =>
+                            {
+                                if (grabbag_clear > 0)
+                                {
+                                    geometrydash.Clear(c);
+                                }
+                                grabbag_clear--;
+                            });
+                        }
+                    }
 
+                });
+                grabbag_workaround_img_on = new Hook(ren, (Action<Entity> orig, Entity self) =>
+                {
+                    //List<Entity> list = [];
+                    //List<Entity> list2 = [];
+                    //foreach (Entity entity in Engine.Scene.Tracker.Entities[DreamSpinner.Type])
+                    //{
+                    //    if (DreamSpinner.InView(entity))
+                    //    {
+                    //        list.Add(entity);
+                    //    }
+                    //    else
+                    //    {
+                    //        list2.Add(entity);
+                    //    }
+                    //}
+
+                    grabbag_clear = 2;
+                    grabbag_on = true;
+                    orig(self);
+                    grabbag_on = false;
+                    orig(self);
+                });
+                grabbag_workaround_img_rr = new ILHook(rren, (ILContext il) =>
+                {
+                    ILCursor ic= new ILCursor(il);
+                    if(ic.TryGotoNext(MoveType.Before,(i)=>i.MatchBrfalse(out _)))
+                    {
+                        ic.EmitDelegate((bool b) =>
+                        {
+                            if (Engine.Scene.Tracker.Entities[DreamSpinner.Type].Count > 0)
+                            {
+                                return true;
+                            }
+                            return false;
+                        });
+                    }    
+                });
             }
         }
 
@@ -246,6 +342,10 @@ namespace Celeste.Mod.ReverseHelper.Entities
             //IL.Celeste.Player.DashCoroutine -= Player_DashCoroutine;
             dashcoroutine?.Dispose();
             grabbag_workaround?.Dispose();
+            grabbag_workaround_img_il?.Dispose();
+            grabbag_workaround_img_on?.Dispose();
+            grabbag_workaround_img_gt?.Dispose();
+            grabbag_workaround_img_rr?.Dispose();
         }
         public override void Awake(Scene scene)
         {
