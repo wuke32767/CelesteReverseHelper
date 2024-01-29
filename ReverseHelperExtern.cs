@@ -1,4 +1,5 @@
 ﻿using Celeste.Mod.ReverseHelper.Entities;
+using FMOD;
 using Microsoft.Xna.Framework;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -310,13 +311,15 @@ namespace Celeste.Mod.ReverseHelper
                 public static MethodInfo? Update;
                 static FieldInfo? color;
                 static FieldInfo? OneUse;
+                static FieldInfo? block;
 
                 public static void LoadContent()
                 {
-                    Type = Assembly?.GetType("Celeste.Mod.MaxHelpingHand.Entities.AttachedSidewaysJumpThru");
+                    Type = Assembly?.GetType("Celeste.Mod.IsaGrabBag.DreamSpinner");
                     Update = Type?.GetMethod("Update",bf);
                     color = Type?.GetField("color",bf);
                     OneUse = Type?.GetField("OneUse", bf);
+                    block = Type?.GetField("block", bf);
                 }
                 public static void set_color(Entity e,Color c)
                 {
@@ -325,6 +328,10 @@ namespace Celeste.Mod.ReverseHelper
                 public static bool get_OneUse(Entity e)
                 {
                     return (bool)OneUse!.GetValue(e);
+                }
+                public static Entity get_block(Entity e)
+                {
+                    return (Entity)block!.GetValue(e);
                 }
             }
             public static class DreamSpinnerRenderer
@@ -342,16 +349,24 @@ namespace Celeste.Mod.ReverseHelper
                 }
             }
         }
-
+        public static string[] debugger;//what if ReverseHelper named as ConverseHelper in assembly?
+        public static Assembly[] debugger_;
         public static void LoadContent()
         {
             VortexHelperModule.LoadContent();
             ExtendedVariantsModule.LoadContent();
             MaddieHelpingHandModule.LoadContent();
             GravityHelperModule.LoadContent();
+            IsaGrabBag.LoadContent();
 
             CustomInvisibleBarrier.LoadContent();
             ReversedDreamBlock.LoadContent();
+            if(false)
+            {
+                debugger_ = AppDomain.CurrentDomain
+                    .GetAssemblies();
+                debugger=debugger_.Select(x=>x.GetName().Name).ToArray();
+            }
         }
 
 

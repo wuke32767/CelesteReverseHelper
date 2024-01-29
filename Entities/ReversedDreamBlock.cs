@@ -78,7 +78,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                         {
                             Color color;
                             color = Color.Black;
-                            if (!dreamblock_enabled(e))
+                            if (!dreamblock_enabled(ReverseHelperExtern.IsaGrabBag.DreamSpinner.get_block(e)))
                             {
                                 color = new Color(25, 25, 25);
                             }
@@ -95,7 +95,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                         (i) => { i.MatchLdfld(out var v);return v?.Name == "DreamDash"; }))
                     {
                         ic.Emit(OpCodes.Ldarg_0);
-                        ic.EmitDelegate((bool x,Entity self) => dreamblock_enabled(self));
+                        ic.EmitDelegate((bool x,Entity self) => dreamblock_enabled(ReverseHelperExtern.IsaGrabBag.DreamSpinner.get_block(self)));
                     }
                 });
 
