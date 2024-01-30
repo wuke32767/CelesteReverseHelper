@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Monocle;
 using System;
+using System.Reflection;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
@@ -21,6 +22,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 ForceUpdate();
             }
         }
+        private static FieldInfo playerHasDreamDashInfo = typeof(DreamBlock).GetField("playerHasDreamDash", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.GetField);
+
         public static void ForceUpdate()
         {
             if (Engine.Scene is Level level)
@@ -35,10 +38,12 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     var vv = (v as DreamBlock)!;
                     if(ReversedDreamBlock.dreamblock_enabled(vv))
                     {
+                        playerHasDreamDashInfo.SetValue(vv, false);//for brokemia
                         vv.ActivateNoRoutine();
                     }
                     else
                     {
+                        playerHasDreamDashInfo.SetValue(vv, true);//for brokemia
                         vv.DeactivateNoRoutine();
                     }
                 }

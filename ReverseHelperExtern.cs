@@ -358,7 +358,7 @@ namespace Celeste.Mod.ReverseHelper
                 }
             }
         }
-        public static string[] debugger;//what if ReverseHelper named as ConverseHelper in assembly?
+        public static string[] debugger;//what if ReverseHelper is named as ConverseHelper in assembly?
         public static Assembly[] debugger_;
         public static void LoadContent()
         {
