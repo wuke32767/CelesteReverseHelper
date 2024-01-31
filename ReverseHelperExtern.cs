@@ -301,8 +301,22 @@ namespace Celeste.Mod.ReverseHelper
                     .GetAssemblies()
                     .Where(assembly => assembly.GetName().Name == "IsaMods")
                     .FirstOrDefault();
+                GrabBagModule.LoadContent();
                 DreamSpinner.LoadContent();
                 DreamSpinnerRenderer.LoadContent();
+            }
+            public static class GrabBagModule
+            {
+                public static Type? Type;
+
+                public static PropertyInfo? spritesinfo;
+
+                internal static void LoadContent()
+                {
+                    Type = Assembly?.GetType("Celeste.Mod.IsaGrabBag.GrabBagModule");
+                    spritesinfo = Type?.GetProperty("sprites", bf);
+                }
+                public static SpriteBank? sprites { get => (SpriteBank)spritesinfo?.GetValue(null); }
             }
             public static class DreamSpinner
             {

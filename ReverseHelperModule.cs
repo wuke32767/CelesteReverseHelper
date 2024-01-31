@@ -42,6 +42,7 @@ namespace Celeste.Mod.ReverseHelper
             ReversedDreamBlock.Load();
             CustomInvisibleBarrier.Load();
 
+            ZiplineZipmover.Load();
             //Everest.Events.Level.OnLoadLevel += Level_OnLoadLevel;
         }
         public static bool ReversedDreamBlockContainerHooked = false;
@@ -79,6 +80,7 @@ namespace Celeste.Mod.ReverseHelper
             CustomInvisibleBarrier.Unload();
 
             ReverseHelperExtern.Unload();
+            ZiplineZipmover.Unload();
             //Everest.Events.Level.OnLoadLevel -= Level_OnLoadLevel;
         }
         //public override void PrepareMapDataProcessors(MapDataFixup context)

@@ -11,7 +11,7 @@ purpleBooster.placements = {
         name = "Another Purple Booster",
         data = {
             redirect=true,
-            --addDashAttack=false,
+            addDashAttack=false,--can i make it public?
             --NewAction=false,
         }
     

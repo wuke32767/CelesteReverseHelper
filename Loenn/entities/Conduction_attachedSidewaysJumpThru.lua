@@ -31,7 +31,7 @@ jumpthru.fieldInformation = {
 
     }
 }
-jumpthru.associatedMods = { "ReverseHelper","MaddieHelpingHand", }
+jumpthru.associatedMods = { "ReverseHelper","MaxHelpingHand", }
 
 jumpthru.placements = {}
 
