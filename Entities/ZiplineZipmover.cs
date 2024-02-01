@@ -29,6 +29,7 @@ namespace Celeste.Mod.ReverseHelper
         private readonly Sprite? sprite;
         private readonly bool usesStamina;
         private Vector2 last_speed_mul_time_is_distance;
+        private float last_speed_grace;
         private Vector2 speed_mul_time_is_distance;
         private Vector2 speed { get => speed_mul_time_is_distance / Engine.DeltaTime; }
         private Vector2 last_speed { get => last_speed_mul_time_is_distance / Engine.DeltaTime; }
@@ -139,7 +140,6 @@ namespace Celeste.Mod.ReverseHelper
 
                 void onCollide(CollisionData data)
                 {
-                    player.Speed = speed;
                     player.StateMachine.State = Player.StNormal;
                 };
                 player.LiftSpeed = speed;
@@ -180,9 +180,18 @@ namespace Celeste.Mod.ReverseHelper
                 //Position.X = MathHelper.Clamp(Position.X, LeftEdge, RightEdge);
                 //Position.Y = height;
             }
-            last_speed_mul_time_is_distance = speed_mul_time_is_distance;
-            speed_mul_time_is_distance = Vector2.Zero;
 
+            if (speed_mul_time_is_distance.LengthSquared() > last_speed_mul_time_is_distance.LengthSquared())
+            {
+                last_speed_mul_time_is_distance = speed_mul_time_is_distance;
+                last_speed_grace = 0.15f;
+            }
+            speed_mul_time_is_distance = Vector2.Zero;
+            last_speed_grace -= Engine.DeltaTime;
+            if(last_speed_grace<0)
+            {
+                last_speed_mul_time_is_distance = Vector2.Zero;
+            }
         }
         private IEnumerator Sequence()
         {
@@ -390,22 +399,27 @@ namespace Celeste.Mod.ReverseHelper
 
         private static void ZiplineEnd()
         {
-            currentGrabbed!.grabbed = false;
+            Player self = Engine.Scene.Tracker.GetEntity<Player>();
+            if(!s1mpleend)
+            {
+                self.Speed = currentGrabbed!.last_speed;
+            }
+            currentGrabbed!.grabbed = false;//anyway, it haven't crashed in grabbag.
             currentGrabbed = null;
             ziplineBuffer = 0.35f;
+            s1mpleend = false;
         }
         static PropertyInfo Player_IsTired = typeof(Player).GetProperty("IsTired", BindingFlags.NonPublic | BindingFlags.Instance);
         //static FieldInfo Player_moveX = typeof(Player).GetField("moveX", BindingFlags.NonPublic | BindingFlags.Instance);
         private SoundSource sfx;
         internal float percent;
-
+        static bool s1mpleend = false;
         private static int ZiplineUpdate()
         {
             Player self = Engine.Scene.Tracker.GetEntity<Player>();
 
             if (currentGrabbed == null)
             {
-                self.Speed = self.LiftSpeed;//?
                 return Player.StNormal;
             }
 
@@ -434,7 +448,7 @@ namespace Celeste.Mod.ReverseHelper
 
             if (!Input.GrabCheck || self.Stamina <= 0)
             {
-                self.Speed = currentGrabbed.last_speed;
+                //self.Speed = currentGrabbed.last_speed;
                 return Player.StNormal;
             }
 
@@ -451,7 +465,7 @@ namespace Celeste.Mod.ReverseHelper
                 self.Speed.X *= 0.1f;
                 self.Jump(false, true);
                 self.LiftSpeed *= 0.4f;
-
+                s1mpleend = true;
                 //currentGrabbed.speed_mul_time = Calc.Approach(currentGrabbed.speed_mul_time, 0, 20);
 
                 return Player.StNormal;
@@ -460,6 +474,7 @@ namespace Celeste.Mod.ReverseHelper
             if (self.CanDash)
             {
                 self.Speed = currentGrabbed.last_speed;
+                s1mpleend = true;
                 return self.StartDash();
             }
 
