@@ -22,6 +22,7 @@ zipline.placements = {
         time="",
         maxSpeed="",
         strict=false,
+        sprite="",
     }
 }
 

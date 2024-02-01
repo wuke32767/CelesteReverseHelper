@@ -22,7 +22,7 @@ namespace Celeste.Mod.ReverseHelper
         private const float ZIP_ACCEL = 190f;
         private const float ZIP_TURN = 250f;
 
-        private static ZiplineZipmover currentGrabbed, lastGrabbed;
+        private static ZiplineZipmover? currentGrabbed, lastGrabbed;
         private static float ziplineBuffer;
 
         private readonly float height;
@@ -76,8 +76,15 @@ namespace Celeste.Mod.ReverseHelper
             Collider = new Hitbox(20, 16, -10, 1);
             currentGrabbed = null;
             Depth = -500;
-
-            sprite = ReverseHelperExtern.IsaGrabBag.GrabBagModule.sprites?.Create("zipline");
+            string s = e.Attr("sprite");
+            if(s == "")
+            {
+                sprite = ReverseHelperExtern.IsaGrabBag.GrabBagModule.sprites?.Create("zipline");
+            }
+            else
+            {
+                sprite = GFX.SpriteBank.Create(s);
+            }
             if (sprite is not null)
             {
                 sprite.Play("idle");
@@ -264,7 +271,7 @@ namespace Celeste.Mod.ReverseHelper
         internal static void Load()
         {
             Everest.Events.Level.OnLoadLevel += Level_OnLoadLevel;
-            Everest.Events.Level.OnTransitionTo += Level_OnTransitionTo;
+            //Everest.Events.Level.OnTransitionTo += Level_OnTransitionTo;
             On.Celeste.Player.ctor += PlayerInit;
             On.Celeste.Player.Update += OnPlayerUpdate;
             On.Celeste.Player.UpdateSprite += UpdatePlayerVisuals;
@@ -273,7 +280,7 @@ namespace Celeste.Mod.ReverseHelper
         internal static void Unload()
         {
             Everest.Events.Level.OnLoadLevel -= Level_OnLoadLevel;
-            Everest.Events.Level.OnTransitionTo -= Level_OnTransitionTo;
+            //Everest.Events.Level.OnTransitionTo -= Level_OnTransitionTo;
             On.Celeste.Player.ctor -= PlayerInit;
             On.Celeste.Player.Update -= OnPlayerUpdate;
             On.Celeste.Player.UpdateSprite -= UpdatePlayerVisuals;
@@ -371,7 +378,7 @@ namespace Celeste.Mod.ReverseHelper
             //    //yield return null;
             //}
 
-            currentGrabbed.grabbed = true;
+            currentGrabbed!.grabbed = true;
 
             //self.Speed = speed;
 
@@ -383,7 +390,7 @@ namespace Celeste.Mod.ReverseHelper
 
         private static void ZiplineEnd()
         {
-            currentGrabbed.grabbed = false;
+            currentGrabbed!.grabbed = false;
             currentGrabbed = null;
             ziplineBuffer = 0.35f;
         }
@@ -656,7 +663,7 @@ namespace Celeste.Mod.ReverseHelper
             return ((x % m) + m) % m;
         }
 
-        public static EntityData GetEntityData(this MapData mapData, string entityName)
+        public static EntityData? GetEntityData(this MapData mapData, string entityName)
         {
             foreach (LevelData levelData in mapData.Levels)
             {
@@ -674,7 +681,7 @@ namespace Celeste.Mod.ReverseHelper
             return mapData.GetEntityData(entityName) != null;
         }
 
-        public static EntityData GetEntityData(this LevelData levelData, string entityName)
+        public static EntityData? GetEntityData(this LevelData levelData, string entityName)
         {
             foreach (EntityData entity in levelData.Entities)
             {
