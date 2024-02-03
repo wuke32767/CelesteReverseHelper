@@ -56,11 +56,16 @@ namespace Celeste.Mod.ReverseHelper.Entities
             base.Added(scene);
         }
     }
-    [CustomEntity("ReverseHelper/DashConductionJumpThruUpsideDown")]
+    [CustomEntity("GravityHelper/ReverseHelper/DashConductionJumpThruUpsideDown",
+        "ReverseHelper/DashConductionJumpThruUpsideDown = LegacyCtor")]
     public class DashConductionJumpThruUpsideDown : Entity
     {
         public JumpThru? js;
-
+        public static DashConductionJumpThruUpsideDown LegacyCtor(Level level, LevelData levelData, Vector2 offset, EntityData data)
+        {
+            ReverseHelperExtern.GravityHelperModule.RequireGravityHelperHook();
+            return new DashConductionJumpThruUpsideDown(data, offset);
+        }
         public DashConductionJumpThruUpsideDown(EntityData data, Vector2 offset)
             : base(data.Position + offset)
         {
@@ -69,7 +74,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 data.Values.Add("attached", true);
             }
             catch { }
-            ReverseHelperExtern.GravityHelperModule.RequireGravityHelperHook();
 
             js = ReverseHelperExtern.GravityHelperModule.UpsideDownJumpThru.ctor(data, offset);
             if (js is not null)

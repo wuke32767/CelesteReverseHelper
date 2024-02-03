@@ -7,6 +7,7 @@ local cbarea = {
 cbarea.name = "ReverseHelper/SaferFireIceBarrier"
 cbarea.depth = 8500
 cbarea.associatedMods = { "ReverseHelper" }
+cbarea.fieldOrder = { "x","y","width","height","hot","cold","none","iceBlock", }
 
 cbarea.placements = {
 
@@ -17,7 +18,10 @@ cbarea.placements = {
         iceBlock=false,
         cold=false,
         hot=true,
-        none=false,
+        none=true,
+        topSafer=false,
+        topDangerous=false,
+        topRefillDash=true,
     }
     
 }

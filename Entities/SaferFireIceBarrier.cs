@@ -10,19 +10,23 @@ using System.Runtime.CompilerServices;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
-
     // Token: 0x02000278 RID: 632
     [CustomEntity("ReverseHelper/SaferFireIceBarrier")]
     [Tracked]
     public class SaferFireIceBarrier : Solid
     {
-        bool danger = false;
+        bool topdanger;
+        bool topsafer;
+        bool toprestore = false;
+        int safegrace = 0;
+        bool dangercoroutine = false;
+        bool danger { get => dangercoroutine && safegrace == 0; }
         int dangergrace = 0;
         bool framed = false;
         bool ice;
         bool cold = false, hot = false, none = false;
         // Token: 0x060012D7 RID: 4823 RVA: 0x00048F70 File Offset: 0x00047170
-        public SaferFireIceBarrier(Vector2 position, float width, float height, bool icelook, bool c, bool h, bool n) : base(position, width, height, false)
+        public SaferFireIceBarrier(Vector2 position, float width, float height, bool icelook, bool c, bool h, bool n, bool toprestore, bool topsafer, bool topdanger) : base(position, width, height, false)
         {
             Tag = Tags.TransitionUpdate;
             Collider = new Hitbox(width, height, 0f, 0f);
@@ -59,8 +63,19 @@ namespace Celeste.Mod.ReverseHelper.Entities
             none = n;
             OnDashCollide = (p, v) =>
             {
+                if (this.topsafer)
+                {
+                    if (p.Top >= Bottom || p.Bottom <= Top)
+                    {
+                        return DashCollisionResults.NormalCollision;
+                    }
+                }
                 return DashCollisionResults.Ignore;
             };
+            this.toprestore = toprestore;
+            this.topsafer = topsafer;
+            this.topdanger = topdanger;
+
             //OnCollide = dangerous;
         }
         void playertouch(Vector2 v)
@@ -69,12 +84,31 @@ namespace Celeste.Mod.ReverseHelper.Entities
             {
                 return;
             }
-            if (danger == false)
+            if (dangercoroutine == false)
             {
-                danger = true;
-                dangergrace = 2;
+                dangercoroutine = true;
+                if (v.X == 0)
+                {
+                    if (topdanger)
+                    {
+                        Engine.Scene.Tracker.GetEntity<Player>().Die(-v);
+                    }
+                    else if (topsafer)
+                    {
+                        dangergrace = 4;
+                        safegrace = 2;
+                    }
+                    else
+                    {
+                        dangergrace = 2;
+                    }
+                }
+                else
+                {
+                    dangergrace = 2;
+                }
             }
-            else
+            else if (danger)
             {
                 Engine.Scene.Tracker.GetEntity<Player>().Die(-v);
             }
@@ -83,7 +117,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
         // Token: 0x060012D8 RID: 4824 RVA: 0x000490A9 File Offset: 0x000472A9
         public SaferFireIceBarrier(EntityData e, Vector2 offset)
             : this(e.Position + offset, e.Width, e.Height, e.Bool("iceBlock"),
-                  e.Bool("cold"), e.Bool("hot"), e.Bool("none"))
+                  e.Bool("cold"), e.Bool("hot"), e.Bool("none"),
+                  e.Bool("topRefillDash", true), e.Bool("topSafer"), e.Bool("topDangerous"))
         {
         }
 
@@ -91,7 +126,14 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public override void Added(Scene scene)
         {
             base.Added(scene);
-
+            if (!toprestore)
+            {
+                var s = new Spikes(new(X, Y + 2), (int)Width, Spikes.Directions.Up, "");
+                var t = new Spikes(new(X, Y + Height - 2), (int)Width, Spikes.Directions.Down, "");
+                s.Visible = false;
+                t.Visible = false;
+                scene.Add(s, t);
+            }
             Collidable = collideable(SceneAs<Level>().CoreMode);
             if (Collidable)
             {
@@ -149,20 +191,44 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             base.Update();
             var player = Engine.Scene.Tracker.GetEntity<Player>();
-            if((player?.IsRiding(this)??false))
+            if ((player?.IsRiding(this) ?? false))
             {
-                playertouch(Vector2.Zero);
+                Vector2 to = Vector2.Zero;
+                if (player.Left >= Right)
+                {
+                    to = new(1, 0);
+                }
+                else if (player.Top >= Bottom)
+                {
+                    to = new(0, 1);
+                }
+                else if (player.Right <= Left)
+                {
+                    to = new(-1, 0);
+                }
+                else
+                {
+                    to = new(0, -1);
+                }
+                playertouch(to);
             }
 
-            if (dangergrace==0)
+            if (dangergrace == 0)
             {
-                danger = false;
+                dangercoroutine = false;
             }
             else
             {
-                dangergrace -=1;
+                dangergrace -= 1;
             }
+            if (safegrace == 0)
+            {
 
+            }
+            else
+            {
+                safegrace -= 1;
+            }
             framed = false;
             timer += Engine.DeltaTime;
         }

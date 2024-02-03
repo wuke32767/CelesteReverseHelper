@@ -263,7 +263,7 @@ namespace Celeste.Mod.ReverseHelper
                 updatehooks = Module?.GetMethod("updateHooks", bf);
                 CurrentHookLevel = Module?.GetField("CurrentHookLevel", bf);
 
-                var t = HookLevel?.GetEnumValues().Cast<object>().FirstOrDefault(x => x.ToString() == "Everything");
+                var t = HookLevel?.GetEnumValues().Cast<object>().FirstOrDefault(x => x.ToString() == "Everything" || x.ToString() == "Forced");
                 if (t is not null)
                 {
                     Everything = (int)t;

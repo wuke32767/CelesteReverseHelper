@@ -17,7 +17,7 @@ local function getTexture(entity)
 end
 
 local upsideDownJumpThru = {
-    name = "ReverseHelper/DashConductionJumpThruUpsideDown",
+    name = "GravityHelper/ReverseHelper/DashConductionJumpThruUpsideDown",
     depth = -9000,
     canResize = {true, false},
     placements = {},
