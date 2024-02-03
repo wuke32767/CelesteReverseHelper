@@ -42,6 +42,7 @@ namespace Celeste.Mod.ReverseHelper
         static Vector2 collide_offset;
         float speedRate = 2.0f;
         bool strict;
+        static object? speedrun;
         public ZiplineZipmover(EntityData e, Vector2 offset)
             : base(e.Position + offset)
         {
@@ -78,7 +79,7 @@ namespace Celeste.Mod.ReverseHelper
             currentGrabbed = null;
             Depth = -500;
             string s = e.Attr("sprite");
-            if(s == "")
+            if (s == "")
             {
                 sprite = ReverseHelperExtern.IsaGrabBag.GrabBagModule.sprites?.Create("zipline");
             }
@@ -160,9 +161,9 @@ namespace Celeste.Mod.ReverseHelper
                             collide = true;
                         };
 
-                        player.MoveToX(Position.X - player.Collider.CenterX,onCollide);
-                        player.MoveToY(Position.Y + 22,onCollide);
-                        if(strict&&collide)
+                        player.MoveToX(Position.X - player.Collider.CenterX, onCollide);
+                        player.MoveToY(Position.Y + 22, onCollide);
+                        if (strict && collide)
                         {
                             player.Position = pos;
                         }
@@ -188,7 +189,7 @@ namespace Celeste.Mod.ReverseHelper
             }
             speed_mul_time_is_distance = Vector2.Zero;
             last_speed_grace -= Engine.DeltaTime;
-            if(last_speed_grace<0)
+            if (last_speed_grace < 0)
             {
                 last_speed_mul_time_is_distance = Vector2.Zero;
             }
@@ -279,6 +280,8 @@ namespace Celeste.Mod.ReverseHelper
 
         internal static void Load()
         {
+            speedrun = ReverseHelperExtern.SpeedRunTool_Interop.RegisterStaticTypes?.Invoke(typeof(ZiplineZipmover), [nameof(currentGrabbed), nameof(ZiplineState)]);
+
             Everest.Events.Level.OnLoadLevel += Level_OnLoadLevel;
             //Everest.Events.Level.OnTransitionTo += Level_OnTransitionTo;
             On.Celeste.Player.ctor += PlayerInit;
@@ -293,6 +296,7 @@ namespace Celeste.Mod.ReverseHelper
             On.Celeste.Player.ctor -= PlayerInit;
             On.Celeste.Player.Update -= OnPlayerUpdate;
             On.Celeste.Player.UpdateSprite -= UpdatePlayerVisuals;
+            ReverseHelperExtern.SpeedRunTool_Interop.Unregister?.Invoke(speedrun!);
         }
 
         private static void Level_OnLoadLevel(Level level, Player.IntroTypes playerIntro, bool isFromLoader)
@@ -400,7 +404,7 @@ namespace Celeste.Mod.ReverseHelper
         private static void ZiplineEnd()
         {
             Player self = Engine.Scene.Tracker.GetEntity<Player>();
-            if(!s1mpleend)
+            if (!s1mpleend)
             {
                 self.Speed = currentGrabbed!.last_speed;
             }

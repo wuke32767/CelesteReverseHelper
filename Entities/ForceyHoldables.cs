@@ -67,6 +67,16 @@ namespace Celeste.Mod.ReverseHelper.Entities
     public static class ForceyHoldablesComponentPlayer
     {
         public static float force = 0f;
+        public static void Load()
+        {
+            sr = ReverseHelperExtern.SpeedRunTool_Interop.RegisterStaticTypes?.Invoke(typeof(DreamToggleListener), [nameof(force)]);
+        }
+        static object? sr;
+        public static void Unload()
+        {
+            ReverseHelperExtern.SpeedRunTool_Interop.Unregister?.Invoke(sr!);
+        }
+
     }
 
     [CustomEntity("ReverseHelper/ForceyHoldables")]

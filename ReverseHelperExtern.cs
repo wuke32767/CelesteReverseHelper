@@ -5,12 +5,14 @@ using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
+using MonoMod.ModInterop;
 using MonoMod.RuntimeDetour;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Xml;
 using static Celeste.Mod.ReverseHelper.ReverseHelperExtern.MaddieHelpingHandModule;
 
 namespace Celeste.Mod.ReverseHelper
@@ -262,7 +264,7 @@ namespace Celeste.Mod.ReverseHelper
                 CurrentHookLevel = Module?.GetField("CurrentHookLevel", bf);
 
                 var t = HookLevel?.GetEnumValues().Cast<object>().FirstOrDefault(x => x.ToString() == "Everything");
-                if(t is not null)
+                if (t is not null)
                 {
                     Everything = (int)t;
                 }
@@ -270,7 +272,7 @@ namespace Celeste.Mod.ReverseHelper
             }
             public static void RequireGravityHelperHook()
             {
-                if(Everything is not null&&CurrentHookLevel is not null&&(int)CurrentHookLevel.GetValue(null)!= Everything)
+                if (Everything is not null && CurrentHookLevel is not null && (int)CurrentHookLevel.GetValue(null) != Everything)
                 {
                     updatehooks?.Invoke(null, [Everything]);
                 }
@@ -331,13 +333,13 @@ namespace Celeste.Mod.ReverseHelper
                 public static void LoadContent()
                 {
                     Type = Assembly?.GetType("Celeste.Mod.IsaGrabBag.DreamSpinner");
-                    Update = Type?.GetMethod("Update",bf);
-                    color = Type?.GetField("color",bf);
+                    Update = Type?.GetMethod("Update", bf);
+                    color = Type?.GetField("color", bf);
                     OneUse = Type?.GetField("OneUse", bf);
                     block = Type?.GetField("block", bf);
                     InViewr = Type?.GetMethod("InView", bf);
                 }
-                public static void set_color(Entity e,Color c)
+                public static void set_color(Entity e, Color c)
                 {
                     color!.SetValue(e, c);
                 }
@@ -372,6 +374,12 @@ namespace Celeste.Mod.ReverseHelper
                 }
             }
         }
+        [ModImportName("SpeedrunTool.SaveLoad")]
+        public static class SpeedRunTool_Interop
+        {
+            public static Func<Type, string[], object>? RegisterStaticTypes;
+            public static Action<object>? Unregister;
+        }
         public static string[] debugger;//what if ReverseHelper is named as ConverseHelper in assembly?
         public static Assembly[] debugger_;
         public static void LoadContent()
@@ -384,11 +392,11 @@ namespace Celeste.Mod.ReverseHelper
 
             CustomInvisibleBarrier.LoadContent();
             ReversedDreamBlock.LoadContent();
-            if(false)
+            if (false)
             {
                 debugger_ = AppDomain.CurrentDomain
                     .GetAssemblies();
-                debugger=debugger_.Select(x=>x.GetName().Name).ToArray();
+                debugger = debugger_.Select(x => x.GetName().Name).ToArray();
             }
         }
 

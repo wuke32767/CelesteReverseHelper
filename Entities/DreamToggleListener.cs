@@ -17,7 +17,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public static bool isactivated;
         public static void ImmediateUpdate()
         {
-            if((Engine.Scene is Level level)&&level.Session.Inventory.DreamDash != isactivated)
+            if ((Engine.Scene is Level level) && level.Session.Inventory.DreamDash != isactivated)
             {
                 ForceUpdate();
             }
@@ -29,14 +29,14 @@ namespace Celeste.Mod.ReverseHelper.Entities
             if (Engine.Scene is Level level)
             {
                 isactivated = level.Session.Inventory.DreamDash;
-                foreach(var v in level.Tracker.GetComponents<DreamToggleListener>())
+                foreach (var v in level.Tracker.GetComponents<DreamToggleListener>())
                 {
                     (v as DreamToggleListener)!.OnToggle(isactivated);
                 }
-                foreach(var v in level.Tracker.GetEntities<DreamBlock>())
+                foreach (var v in level.Tracker.GetEntities<DreamBlock>())
                 {
                     var vv = (v as DreamBlock)!;
-                    if(ReversedDreamBlock.dreamblock_enabled(vv))
+                    if (ReversedDreamBlock.dreamblock_enabled(vv))
                     {
                         playerHasDreamDashInfo.SetValue(vv, false);//for brokemia
                         vv.ActivateNoRoutine();
@@ -53,8 +53,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public static void Load()
         {
             On.Celeste.Level.Update += Level_Update;
+            sr = ReverseHelperExtern.SpeedRunTool_Interop.RegisterStaticTypes?.Invoke(typeof(DreamToggleListener), [nameof(isactivated)]);
         }
-
+        static object? sr;
         private static void Level_Update(On.Celeste.Level.orig_Update orig, Level self)
         {
             orig(self);
@@ -63,6 +64,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public static void Unload()
         {
             On.Celeste.Level.Update -= Level_Update;
+            ReverseHelperExtern.SpeedRunTool_Interop.Unregister?.Invoke(sr!);
         }
 
         public Action<bool> OnToggle;

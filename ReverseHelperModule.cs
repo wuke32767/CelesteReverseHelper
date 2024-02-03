@@ -1,7 +1,9 @@
 using Celeste.Mod.ReverseHelper.Entities;
 using Monocle;
+using MonoMod.ModInterop;
 using System;
 using System.Runtime.Serialization;
+using static Celeste.Mod.ReverseHelper.ReverseHelperExtern;
 
 namespace Celeste.Mod.ReverseHelper
 {
@@ -32,6 +34,7 @@ namespace Celeste.Mod.ReverseHelper
 
         public override void Load()
         {
+            typeof(SpeedRunTool_Interop).ModInterop();
             AnotherPurpleBooster.Hooks.Hook();
 
             HoldableRefill.Load();
@@ -41,6 +44,7 @@ namespace Celeste.Mod.ReverseHelper
             DreamToggleListener.Load();
             ReversedDreamBlock.Load();
             CustomInvisibleBarrier.Load();
+            SaferFireIceBarrier.Load();
 
             ZiplineZipmover.Load();
             //Everest.Events.Level.OnLoadLevel += Level_OnLoadLevel;
@@ -78,6 +82,7 @@ namespace Celeste.Mod.ReverseHelper
             DreamToggleListener.Unload();
             ReversedDreamBlock.Unload();
             CustomInvisibleBarrier.Unload();
+            SaferFireIceBarrier.Unload();
 
             ReverseHelperExtern.Unload();
             ZiplineZipmover.Unload();

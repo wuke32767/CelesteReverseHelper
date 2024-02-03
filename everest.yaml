@@ -1,5 +1,5 @@
 - Name: ReverseHelper
-  Version: 1.7.1
+  Version: 1.7.2
   DLL: bin/Debug/net452/ReverseHelper.dll
   Dependencies:
     - Name: Everest
@@ -13,5 +13,7 @@
       Version: 1.1.45
     - Name: IsaGrabBag
       Version: 1.6.0
+    - Name: SpeedrunTool
+      Version: 3.22.5
 
 

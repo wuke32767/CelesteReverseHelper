@@ -106,6 +106,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public override void Added(Scene scene)
         {
             base.Added(scene);
+            if(sprite is null)
+            {
+                RemoveSelf();
+                return;
+            }
 
             Image image = new Image(GFX.Game["objects/booster/outline"]);
             image.CenterOrigin();

@@ -12,6 +12,16 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public static float dashTime { set => _dashtime = value / 0.3f; get => _dashtime; }
         public static bool enable = false;
         public static bool disableSpring = true;
+        public static void Load()
+        {
+            sr = ReverseHelperExtern.SpeedRunTool_Interop.RegisterStaticTypes?.Invoke(typeof(DreamToggleListener), [nameof(_dashtime),nameof(enable),nameof(disableSpring)]);
+        }
+        static object? sr;
+        public static void Unload()
+        {
+            ReverseHelperExtern.SpeedRunTool_Interop.Unregister?.Invoke(sr!);
+        }
+
     }
 
     [CustomEntity("ReverseHelper/LongDashRefill")]

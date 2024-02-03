@@ -1,7 +1,11 @@
 ﻿using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
+using Mono.Cecil.Cil;
 using Monocle;
+using MonoMod.Cil;
+using MonoMod.RuntimeDetour;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace Celeste.Mod.ReverseHelper.Entities
@@ -9,14 +13,15 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
     // Token: 0x02000278 RID: 632
     [CustomEntity("ReverseHelper/SaferFireIceBarrier")]
+    [Tracked]
     public class SaferFireIceBarrier : Solid
     {
         bool danger = false;
-        bool dangergrace = false;
+        int dangergrace = 0;
+        bool framed = false;
         bool ice;
         bool cold = false, hot = false, none = false;
         // Token: 0x060012D7 RID: 4823 RVA: 0x00048F70 File Offset: 0x00047170
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public SaferFireIceBarrier(Vector2 position, float width, float height, bool icelook, bool c, bool h, bool n) : base(position, width, height, false)
         {
             Tag = Tags.TransitionUpdate;
@@ -52,22 +57,30 @@ namespace Celeste.Mod.ReverseHelper.Entities
             cold = c;
             hot = h;
             none = n;
-            OnCollide = v =>
+            OnDashCollide = (p, v) =>
             {
-                if (danger == false)
-                {
-                    danger = true;
-                    dangergrace = true;
-                }
-                else
-                {
-                    Engine.Scene.Tracker.GetEntity<Player>().Die(-v);
-                }
+                return DashCollisionResults.Ignore;
             };
+            //OnCollide = dangerous;
         }
-
+        void playertouch(Vector2 v)
+        {
+            if (framed)
+            {
+                return;
+            }
+            if (danger == false)
+            {
+                danger = true;
+                dangergrace = 2;
+            }
+            else
+            {
+                Engine.Scene.Tracker.GetEntity<Player>().Die(-v);
+            }
+            framed = true;
+        }
         // Token: 0x060012D8 RID: 4824 RVA: 0x000490A9 File Offset: 0x000472A9
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public SaferFireIceBarrier(EntityData e, Vector2 offset)
             : this(e.Position + offset, e.Width, e.Height, e.Bool("iceBlock"),
                   e.Bool("cold"), e.Bool("hot"), e.Bool("none"))
@@ -75,7 +88,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
 
         // Token: 0x060012D9 RID: 4825 RVA: 0x000490CC File Offset: 0x000472CC
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public override void Added(Scene scene)
         {
             base.Added(scene);
@@ -93,7 +105,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     || mode == Session.CoreModes.Cold && cold;
         }
         // Token: 0x060012DA RID: 4826 RVA: 0x00049168 File Offset: 0x00047368
-        [MethodImpl(MethodImplOptions.NoInlining)]
         private void OnChangeMode(Session.CoreModes mode)
         {
             Collidable = collideable(mode);
@@ -120,14 +131,12 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
 
         // Token: 0x060012DB RID: 4827 RVA: 0x00033690 File Offset: 0x00031890
-        [MethodImpl(MethodImplOptions.NoInlining)]
         private void OnPlayer(Player player)
         {
             player.Die((player.Center - Center).SafeNormalize(), false, true);
         }
 
         // Token: 0x060012DC RID: 4828 RVA: 0x00049265 File Offset: 0x00047465
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public override void Update()
         {
             if ((Scene as Level)!.Transitioning)
@@ -139,13 +148,25 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 return;
             }
             base.Update();
-            if (!dangergrace)
+            var player = Engine.Scene.Tracker.GetEntity<Player>();
+            if((player?.IsRiding(this)??false))
+            {
+                playertouch(Vector2.Zero);
+            }
+
+            if (dangergrace==0)
             {
                 danger = false;
             }
-            dangergrace = false;
-        }
+            else
+            {
+                dangergrace -=1;
+            }
 
+            framed = false;
+            timer += Engine.DeltaTime;
+        }
+        float timer = 0;
         // Token: 0x060012DD RID: 4829 RVA: 0x000336B1 File Offset: 0x000318B1
         public override void Render()
         {
@@ -167,7 +188,49 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 return FireBarrier.P_Deactivate;
             }
         }
+        static ILHook? orig_Update;
+        public static void Load()
+        {
+            orig_Update = new ILHook(typeof(Player).GetMethod("orig_Update", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance), Player_Update);
+            //IL.Celeste.Player.Update += Player_Update;
+        }
 
+        private static void Player_Update(ILContext il)
+        {
+            ILCursor ic = new(il);
+            while (ic.TryGotoNext(MoveType.After, i => i.MatchLdfld(out var v) && v.Name == "onCollideH",
+                i => i.MatchLdnull(),
+                i => i.MatchCallOrCallvirt(out var v) && v.Name == "MoveH"))
+            {
+                ic.Emit(OpCodes.Ldarg_0);
+                ic.EmitDelegate((Player p) =>
+                {
+                    if (p.CollideFirst<Solid>(p.Position + new Vector2(Math.Sign(p.Speed.X), 0)) is SaferFireIceBarrier safe)
+                    {
+                        safe.playertouch(new Vector2(Math.Sign(p.Speed.X), 0));
+                    }
+                });
+            }
+            ic.Index = 0;
+            while (ic.TryGotoNext(MoveType.After, i => i.MatchLdfld(out var v) && v.Name == "onCollideV",
+                i => i.MatchLdnull(),
+                i => i.MatchCallOrCallvirt(out var v) && v.Name == "MoveV"))
+            {
+                ic.Emit(OpCodes.Ldarg_0);
+                ic.EmitDelegate((Player p) =>
+                {
+                    if (p.CollideFirst<Solid>(p.Position + new Vector2(0, Math.Sign(p.Speed.Y))) is SaferFireIceBarrier safe)
+                    {
+                        safe.playertouch(new Vector2(0, Math.Sign(p.Speed.Y)));
+                    }
+                });
+            }
+        }
+
+        public static void Unload()
+        {
+            orig_Update?.Dispose();
+        }
         // Token: 0x04000C90 RID: 3216
         private LavaRect Lava;
 
