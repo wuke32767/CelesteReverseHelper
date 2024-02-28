@@ -6,7 +6,7 @@
     <AssemblyName>ReverseHelper</AssemblyName>
     <RootNamespace>Celeste.Mod.ReverseHelper</RootNamespace>
     <LangVersion>latest</LangVersion>
-    <CelesteGamePath Condition="'$(CELESTEGAMEPATH)' == ''">..\..</CelesteGamePath>
+    <CelesteGamePath Condition="'$(CELESTEGAMEPATH)' == ''">..\..\legacyRef</CelesteGamePath>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <Platforms>AnyCPU;x64</Platforms>
@@ -25,21 +25,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Celeste">
-      <HintPath>..\..\legacyRef\Celeste.exe</HintPath>
+    <!--<PackageReference Condition="! Exists('..\..\legacyRef\FailedToPublicizeCeleste.txt')" Include="CelesteMod.Publicizer" Version="1.0.0" CelesteAssembly="$(CelestePrefix)\Celeste.dll" />-->
+    <Reference Condition="true Or Exists('..\..\legacyRef\FailedToPublicizeCeleste.txt')" Include="Celeste">
+      <HintPath>$(CELESTEGAMEPATH)\Celeste.exe</HintPath>
     </Reference>
     <Reference Include="FNA">
-      <HintPath>..\..\legacyRef\FNA.dll</HintPath>
+      <HintPath>$(CELESTEGAMEPATH)\FNA.dll</HintPath>
     </Reference>
-    <Reference Include="MMHOOK_Celeste" HintPath="$(CELESTEGAMEPATH)\legacyRef\MMHOOK_Celeste.dll" />
+    <Reference Include="MMHOOK_Celeste" HintPath="$(CELESTEGAMEPATH)\MMHOOK_Celeste.dll" />
     <Reference Include="MonoMod.RuntimeDetour">
-      <HintPath>..\..\legacyRef\MonoMod.RuntimeDetour.dll</HintPath>
+      <HintPath>$(CELESTEGAMEPATH)\MonoMod.RuntimeDetour.dll</HintPath>
     </Reference>
     <Reference Include="MonoMod.Utils">
-      <HintPath>..\..\legacyRef\MonoMod.Utils.dll</HintPath>
+      <HintPath>$(CELESTEGAMEPATH)\MonoMod.Utils.dll</HintPath>
     </Reference>
     <Reference Include="System.ValueTuple">
-      <HintPath>..\..\legacyRef\System.ValueTuple.dll</HintPath>
+      <HintPath>$(CELESTEGAMEPATH)\System.ValueTuple.dll</HintPath>
     </Reference>
     <Reference Include="YamlDotNet" HintPath="$(CELESTEGAMEPATH)\YamlDotNet.dll" />
   </ItemGroup>

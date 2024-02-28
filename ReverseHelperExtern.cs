@@ -110,6 +110,12 @@ namespace Celeste.Mod.ReverseHelper
                     Type = Assembly?.GetType("Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru");
                     addSidewaysJumpthrusInHorizontalMoveMethods = Type?.GetMethod("addSidewaysJumpthrusInHorizontalMoveMethods", bf);
                     checkCollisionWithSidewaysJumpthruWhileMoving = Type?.GetMethod("checkCollisionWithSidewaysJumpthruWhileMoving", bf);
+                    activatehooks = Type?.GetMethod("activateHooks", bf);
+                    Load();
+                }
+
+                private static void Load()
+                {
                     if (TheTarget is null)
                     {
                         new ILHook(addSidewaysJumpthrusInHorizontalMoveMethods, Watcher).Dispose();
@@ -119,13 +125,13 @@ namespace Celeste.Mod.ReverseHelper
                         checkCollisionWithSidewaysJumpthruWhileMovingHook = new ILHook(checkCollisionWithSidewaysJumpthruWhileMoving, Pilferer);
                         SomeLambdaHook = new ILHook(TheTarget, Modifier);
                     }
-                    activatehooks = Type?.GetMethod("activateHooks", bf);
                     if (!failed)
                     {
-                        Logger.Log(LogLevel.Warn, "ReverseHelper", "Nothing went wrong. This warning is just to tell you I hooked MaddieHelpingHand's SidewaysJumpThru, and I'm not sure if it is safe. If anything went wrong, please ping USSRNAME.");
+                        Logger.Log(LogLevel.Warn, "ReverseHelper", "Nothing went wrong. This warning is just to tell you I hooked MaddieHelpingHand(MaxHelpingHand)'s SidewaysJumpThru, and I'm not sure if it is safe. If anything went wrong, please ping USSRNAME.");
                         Logger.Log(LogLevel.Warn, "ReverseHelper", "Only SidewaysJumpThru could went wrong, I think. (and should not crash. (if maddie havn't changed SidewaysJumpThru.))");
                     }
                 }
+
                 public static void activateHooks()
                 {
                     activatehooks?.Invoke(null, []);
@@ -157,23 +163,24 @@ namespace Celeste.Mod.ReverseHelper
                     }
                     else
                     {
-                        Logger.Log(LogLevel.Error, "ReverseHelper", $"Failed when hooking MaddieHelpingHand. Here's The {nameof(Watcher)}.");
+                        Logger.Log(LogLevel.Error, "ReverseHelper", $"Failed when hooking MaddieHelpingHand. Here's The Part1.");
                     }
                 }
                 public static void Modifier(ILContext il)
                 {
                     ILCursor ilc = new(il);
                     if (ilc.TryGotoNext(MoveType.After, i => i.MatchNewobj(out _)))
-                    {
+                    { 
                         ilc.EmitDelegate((Entity e) =>
                         {
                             (e as Solid)!.OnDashCollide ??= dashCollision;
+                            dashCollision = null;
                             return e;
                         });
                     }
                     else
                     {
-                        Logger.Log(LogLevel.Error, "ReverseHelper", $"Failed when hooking MaddieHelpingHand. Here's The {nameof(Modifier)}.");
+                        Logger.Log(LogLevel.Error, "ReverseHelper", $"Failed when hooking MaddieHelpingHand. Here's The Part3.");
                     }
                 }
                 public static void Pilferer(ILContext il)
@@ -190,7 +197,7 @@ namespace Celeste.Mod.ReverseHelper
                     }
                     else
                     {
-                        Logger.Log(LogLevel.Error, "ReverseHelper", $"Failed when hooking MaddieHelpingHand. Here's The {nameof(Pilferer)}.");
+                        Logger.Log(LogLevel.Error, "ReverseHelper", $"Failed when hooking MaddieHelpingHand. Here's The Part2.");
                     }
                 }
             }
@@ -382,6 +389,7 @@ namespace Celeste.Mod.ReverseHelper
         }
         public static string[] debugger;//what if ReverseHelper is named as ConverseHelper in assembly?
         public static Assembly[] debugger_;
+#pragma warning disable CS0162 // unreachable
         public static void LoadContent()
         {
             VortexHelperModule.LoadContent();
@@ -399,6 +407,7 @@ namespace Celeste.Mod.ReverseHelper
                 debugger = debugger_.Select(x => x.GetName().Name).ToArray();
             }
         }
+#pragma warning restore CS0162
 
 
         public static void Unload()

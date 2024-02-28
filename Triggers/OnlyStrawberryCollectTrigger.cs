@@ -35,7 +35,7 @@ namespace Celeste.Mod.ReverseHelper.Triggers
             }
             else
             {
-                IStrawberry[] list =
+                IStrawberry?[] list =
                     player.Leader.Followers
                     .Where(x => type.Contains(x.Entity.GetType()))
                     .Select(x => x.Entity as IStrawberry)

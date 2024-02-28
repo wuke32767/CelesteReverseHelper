@@ -25,7 +25,7 @@ namespace Celeste.Mod.ReverseHelper
         private static ZiplineZipmover? currentGrabbed, lastGrabbed;
         private static float ziplineBuffer;
 
-        private readonly float height;
+        //private readonly float height;
         private readonly Sprite? sprite;
         private readonly bool usesStamina;
         private Vector2 last_speed_mul_time_is_distance;

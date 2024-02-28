@@ -13,6 +13,8 @@ RefillWallWrapper.placements={
     name="Reversed Dream Block Container",
     data={
             width = 8, height = 8,
+            alwaysEnable=false,
+            alwaysDisable=false,
         }
     }
 function RefillWallWrapper.sprite(room,entity)

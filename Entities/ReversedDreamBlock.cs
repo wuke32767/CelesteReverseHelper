@@ -17,8 +17,10 @@ using Component = Monocle.Component;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
-    public class ReversedDreamBlockComponent() : Component(true, false)
+    public class ReversedDreamBlockComponent(bool enable,bool disable) : Component(true, false)
     {
+        public bool enable = enable;
+        public bool disable = disable;
 
     }
 
@@ -33,14 +35,17 @@ namespace Celeste.Mod.ReverseHelper.Entities
         //private FlagMatch flagEnable;
         //private TypeMatch wraptype;
         //private float pushForce;
-
+        bool alwaysEnable = false;
+        bool alwaysDisable = false;
         public override void Update()
         {
             base.Update();
         }
-        public static MTexture invalid_img;
-        public ReversedDreamBlock(Vector2 position, float width, float height) : base(position)
+        public static MTexture? invalid_img;
+        public ReversedDreamBlock(Vector2 position, float width, float height,bool alwaysenable,bool alw) : base(position)
         {
+            alwaysEnable = alwaysenable;
+            alwaysDisable = alw;
             Collider = new Hitbox(width, height, 0f, 0f);
             //wraptype = typename;
             //pushForce = force;
@@ -53,7 +58,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
 
         // Token: 0x06000EF3 RID: 3827 RVA: 0x0003A0EC File Offset: 0x000382EC
-        public ReversedDreamBlock(EntityData e, Vector2 offset) : this(e.Position + offset, e.Width, e.Height)
+        public ReversedDreamBlock(EntityData e, Vector2 offset) : this(e.Position + offset, e.Width, e.Height,e.Bool("alwaysEnable",false),e.Bool("alwaysDisable",false))
         {
         }
         static ILHook dashcoroutine;
@@ -73,7 +78,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         static Hook grabbag_workaround_img_on;
         static bool grabbag_on = false;
         static int grabbag_clear = 2;
-        static List<Entity> grabbag_list;
+        //static List<Entity> grabbag_list;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static bool grabbag_enabled(Entity e)
         {
@@ -251,7 +256,16 @@ namespace Celeste.Mod.ReverseHelper.Entities
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool dreamblock_enabled(Entity db)
         {
-            return (db.Components.Get<ReversedDreamBlockComponent>() is null) == ReverseHelperModule.playerHasDreamDash;
+            var com = db.Components.Get<ReversedDreamBlockComponent>();
+            if (com is not null && com.enable == true)
+            {
+                return true;
+            }
+            if(com is not null&&com.disable == true)
+            {
+                return false;
+            }
+            return (com is null) == ReverseHelperModule.playerHasDreamDash;
         }
 
         private static void Player_DreamDashCheck(ILContext il)
@@ -368,7 +382,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         {
             //if (entity is DreamBlock db)
             {
-                entity.Add(new ReversedDreamBlockComponent());
+                entity.Add(new ReversedDreamBlockComponent(alwaysEnable,alwaysDisable));
             }
         }
     }
