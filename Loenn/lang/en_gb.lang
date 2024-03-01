@@ -13,7 +13,10 @@ triggers.ReverseHelper/OnlyStrawberryCollectTrigger.attributes.description.type=
 entities.ReverseHelper/HoldableRefill.attributes.description.dashable=Whether you can dash when holding it.
 entities.ReverseHelper/HoldableRefill.attributes.description.stillRefillOnNoDash=Not sure what will happen when refillOnHolding is checked.\nIf checked, you can still collect the refill when you have no dash.
 entities.ReverseHelper/HoldableRefill.attributes.description.slowFall=Whether it acts like a jellyfish.
+
 entities.ReverseHelper/AnotherPurpleBooster.attributes.description.redirect=if unchecked, it will move in the direction it came.\nif checked, it will move in the opposite direction as the player activated it.
+entities.ReverseHelper/AnotherPurpleBooster.attributes.description.conserveSpeedV=if unchecked, your conserved speed will not be applied vertically.
+entities.ReverseHelper/AnotherPurpleBooster.attributes.description.conserveMovingSpeedCutOff=AnotherPurpleBooster also try conserve speed that you get when Purple Boosting.\nIf your current speed is lower than this value, it will not conserve more speed. (previously conserved speed will not be removed.)\nTry to conserve more in low speeds is dangerous.
 
 entities.ReverseHelper/SquareSpinner.attributes.description.colorCore=Only used in core mode, determines its color in hot core.
 

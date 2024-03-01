@@ -41,9 +41,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
         private float actualLinkPercent = 1.0f;
         private float linkPercent = 1.0f;
 
-        public static ParticleType P_Burst;//= new ParticleType(Booster.P_Burst);
-        public static ParticleType P_Appear;//= new ParticleType(Booster.P_Appear);
-        public static ParticleType P_BurstExplode;// new ParticleType(Booster.P_Burst);
+        public static ParticleType P_Burst= new ParticleType(Booster.P_Burst);
+        public static ParticleType P_Appear= new ParticleType(Booster.P_Appear);
+        public static ParticleType P_BurstExplode= new ParticleType(Booster.P_Burst);
+        static AnotherPurpleBooster()
+        {
+            InitializeParticles();
+        }
 
         private SoundSource loopingSfx;
         //public static bool AnotherRedirect = true;
@@ -58,10 +62,10 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public bool conserveSpeed;
         public bool conserveSpeedV;
         public float conserveMovingSpeedCutOff;
-        public bool neverSlowDown;
+        public bool neverSlowDown;//not used. never slow down now for sure.
         public AnotherPurpleBooster(EntityData data, Vector2 offset)
             : this(data.Position + offset, data.Bool("redirect", true), data.Bool("addDashAttack", false), data.Bool("NewAction", false),
-                  data.Bool("conserveSpeed", false), data.Bool("conserveSpeedV", false), data.Float("conserveMovingSpeedCutOff", 283), data.Bool("neverSlowDown", false))
+                  data.Bool("conserveSpeed", false), data.Bool("conserveSpeedV", true), data.Float("conserveMovingSpeedCutOff", 100000), /*data.Bool("neverSlowDown", false)*/true)
         {
         }
 
@@ -69,12 +73,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
             bool conserveSpeed, bool conserveSpeedV, float conserveMovingSpeed, bool neverSlowDown)
             : base(position)
         {
-            if (P_Burst is null)
-            {
-                P_Burst = new ParticleType(Booster.P_Burst);
-                P_Appear = new ParticleType(Booster.P_Appear);
-                P_BurstExplode = new ParticleType(Booster.P_Burst);
-            }
 
             fixsomething1 = fix1;
             dashatt = dashattack;
@@ -87,7 +85,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             {
                 Add(sprite);
             }
-            
+
             Add(new PlayerCollider(OnPlayer));
             Add(new VertexLight(Color.White, 1f, 16, 32));
             Add(new BloomPoint(0.1f, 16f));
@@ -111,6 +109,10 @@ namespace Celeste.Mod.ReverseHelper.Entities
             this.conserveSpeed = conserveSpeed;
             this.conserveSpeedV = conserveSpeedV;
             this.conserveMovingSpeedCutOff = conserveMovingSpeed;
+            if (conserveMovingSpeedCutOff < 0)
+            {
+                conserveMovingSpeedCutOff = 0;
+            }
             this.neverSlowDown = neverSlowDown;
         }
 
@@ -516,7 +518,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             Util.TryGetPlayer(out Player player);
             DynData<Player> playerData = player.GetData();
             Vector2 origin = playerData.Get<Vector2>("boostTarget");
-
+            player.Speed = playerData.Get<Vector2>("USSRNAME_ConserveSpeedSave");
             //player.MoveToX(origin.X);
             //player.MoveToY(origin.Y + 6f);
             Vector2 earlyExitBoost;
@@ -524,32 +526,55 @@ namespace Celeste.Mod.ReverseHelper.Entities
             float mov = 0;
             Vector2 dir = player.DashDir;
             bool AnotherRedirect = playerData.Get<bool>("USSRNAME_AnotherRedirect");
-            float conserveCutOffSquare = playerData.Get<float>("USSRNAME_ConserveMovingSpeedCutOff");
-            conserveCutOffSquare *= conserveCutOffSquare;
+            float conserveCutOff = playerData.Get<float>("USSRNAME_ConserveMovingSpeedCutOff");
             bool conserveSpeed = playerData.Get<bool>("USSRNAME_ConserveSpeed");
             bool conserveSpeedV = playerData.Get<bool>("USSRNAME_ConserveSpeedV");
             bool neverSlowDown = playerData.Get<bool>("USSRNAME_NeverSlowDown");
 
+
             const double speedconstant = 1.5 * Math.PI * 60;
             double rate = 1;
+            float lastfspeed = (float)(1 * speedconstant);
             if (conserveSpeed)
             {
+                lastfspeed = player.Speed.Length();
                 rate = player.Speed.Length() / speedconstant;
                 if (neverSlowDown)
                 {
                     rate = Math.Max(rate, 1);
+                    lastfspeed = (float)Math.Max(speedconstant, lastfspeed);
                 }
             }
-            float lastfspeed = player.Speed.Length();
+            if (!conserveSpeedV&&conserveSpeed)
+            {
+                if (dir.Y != 0 && dir.X != 0)
+                {
+                    const double vspeedSquared = speedconstant * speedconstant / 2;
+                    double vspeed = speedconstant / Math.Sqrt(2);
+                    var hspeed = Math.Sqrt(Math.Max(vspeedSquared, player.Speed.LengthSquared()) - vspeedSquared);
+                    hspeed=Math.Max(hspeed, vspeed);
+                    dir = new Vector2((float)hspeed * Math.Sign(dir.X), (float)vspeed * Math.Sign(dir.Y)).SafeNormalize();
+                }
+                else if(dir.Y != 0)
+                {
+                    rate = 1;
+                    lastfspeed = (float)speedconstant;
+                }
+            }
             bool calcmethod()
             {
+                if (lastfspeed > conserveCutOff)
+                {
+                    rate = player.Speed.Length() / lastfspeed * rate;
+                }
+
                 t = Calc.Approach(t, 1.0f, Engine.DeltaTime * 1.5f);
 
                 float oldmov = mov;
                 mov = (float)(60f * (float)Math.Sin(t * Math.PI));
                 Vector2 delta = (mov - oldmov) * dir;
 
-                playerData.Set(POSSIBLE_EARLY_DASHSPEED, earlyExitBoost = (t > .6f) ? (t - .5f) * 200f * -dir : Vector2.Zero);
+                playerData.Set(POSSIBLE_EARLY_DASHSPEED, earlyExitBoost = ((t > .6f) ? (t - .5f) * 200f * -dir : Vector2.Zero)*(float)rate);
 
                 if (player.CollideCheck<Solid>(player.Position + delta))
                 {
@@ -559,12 +584,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 //player.MoveH(delta.X);
                 //player.MoveV(delta.Y);
 
-                player.Speed = delta * 60f;
+                player.Speed = delta * 60f * (float)rate;
+                lastfspeed = player.Speed.Length();
                 return false;
             }
             if (!AnotherRedirect)
             {
-                player.Speed = player.DashDir;
+                player.Speed = dir * (float)speedconstant * (float)rate;
                 while (t < 0.5f)
                 {
                     dir = player.Speed.SafeNormalize(Vector2.Zero);
@@ -586,7 +612,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 while (t < 1f)
                 {
                     dir = (-player.Speed).SafeNormalize(Vector2.Zero);
-                    if(calcmethod())
+                    if (calcmethod())
                     {
                         yield break;
                     }
@@ -595,6 +621,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             else
             {
+                var dir_save = dir;
+                player.Speed = dir_save * (float)speedconstant * (float)rate;
                 while (t < 0.5f)
                 {
                     dir = player.Speed.SafeNormalize(dir);
@@ -611,7 +639,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 player.MoveV(delta_.Y);
                 //player.Speed = Vector2.Zero;
                 //yield return null;
-                player.Speed = -player.DashDir;
+                player.Speed = -dir_save * (float)speedconstant * (float)rate;
+
+
                 while (t < 1f)
                 {
                     dir = (-player.Speed).SafeNormalize(dir);
@@ -622,8 +652,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     yield return null;
                 }
             }
-            player.LiftSpeed += 120f * -dir;
-            PurpleBoosterExplodeLaunch(player, playerData, player.Center - dir, origin);
+            player.LiftSpeed += 120f * -dir*(float)rate;
+            PurpleBoosterExplodeLaunch(player, playerData, player.Center - dir, origin, (float)rate);
         }
 
         private static void addDashAttack()

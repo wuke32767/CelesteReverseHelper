@@ -13,6 +13,9 @@ purpleBooster.placements = {
             redirect=true,
             addDashAttack=false,--can i make it public?
             --NewAction=false,
+            conserveSpeed= false,
+            conserveSpeedV=true,
+            conserveMovingSpeedCutOff=283
         }
     
 }
