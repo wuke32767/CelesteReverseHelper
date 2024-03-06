@@ -1,6 +1,6 @@
 - Name: ReverseHelper
   Version: 1.9.0
-  DLL: bin/Debug/net452/ReverseHelper.dll
+  DLL: bin/Debug/net7.0/ReverseHelper.dll
   Dependencies:
     - Name: Everest
       Version: 1.3164.0

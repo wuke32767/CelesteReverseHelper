@@ -207,7 +207,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         }
 
-        protected override void OnSquish(CollisionData data)
+        public override void OnSquish(CollisionData data)
         {
             if (!TrySquishWiggle(data, 8, 8))
             {

@@ -2,11 +2,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net452</TargetFrameworks>
+    <TargetFrameworks>net7.0</TargetFrameworks>
     <AssemblyName>ReverseHelper</AssemblyName>
     <RootNamespace>Celeste.Mod.ReverseHelper</RootNamespace>
     <LangVersion>latest</LangVersion>
-    <CelesteGamePath Condition="'$(CELESTEGAMEPATH)' == ''">..\..\legacyRef</CelesteGamePath>
+    <CelesteGamePath Condition="'$(CELESTEGAMEPATH)' == ''">..\..</CelesteGamePath>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <Platforms>AnyCPU;x64</Platforms>
@@ -25,10 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!--<PackageReference Condition="! Exists('..\..\legacyRef\FailedToPublicizeCeleste.txt')" Include="CelesteMod.Publicizer" Version="1.0.0" CelesteAssembly="$(CelestePrefix)\Celeste.dll" />-->
-    <Reference Condition="true Or Exists('..\..\legacyRef\FailedToPublicizeCeleste.txt')" Include="Celeste">
-      <HintPath>$(CELESTEGAMEPATH)\Celeste.exe</HintPath>
-    </Reference>
+    <PackageReference Include="CelesteMod.Publicizer" Version="*" CelesteAssembly="$(CELESTEGAMEPATH)\Celeste.dll" />
     <Reference Include="FNA">
       <HintPath>$(CELESTEGAMEPATH)\FNA.dll</HintPath>
     </Reference>
@@ -39,13 +36,13 @@
     <Reference Include="MonoMod.Utils">
       <HintPath>$(CELESTEGAMEPATH)\MonoMod.Utils.dll</HintPath>
     </Reference>
-    <Reference Include="System.ValueTuple">
+    <!--<Reference Include="System.ValueTuple">
       <HintPath>$(CELESTEGAMEPATH)\System.ValueTuple.dll</HintPath>
-    </Reference>
+    </Reference>-->
     <Reference Include="YamlDotNet" HintPath="$(CELESTEGAMEPATH)\YamlDotNet.dll" />
   </ItemGroup>
 
-  <Choose>
+  <!--<Choose>
     <When Condition="'$(OS)' != 'Windows_NT' Or Exists('$(CELESTEGAMEPATH)\FNA.dll')" />
 
     <Otherwise>
@@ -55,6 +52,6 @@
         <Reference Include="Microsoft.Xna.Framework.Graphics" HintPath="$(WINDIR)\Microsoft.NET\assembly\GAC_32\Microsoft.Xna.Framework.Graphics\v4.0_4.0.0.0__842cf8be1de50553\Microsoft.Xna.Framework.Graphics.dll" />
       </ItemGroup>
     </Otherwise>
-  </Choose>
+  </Choose>-->
   
 </Project>
