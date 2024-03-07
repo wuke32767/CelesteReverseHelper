@@ -47,6 +47,22 @@ namespace Celeste.Mod.ReverseHelper.Entities
                         vv.DeactivateNoRoutine();
                     }
                 }
+                var com = ReverseHelperExtern.CommunalHelper.DreamTunnelEntry.Type;
+                if (com is not null)
+                {
+                    foreach (var v in level.Tracker.Entities[com])
+                    {
+                        var vv = v;
+                        if (ReversedDreamBlock.dreamblock_enabled(vv))
+                        {
+                            ReverseHelperExtern.CommunalHelper.DreamTunnelEntry.ActivateNoRoutine?.Invoke(vv, null);
+                        }
+                        else
+                        {
+                            ReverseHelperExtern.CommunalHelper.DreamTunnelEntry.DeactivateNoRoutine?.Invoke(vv, null);
+                        }
+                    }
+                }
             }
         }
 

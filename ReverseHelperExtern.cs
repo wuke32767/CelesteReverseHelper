@@ -300,6 +300,34 @@ namespace Celeste.Mod.ReverseHelper
                 }
             }
         }
+        public static class CommunalHelper
+        {
+            static Assembly? Assembly;
+            public static void LoadContent()
+            {
+                Assembly =
+                    AppDomain.CurrentDomain
+                    .GetAssemblies()
+                    .Where(assembly => assembly.GetName().Name == "CommunalHelper")
+                    .FirstOrDefault();
+                DreamTunnelEntry.LoadContent();
+            }
+            public static class DreamTunnelEntry
+            {
+                public static Type? Type;
+                public static MethodInfo? Added;
+                public static MethodInfo? ActivateNoRoutine;
+                public static MethodInfo? DeactivateNoRoutine;
+                public static void LoadContent()
+                {
+                    Type = Assembly?.GetType("Celeste.Mod.CommunalHelper.Entities.DreamTunnelEntry");
+                    Added = Type?.GetMethod("Added");
+                    ActivateNoRoutine = Type?.GetMethod("ActivateNoRoutine");
+                    DeactivateNoRoutine = Type?.GetMethod("DeactivateNoRoutine");
+                }
+                
+            }
+        }
         public static class IsaGrabBag
         {
             static Assembly? Assembly;
@@ -397,6 +425,7 @@ namespace Celeste.Mod.ReverseHelper
             MaddieHelpingHandModule.LoadContent();
             GravityHelperModule.LoadContent();
             IsaGrabBag.LoadContent();
+            CommunalHelper.LoadContent();
 
             CustomInvisibleBarrier.LoadContent();
             ReversedDreamBlock.LoadContent();

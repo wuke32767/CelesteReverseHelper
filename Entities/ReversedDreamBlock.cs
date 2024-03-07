@@ -17,7 +17,7 @@ using Component = Monocle.Component;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
-    public class ReversedDreamBlockComponent(bool enable,bool disable) : Component(true, false)
+    public class ReversedDreamBlockComponent(bool enable, bool disable) : Component(true, false)
     {
         public bool enable = enable;
         public bool disable = disable;
@@ -42,7 +42,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             base.Update();
         }
         public static MTexture? invalid_img;
-        public ReversedDreamBlock(Vector2 position, float width, float height,bool alwaysenable,bool alw) : base(position)
+        public ReversedDreamBlock(Vector2 position, float width, float height, bool alwaysenable, bool alw) : base(position)
         {
             alwaysEnable = alwaysenable;
             alwaysDisable = alw;
@@ -58,7 +58,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
 
         // Token: 0x06000EF3 RID: 3827 RVA: 0x0003A0EC File Offset: 0x000382EC
-        public ReversedDreamBlock(EntityData e, Vector2 offset) : this(e.Position + offset, e.Width, e.Height,e.Bool("alwaysEnable",false),e.Bool("alwaysDisable",false))
+        public ReversedDreamBlock(EntityData e, Vector2 offset) : this(e.Position + offset, e.Width, e.Height, e.Bool("alwaysEnable", false), e.Bool("alwaysDisable", false))
         {
         }
         static ILHook dashcoroutine;
@@ -71,11 +71,12 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
 
         }
-        static ILHook grabbag_workaround;
-        static ILHook grabbag_workaround_img_il;
-        static ILHook grabbag_workaround_img_gt;
-        static ILHook grabbag_workaround_img_rr;
-        static Hook grabbag_workaround_img_on;
+        //static ILHook? communal_dreamtunnel;
+        static ILHook? grabbag_workaround;
+        static ILHook? grabbag_workaround_img_il;
+        static ILHook? grabbag_workaround_img_gt;
+        static ILHook? grabbag_workaround_img_rr;
+        static Hook? grabbag_workaround_img_on;
         static bool grabbag_on = false;
         static int grabbag_clear = 2;
         //static List<Entity> grabbag_list;
@@ -86,6 +87,20 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
         public static void LoadContent()
         {
+            //var com = ReverseHelperExtern.CommunalHelper.DreamTunnelEntry.Added;
+            //if(com is not null)
+            //{
+            //    communal_dreamtunnel=new(com,(ILContext il)=>
+            //    {
+            //        ILCursor ic = new(il);
+            //        if(ic.TryGotoNext(MoveType.After,i=>i.MatchLdfld<PlayerInventory>("DreamDash")))
+            //        {
+            //            ic.Emit(OpCodes.Pop);
+            //            ic.Emit(OpCodes.Pop);
+            //            ic.EmitDelegate()
+            //        }
+            //    });
+            //}
             var upd = DreamSpinner.Update;
             if (upd is not null)
             {
@@ -187,8 +202,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 });
                 grabbag_workaround_img_rr = new ILHook(rren, (ILContext il) =>
                 {
-                    ILCursor ic= new ILCursor(il);
-                    if(ic.TryGotoNext(MoveType.Before,(i)=>i.MatchBrfalse(out _)))
+                    ILCursor ic = new ILCursor(il);
+                    if (ic.TryGotoNext(MoveType.Before, (i) => i.MatchBrfalse(out _)))
                     {
                         ic.EmitDelegate((bool b) =>
                         {
@@ -198,7 +213,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                             }
                             return false;
                         });
-                    }    
+                    }
                 });
             }
         }
@@ -261,7 +276,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             {
                 return true;
             }
-            if(com is not null&&com.disable == true)
+            if (com is not null && com.disable == true)
             {
                 return false;
             }
@@ -366,6 +381,17 @@ namespace Celeste.Mod.ReverseHelper.Entities
             base.Awake(scene);
             if (bindOnRoomStart)
             {
+                var com = ReverseHelperExtern.CommunalHelper.DreamTunnelEntry.Type;
+                if (com is not null)
+                {
+                    foreach (Entity playerCollider in Scene.Tracker.Entities[com])
+                    {
+                        if (playerCollider.Collider.Collide(Collider))
+                        {
+                            BindEntity(playerCollider);
+                        }
+                    }
+                }
                 foreach (Entity playerCollider in Scene.Tracker.Entities[typeof(DreamBlock)])
                 {
                     if (playerCollider.Collider.Collide(Collider))
@@ -380,9 +406,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         private void BindEntity(Entity entity)
         {
-            //if (entity is DreamBlock db)
+            //if (entity is DreamBlock db || entity is not DreamBlock)
             {
-                entity.Add(new ReversedDreamBlockComponent(alwaysEnable,alwaysDisable));
+                entity.Add(new ReversedDreamBlockComponent(alwaysEnable, alwaysDisable));
             }
         }
     }
