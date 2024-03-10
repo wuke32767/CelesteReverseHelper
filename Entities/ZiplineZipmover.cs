@@ -266,7 +266,11 @@ namespace Celeste.Mod.ReverseHelper
                 if (grabbed)
                 {
                     //sprite.Visible = true;
-                    sprite.Play(Engine.Scene.Tracker.GetEntity<Player>().Facing == Facings.Left ? "held_l" : "held_r");
+                    var p = Engine.Scene.Tracker.GetEntity<Player>();
+                    if(p is not null)
+                    {
+                        sprite.Play(p.Facing == Facings.Left ? "held_l" : "held_r");
+                    }
                 }
                 else
                 {
