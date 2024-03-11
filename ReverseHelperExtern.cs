@@ -205,46 +205,29 @@ namespace Celeste.Mod.ReverseHelper
 
         public static class ExtendedVariantsModule
         {
-            private static object? triggermanager;
-            private static Assembly? ExtendedVariantMode;
-            private static Type? module;
-            private static object? instance;
-            private static Type? manager;
-            private static MethodInfo? managerExit;
-            private static MethodInfo? managerEnter;
-            private static Type? Variant;
-            public struct as_triggermamager
+            [ModImportName("ExtendedVariantMode")]
+            public static class Interop
             {
-                internal void LongDash_OnExitedRevertOnLeaveTrigger(float dashTime, bool legacy)
-                {
-                    managerExit?.Invoke(triggermanager, bf, null, [/*Convert.ChangeType(9, Variant)*/9, dashTime, legacy], null);
-                }
+                public static Func<string, object> GetCurrentVariantValue;
 
-                internal void LongDash_OnEnteredInTrigger(float dashTime, bool revertOnLeave, bool isFade, bool revertOnDeath, bool legacy)
-                {
-                    managerEnter?.Invoke(triggermanager, bf, null, [/*Convert.ChangeType(9, Variant)*/9, dashTime, revertOnLeave, isFade, revertOnDeath, legacy], null);
+                public static Action<string, int, bool> TriggerIntegerVariant;
 
-                }
+                public static Action<string, bool, bool> TriggerBooleanVariant;
+
+                public static Action<string, float, bool> TriggerFloatVariant;
+
+                public static Action<string, object, bool> TriggerVariant;
+
+                // Token: 0x06000793 RID: 1939 RVA: 0x0001A5A1 File Offset: 0x000187A1
+                public static Action<int> SetJumpCount;
+
+                // Token: 0x06000794 RID: 1940 RVA: 0x0001A5AA File Offset: 0x000187AA
+                public static Action<int> CapJumpCount;
+
             }
-
-            public static as_triggermamager TriggerManager;
-
             public static void LoadContent()
             {
-                ExtendedVariantMode = AppDomain.CurrentDomain.GetAssemblies()
-                    .Where(assembly => assembly.GetName().Name == "ExtendedVariantMode")
-                    .FirstOrDefault();
-                if (ExtendedVariantMode is null)
-                {
-                    return;
-                }
-                module = ExtendedVariantMode.GetType("ExtendedVariants.Module.ExtendedVariantsModule");
-                instance = module.GetField("Instance", bf).GetValue(null);
-                triggermanager = module.GetField("TriggerManager", bf).GetValue(instance);
-                manager = ExtendedVariantMode.GetType("ExtendedVariants.ExtendedVariantTriggerManager");
-                managerExit = manager.GetMethod("OnExitedRevertOnLeaveTrigger");
-                managerEnter = manager.GetMethod("OnEnteredInTrigger");
-                Variant = ExtendedVariantMode.GetType("ExtendedVariants.Module.ExtendedVariantsModule.Variant");
+                typeof(Interop).ModInterop();
             }
         }
         public static class GravityHelperModule

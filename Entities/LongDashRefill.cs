@@ -47,7 +47,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         {
             yield return 0.01f;
             //ExtendedVariantsModule.Instance.TriggerManager.OnExitedRevertOnLeaveTrigger(variant, LongDashRefillInst.dashTime, legacy: false);
-            ReverseHelperExtern.ExtendedVariantsModule.TriggerManager.LongDash_OnExitedRevertOnLeaveTrigger(LongDashRefillInst.dashTime, legacy: false);
+            ReverseHelperExtern.ExtendedVariantsModule.Interop.TriggerFloatVariant("DashLength", 1, true);
         }
 
         private static System.Reflection.FieldInfo varJumpTimerRefl = typeof(Player).GetField("varJumpTimer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.GetField);
@@ -204,7 +204,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 LongDashRefillInst.enable = true;
                 LongDashRefillInst.dashTime = dashTime;
                 LongDashRefillInst.disableSpring = disableSpring;
-                ReverseHelperExtern.ExtendedVariantsModule.TriggerManager.LongDash_OnEnteredInTrigger(LongDashRefillInst.dashTime, revertOnLeave: true, isFade: false, true, legacy: false);
+                ReverseHelperExtern.ExtendedVariantsModule.Interop.TriggerFloatVariant("DashLength", LongDashRefillInst.dashTime, true);
             }
         }
 

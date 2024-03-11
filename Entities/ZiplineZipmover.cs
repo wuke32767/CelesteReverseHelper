@@ -108,6 +108,11 @@ namespace Celeste.Mod.ReverseHelper
         public override void Added(Scene scene)
         {
             base.Added(scene);
+            if(sprite is null)
+            {
+                RemoveSelf(); 
+                return;
+            }
             scene.Add(new ZiplineRender(this));
         }
 

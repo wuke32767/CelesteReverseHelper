@@ -41,9 +41,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
         private float actualLinkPercent = 1.0f;
         private float linkPercent = 1.0f;
 
-        public static ParticleType P_Burst= new ParticleType(Booster.P_Burst);
-        public static ParticleType P_Appear= new ParticleType(Booster.P_Appear);
-        public static ParticleType P_BurstExplode= new ParticleType(Booster.P_Burst);
+        public static ParticleType P_Burst = new ParticleType(Booster.P_Burst);
+        public static ParticleType P_Appear = new ParticleType(Booster.P_Appear);
+        public static ParticleType P_BurstExplode = new ParticleType(Booster.P_Burst);
         static AnotherPurpleBooster()
         {
             InitializeParticles();
@@ -91,7 +91,10 @@ namespace Celeste.Mod.ReverseHelper.Entities
             Add(new BloomPoint(0.1f, 16f));
             Add(wiggler = Wiggler.Create(0.5f, 4f, delegate (float f)
             {
-                sprite.Scale = Vector2.One * (1f + f * 0.25f);
+                if (sprite is not null)
+                {
+                    sprite.Scale = Vector2.One * (1f + f * 0.25f);
+                }
             }));
 
             linkSegCenter = GFX.Game["objects/VortexHelper/slingBooster/link03"];
@@ -545,17 +548,17 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     lastfspeed = (float)Math.Max(speedconstant, lastfspeed);
                 }
             }
-            if (!conserveSpeedV&&conserveSpeed)
+            if (!conserveSpeedV && conserveSpeed)
             {
                 if (dir.Y != 0 && dir.X != 0)
                 {
                     const double vspeedSquared = speedconstant * speedconstant / 2;
                     double vspeed = speedconstant / Math.Sqrt(2);
                     var hspeed = Math.Sqrt(Math.Max(vspeedSquared, player.Speed.LengthSquared()) - vspeedSquared);
-                    hspeed=Math.Max(hspeed, vspeed);
+                    hspeed = Math.Max(hspeed, vspeed);
                     dir = new Vector2((float)hspeed * Math.Sign(dir.X), (float)vspeed * Math.Sign(dir.Y)).SafeNormalize();
                 }
-                else if(dir.Y != 0)
+                else if (dir.Y != 0)
                 {
                     rate = 1;
                     lastfspeed = (float)speedconstant;
@@ -574,7 +577,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 mov = (float)(60f * (float)Math.Sin(t * Math.PI));
                 Vector2 delta = (mov - oldmov) * dir;
 
-                playerData.Set(POSSIBLE_EARLY_DASHSPEED, earlyExitBoost = ((t > .6f) ? (t - .5f) * 200f * -dir : Vector2.Zero)*(float)rate);
+                playerData.Set(POSSIBLE_EARLY_DASHSPEED, earlyExitBoost = ((t > .6f) ? (t - .5f) * 200f * -dir : Vector2.Zero) * (float)rate);
 
                 if (player.CollideCheck<Solid>(player.Position + delta))
                 {
@@ -652,7 +655,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     yield return null;
                 }
             }
-            player.LiftSpeed += 120f * -dir*(float)rate;
+            player.LiftSpeed += 120f * -dir * (float)rate;
             PurpleBoosterExplodeLaunch(player, playerData, player.Center - dir, origin, (float)rate);
         }
 
