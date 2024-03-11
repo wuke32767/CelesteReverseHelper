@@ -21,6 +21,7 @@ namespace Celeste.Mod.ReverseHelper
 
         public ReverseHelperModule()
         {
+            ReverseHelperExtern.Load();
             Instance = this;
         }
 

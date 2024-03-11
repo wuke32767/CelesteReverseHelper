@@ -47,20 +47,22 @@ namespace Celeste.Mod.ReverseHelper.Entities
                         vv.DeactivateNoRoutine();
                     }
                 }
-                var com = ReverseHelperExtern.CommunalHelper.DreamTunnelEntry.Type;
-                if (com is not null)
+                foreach (var (t, call) in ReversedDreamBlock.ExternalDreamBlockLike)
                 {
-                    foreach (var v in level.Tracker.Entities[com])
+                    if (level.Tracker.Entities.TryGetValue(t, out var list))
                     {
-                        var vv = v;
-                        if (ReversedDreamBlock.dreamblock_enabled(vv))
+                        foreach (var v in list)
                         {
-                            ReverseHelperExtern.CommunalHelper.DreamTunnelEntry.ActivateNoRoutine?.Invoke(vv, null);
+                            if (ReversedDreamBlock.dreamblock_enabled(v))
+                            {
+                                call.activate?.Invoke(v);
+                            }
+                            else
+                            {
+                                call.deactivate?.Invoke(v);
+                            }
                         }
-                        else
-                        {
-                            ReverseHelperExtern.CommunalHelper.DreamTunnelEntry.DeactivateNoRoutine?.Invoke(vv, null);
-                        }
+
                     }
                 }
             }

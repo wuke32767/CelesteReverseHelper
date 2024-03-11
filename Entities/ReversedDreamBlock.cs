@@ -376,27 +376,41 @@ namespace Celeste.Mod.ReverseHelper.Entities
             grabbag_workaround_img_gt?.Dispose();
             grabbag_workaround_img_rr?.Dispose();
         }
+        internal static Dictionary<Type, (Action<Entity> activate, Action<Entity> deactivate)> ExternalDreamBlockLike = [];
         public override void Awake(Scene scene)
         {
             base.Awake(scene);
             if (bindOnRoomStart)
             {
-                var com = ReverseHelperExtern.CommunalHelper.DreamTunnelEntry.Type;
-                if (com is not null)
-                {
-                    foreach (Entity playerCollider in Scene.Tracker.Entities[com])
-                    {
-                        if (playerCollider.Collider.Collide(Collider))
-                        {
-                            BindEntity(playerCollider);
-                        }
-                    }
-                }
+                //var com = ReverseHelperExtern.CommunalHelper.DreamTunnelEntry.Type;
+                //if (com is not null)
+                //{
+                //    foreach (Entity playerCollider in Scene.Tracker.Entities[com])
+                //    {
+                //        if (playerCollider.Collider.Collide(Collider))
+                //        {
+                //            BindEntity(playerCollider);
+                //        }
+                //    }
+                //}
                 foreach (Entity playerCollider in Scene.Tracker.Entities[typeof(DreamBlock)])
                 {
                     if (playerCollider.Collider.Collide(Collider))
                     {
                         BindEntity(playerCollider);
+                    }
+                }
+                foreach (var (t, _) in ExternalDreamBlockLike)
+                {
+                    if (Scene.Tracker.Entities.TryGetValue(t, out var list))
+                    {
+                        foreach (Entity playerCollider in list)
+                        {
+                            if (playerCollider.Collider.Collide(Collider))
+                            {
+                                BindEntity(playerCollider);
+                            }
+                        }
                     }
                 }
             }
