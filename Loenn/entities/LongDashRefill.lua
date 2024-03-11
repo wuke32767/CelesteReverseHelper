@@ -16,7 +16,7 @@ HoldableRefill.maximumSize = {16, 16}
 
 HoldableRefill.placements = {}
 HoldableRefill.placements = {
-    name = "Long Dash Refill",
+    name = "Long Dash Refill [deprecated]",
     data = {
         oneUse=false,
         dashTime=0.01,
