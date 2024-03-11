@@ -215,9 +215,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
             if (r_resttype.Any())
             {
                 ed.Values["_resttype"] = r_resttype;
-                foreach (var v in resttype)
+                foreach (var v in r_resttype)
                 {
-                    Logger.Log(LogLevel.Warn, "ReverseHelper", $"Failed when loading {v} for {nameof(CustomInvisibleBarrier)}, but it is not exist in current room. (at least now.) Please add one from map editor so it could be found successfully.");
+                    Logger.Log(LogLevel.Warn, "ReverseHelper", $"Failed when loading {v} for {nameof(CustomInvisibleBarrier)}, it is not exist in current room. (at least now.) Please add one from map editor so it could be found successfully.");
                 }
             }
             foreach (var v in typer)

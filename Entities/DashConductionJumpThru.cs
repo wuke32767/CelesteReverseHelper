@@ -16,15 +16,16 @@ namespace Celeste.Mod.ReverseHelper.Entities
         Ignore,
         DoNotOverride,
     }
-    [CustomEntity("ReverseHelper/DashConductionJumpThru")]
-    public class DashConductionJumpThru : Entity
+    [CustomEntity("ReverseHelper/DashConductionJumpThru = Ctor")]
+    public static class DashConductionJumpThru
     {
-        public JumpThru? js;
-
-        public DashConductionJumpThru(EntityData data, Vector2 offset)
-            : base(data.Position + offset)
+        public static JumpThru Ctor(Level level, LevelData levelData, Vector2 offset, EntityData data)
         {
-            js = ReverseHelperExtern.VortexHelperModule.AttachedJumpThru.ctor(data, offset);
+            JumpThru? js = null ;
+            if (Level.EntityLoaders.TryGetValue("VortexHelper/AttachedJumpThru", out var entityLoader))
+            {
+                js = (JumpThru?)entityLoader(level, levelData, offset, data);
+            }
             if (js is not null)
             {
                 var mov = js.Get<StaticMover>();
@@ -46,36 +47,20 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 }
                 js.OnDashCollide += Func;
             }
-        }
-        public override void Added(Scene scene)
-        {
-            if (js is not null)
-            {
-                scene.Add(js);
-            }
-            base.Added(scene);
+            return js;
         }
     }
-    [CustomEntity("GravityHelper/ReverseHelper/DashConductionJumpThruUpsideDown",
-        "ReverseHelper/DashConductionJumpThruUpsideDown = LegacyCtor")]
-    public class DashConductionJumpThruUpsideDown : Entity
+    [CustomEntity("GravityHelper/ReverseHelper/DashConductionJumpThruUpsideDown = Ctor")]
+    public static class DashConductionJumpThruUpsideDown
     {
-        public JumpThru? js;
-        public static DashConductionJumpThruUpsideDown LegacyCtor(Level level, LevelData levelData, Vector2 offset, EntityData data)
+        public static JumpThru Ctor(Level level,LevelData levelData, Vector2 offset,EntityData data)
         {
-            ReverseHelperExtern.GravityHelperModule.RequireGravityHelperHook();
-            return new DashConductionJumpThruUpsideDown(data, offset);
-        }
-        public DashConductionJumpThruUpsideDown(EntityData data, Vector2 offset)
-            : base(data.Position + offset)
-        {
-            try
+            JumpThru? js = null ;
+            data.Values.TryAdd("attached", true);
+            if (Level.EntityLoaders.TryGetValue("GravityHelper/UpsideDownJumpThru", out var entityLoader))
             {
-                data.Values.Add("attached", true);
+                js = (JumpThru?)entityLoader(level, levelData, offset, data);
             }
-            catch { }
-
-            js = ReverseHelperExtern.GravityHelperModule.UpsideDownJumpThru.ctor(data, offset);
             if (js is not null)
             {
                 var mov = js.Get<StaticMover>();
@@ -97,26 +82,21 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 }
                 js.OnDashCollide += Func;
             }
-        }
-        public override void Added(Scene scene)
-        {
-            if (js is not null)
-            {
-                scene.Add(js);
-            }
-            base.Added(scene);
+            return js;
         }
     }
-    [CustomEntity("ReverseHelper/DashConductionJumpThruSideways")]
+    [CustomEntity("ReverseHelper/DashConductionJumpThruSideways = Ctor")]
     public class DashConductionJumpThruSideways : Entity
     {
-        public Entity? js;
-        public DashConductionJumpThruSideways(EntityData data, Vector2 offset)
-            : base(data.Position + offset)
+        public static Entity Ctor(Level level, LevelData levelData, Vector2 offset, EntityData data)
         {
+            Entity? js = null;
             ReverseHelperExtern.MaddieHelpingHandModule.SidewaysJumpThru.activateHooks();
 
-            js = ReverseHelperExtern.MaddieHelpingHandModule.AttachedSidewaysJumpThru.ctor(data, offset);
+            if (Level.EntityLoaders.TryGetValue("MaxHelpingHand/AttachedSidewaysJumpThru", out var entityLoader))
+            {
+                js = entityLoader(level, levelData, offset, data);
+            }
             if (js is not null)
             {
                 var mov = js.Get<StaticMover>();
@@ -139,15 +119,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
                 ReverseHelperExtern.MaddieHelpingHandModule.AttachedSidewaysJumpThru.SetIfNull_OnDashCollide(js,Func);
             }
-
-        }
-        public override void Added(Scene scene)
-        {
-            if (js is not null)
-            {
-                scene.Add(js);
-            }
-            base.Added(scene);
+            return js;
         }
     }
 }

@@ -230,59 +230,6 @@ namespace Celeste.Mod.ReverseHelper
                 typeof(Interop).ModInterop();
             }
         }
-        public static class GravityHelperModule
-        {
-            static Assembly? Assembly;
-            static Type? Module;
-            static Type? HookLevel;
-            static MethodInfo? updatehooks;
-            static FieldInfo? CurrentHookLevel;
-            static int? Everything;
-            //public static string[] all;
-            [MethodImpl(MethodImplOptions.NoOptimization)]
-            public static void LoadContent()
-            {
-                Assembly =
-                    AppDomain.CurrentDomain
-                    .GetAssemblies()
-                    .Where(assembly => assembly.GetName().Name == "GravityHelper")
-                    .FirstOrDefault();
-                Module = Assembly?.GetType("Celeste.Mod.GravityHelper.GravityHelperModule");
-                HookLevel = Assembly?.GetType("Celeste.Mod.GravityHelper.GravityHelperModule+HookLevel");
-                //all = Assembly?.GetTypes().Select(x=>x.FullName).ToArray();
-                updatehooks = Module?.GetMethod("updateHooks", bf);
-                CurrentHookLevel = Module?.GetField("CurrentHookLevel", bf);
-
-                var t = HookLevel?.GetEnumValues().Cast<object>().FirstOrDefault(x => x.ToString() == "Everything" || x.ToString() == "Forced");
-                if (t is not null)
-                {
-                    Everything = (int)t;
-                }
-                UpsideDownJumpThru.LoadContent();
-            }
-            public static void RequireGravityHelperHook()
-            {
-                if (Everything is not null && CurrentHookLevel is not null && (int)CurrentHookLevel.GetValue(null) != Everything)
-                {
-                    updatehooks?.Invoke(null, [Everything]);
-                }
-            }
-            public static class UpsideDownJumpThru
-            {
-                static Type? Type;
-
-                static ConstructorInfo? Ctor;
-                public static JumpThru? ctor(EntityData data, Vector2 offset)
-                    => Ctor?.Invoke([data, offset]) as JumpThru;
-
-                public static void LoadContent()
-                {
-                    Type = Assembly?.GetType("Celeste.Mod.GravityHelper.Entities.UpsideDownJumpThru");
-                    Ctor = Type?.GetConstructor([typeof(EntityData), typeof(Vector2)]);
-
-                }
-            }
-        }
         public static class CommunalHelper
         {
             static Assembly? Assembly;
@@ -437,7 +384,6 @@ namespace Celeste.Mod.ReverseHelper
             VortexHelperModule.LoadContent();
             ExtendedVariantsModule.LoadContent();
             MaddieHelpingHandModule.LoadContent();
-            GravityHelperModule.LoadContent();
             IsaGrabBag.LoadContent();
             CommunalHelper.LoadContent();
 
