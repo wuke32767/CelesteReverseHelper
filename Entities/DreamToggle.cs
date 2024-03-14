@@ -37,8 +37,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
         // Token: 0x06001651 RID: 5713 RVA: 0x0005C416 File Offset: 0x0005A616
         private void OnChangeMode(bool enabled)
         {
+            bool changed = enableMode != (ReverseHelperModule.playerHasDreamDash);
             enableMode = (ReverseHelperModule.playerHasDreamDash);
-            SetSprite(true);
+            SetSprite(changed);
         }
 
         // Token: 0x06001652 RID: 5714 RVA: 0x0005C42C File Offset: 0x0005A62C

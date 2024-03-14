@@ -34,22 +34,18 @@ namespace Celeste.Mod.ReverseHelper
                     .FirstOrDefault();
                 purpleBoosterSpriteBank =
                     VortexHelperAssembly?
-                    .GetType("Celeste.Mod.VortexHelper.VortexHelperModule")
+                    .GetType("Celeste.Mod.VortexHelper.VortexHelperModule")?
                     .GetField("PurpleBoosterSpriteBank", bf);
                 AttachedJumpThru.LoadContent();
             }
             public static class AttachedJumpThru
             {
                 static Type? Type;
-                static ConstructorInfo? Ctor;
                 public static MethodInfo? MoveHExact;
-                public static JumpThru? ctor(EntityData data, Vector2 offset)
-                => Ctor?.Invoke([data, offset]) as JumpThru;
                 public static void LoadContent()
                 {
                     Type = VortexHelperAssembly?
                         .GetType("Celeste.Mod.VortexHelper.Entities.AttachedJumpThru");
-                    Ctor = Type?.GetConstructor([typeof(EntityData), typeof(Vector2)]);
                     MoveHExact = Type?.GetMethod("MoveHExact", bf);
                 }
             }
@@ -358,6 +354,11 @@ namespace Celeste.Mod.ReverseHelper
         public static void Load()
         {
             typeof(Interop).ModInterop();
+            // later it will be moved
+            Interop.RegisterDreamBlockLike(CommunalHelper.DreamTunnelEntry.Type,
+                (e) => CommunalHelper.DreamTunnelEntry.ActivateNoRoutine?.Invoke(e, null),
+                (e) => CommunalHelper.DreamTunnelEntry.DeactivateNoRoutine?.Invoke(e, null)
+                );
         }
         public static void LoadContent()
         {
@@ -370,11 +371,6 @@ namespace Celeste.Mod.ReverseHelper
             CustomInvisibleBarrier.LoadContent();
             ReversedDreamBlock.LoadContent();
 
-            // later it will be moved
-            Interop.RegisterDreamBlockLike(CommunalHelper.DreamTunnelEntry.Type,
-                (e) => CommunalHelper.DreamTunnelEntry.ActivateNoRoutine?.Invoke(e, null),
-                (e) => CommunalHelper.DreamTunnelEntry.DeactivateNoRoutine?.Invoke(e, null)
-                );
         }
 
 
