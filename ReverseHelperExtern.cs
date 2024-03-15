@@ -114,20 +114,20 @@ namespace Celeste.Mod.ReverseHelper
                 {
                     try
                     {
-                        if (TheTarget is null)
-                        {
-                            new ILHook(addSidewaysJumpthrusInHorizontalMoveMethods, Watcher).Dispose();
-                        }
-                        if (TheTarget is not null)
-                        {
-                            checkCollisionWithSidewaysJumpthruWhileMovingHook = new ILHook(checkCollisionWithSidewaysJumpthruWhileMoving, Pilferer);
-                            SomeLambdaHook = new ILHook(TheTarget, Modifier);
-                        }
-                        if (!failed)
-                        {
-                            Logger.Log(LogLevel.Warn, "ReverseHelper", "Nothing went wrong. This warning is just to tell you I hooked MaddieHelpingHand(MaxHelpingHand)'s SidewaysJumpThru, and I'm not sure if it is safe. If anything went wrong, please ping USSRNAME.");
-                            Logger.Log(LogLevel.Warn, "ReverseHelper", "Only SidewaysJumpThru could went wrong, I think. (and should not crash. (if maddie havn't changed SidewaysJumpThru.))");
-                        }
+                        //if (TheTarget is null)
+                        //{
+                        //    new ILHook(addSidewaysJumpthrusInHorizontalMoveMethods, Watcher).Dispose();
+                        //}
+                        //if (TheTarget is not null)
+                        //{
+                        //    checkCollisionWithSidewaysJumpthruWhileMovingHook = new ILHook(checkCollisionWithSidewaysJumpthruWhileMoving, Pilferer);
+                        //    SomeLambdaHook = new ILHook(TheTarget, Modifier);
+                        //}
+                        //if (!failed)
+                        //{
+                        //    Logger.Log(LogLevel.Warn, "ReverseHelper", "Nothing went wrong. This warning is just to tell you I hooked MaddieHelpingHand(MaxHelpingHand)'s SidewaysJumpThru, and I'm not sure if it is safe. If anything went wrong, please ping USSRNAME.");
+                        //    Logger.Log(LogLevel.Warn, "ReverseHelper", "Only SidewaysJumpThru could went wrong, I think. (and should not crash. (if maddie havn't changed SidewaysJumpThru.))");
+                        //}
                     }
                     catch
                     {
@@ -333,12 +333,15 @@ namespace Celeste.Mod.ReverseHelper
                 public static MethodInfo? Render;
                 public static MethodInfo? GetSpinnersToRender;
 
+                public static FieldInfo? ReverseHelperSupported;
                 public static void LoadContent()
                 {
                     Type = Assembly?.GetType("Celeste.Mod.IsaGrabBag.DreamSpinnerRenderer");
                     BeforeRender = Type?.GetMethod("BeforeRender", bf);
                     Render = Type?.GetMethod("Render", bf);
                     GetSpinnersToRender = Type?.GetMethod("GetSpinnersToRender", bf);
+
+                    ReverseHelperSupported = Type?.GetField("_ReverseHelperSupported", bf);
                 }
             }
         }

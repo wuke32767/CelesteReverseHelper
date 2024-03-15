@@ -2,3 +2,42 @@
 
 # Default severity for all analyzer diagnostics
 dotnet_analyzer_diagnostic.severity = silent
+
+# CL0001: Lambda passed to ILCursor.EmitDelegate
+dotnet_diagnostic.CL0001.severity = warning
+
+# CL0003: Orig not called in hook
+dotnet_diagnostic.CL0003.severity = warning
+
+# CL0005: ILCursor.Remove or RemoveRange used
+dotnet_diagnostic.CL0005.severity = warning
+
+# CL0007: No valid ctor for CustomEntity
+dotnet_diagnostic.CL0007.severity = warning
+
+# CL009: CustomEntity generator method missing
+dotnet_diagnostic.CL009.severity = warning
+
+# CL011: CustomEntity generator method invalid
+dotnet_diagnostic.CL011.severity = warning
+
+# CL013: Entity.Scene accessed in ctor
+dotnet_diagnostic.CL013.severity = warning
+
+# CL0006: Multiple predicates to ILCursor.(Try)Goto*
+dotnet_diagnostic.CL0006.severity = warning
+
+# CL0002: Instance method passed to EmitDelegate
+dotnet_diagnostic.CL0002.severity = warning
+
+# CL008: Class marked by CustomEntity doesn't extend Entity
+dotnet_diagnostic.CL008.severity = warning
+
+# CL012: CustomEntity with no IDs
+dotnet_diagnostic.CL012.severity = warning
+
+# CL0004: Non-static Hook
+dotnet_diagnostic.CL0004.severity = warning
+
+# CL010: CustomEntity generator method parameters invalid
+dotnet_diagnostic.CL010.severity = warning
