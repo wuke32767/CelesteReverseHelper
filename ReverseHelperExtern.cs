@@ -107,101 +107,12 @@ namespace Celeste.Mod.ReverseHelper
                     addSidewaysJumpthrusInHorizontalMoveMethods = Type?.GetMethod("addSidewaysJumpthrusInHorizontalMoveMethods", bf);
                     checkCollisionWithSidewaysJumpthruWhileMoving = Type?.GetMethod("checkCollisionWithSidewaysJumpthruWhileMoving", bf);
                     activatehooks = Type?.GetMethod("activateHooks", bf);
-                    Load();
                 }
 
-                private static void Load()
-                {
-                    try
-                    {
-                        //if (TheTarget is null)
-                        //{
-                        //    new ILHook(addSidewaysJumpthrusInHorizontalMoveMethods, Watcher).Dispose();
-                        //}
-                        //if (TheTarget is not null)
-                        //{
-                        //    checkCollisionWithSidewaysJumpthruWhileMovingHook = new ILHook(checkCollisionWithSidewaysJumpthruWhileMoving, Pilferer);
-                        //    SomeLambdaHook = new ILHook(TheTarget, Modifier);
-                        //}
-                        //if (!failed)
-                        //{
-                        //    Logger.Log(LogLevel.Warn, "ReverseHelper", "Nothing went wrong. This warning is just to tell you I hooked MaddieHelpingHand(MaxHelpingHand)'s SidewaysJumpThru, and I'm not sure if it is safe. If anything went wrong, please ping USSRNAME.");
-                        //    Logger.Log(LogLevel.Warn, "ReverseHelper", "Only SidewaysJumpThru could went wrong, I think. (and should not crash. (if maddie havn't changed SidewaysJumpThru.))");
-                        //}
-                    }
-                    catch
-                    {
-
-                    }
-                }
 
                 public static void activateHooks()
                 {
                     activatehooks?.Invoke(null, []);
-                }
-                public static void Watcher(ILContext il)
-                {
-                    MethodReference? inst3;
-                    Type inst4;
-                    ILCursor ilc = new(il);
-                    if (ilc.TryGotoNext(i => { i.MatchCallvirt(out var m); return m?.Name == "EmitDelegate"; }) && ilc.TryGotoPrev(i => { return i.MatchLdftn(out _); }))
-                    {
-                        inst3 = ilc.Next.Operand as MethodReference;
-                        inst4 = Assembly!.GetType(inst3!.DeclaringType.FullName.Replace('/', '+'));
-                        TheTarget = inst4.GetMethod(inst3.Name, bf);
-                        /*
-                        39	007A	ldloc.0
-                        40	007B	ldsfld	class [mscorlib]System.Func`4<class [Celeste]Celeste.Solid, class [Celeste]Monocle.Entity, int32, class [Celeste]Celeste.Solid> Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru/'<>c'::'<>9__11_1'
-                        41	0080	dup
-                        42	0081	brtrue.s	49 (009A) callvirt instance int32 [MonoMod.Utils]MonoMod.Cil.ILCursor::EmitDelegate<class [mscorlib]System.Func`4<class [Celeste]Celeste.Solid, class [Celeste]Monocle.Entity, int32, class [Celeste]Celeste.Solid>>(!!0)
-                        43	0083	pop
-                        44	0084	ldsfld	class Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru/'<>c' Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru/'<>c'::'<>9'
-                        45	0089	ldftn	instance class [Celeste]Celeste.Solid Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru/'<>c'::'<addSidewaysJumpthrusInHorizontalMoveMethods>b__11_1'(class [Celeste]Celeste.Solid, class [Celeste]Monocle.Entity, int32)
-                        46	008F	newobj	instance void class [mscorlib]System.Func`4<class [Celeste]Celeste.Solid, class [Celeste]Monocle.Entity, int32, class [Celeste]Celeste.Solid>::.ctor(object, native int)
-                        47	0094	dup
-                        48	0095	stsfld	class [mscorlib]System.Func`4<class [Celeste]Celeste.Solid, class [Celeste]Monocle.Entity, int32, class [Celeste]Celeste.Solid> Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru/'<>c'::'<>9__11_1'
-                        49	009A	callvirt	instance int32 [MonoMod.Utils]MonoMod.Cil.ILCursor::EmitDelegate<class [mscorlib]System.Func`4<class [Celeste]Celeste.Solid, class [Celeste]Monocle.Entity, int32, class [Celeste]Celeste.Solid>>(!!0)
-                        50	009F	pop
-                         */
-                    }
-                    else
-                    {
-                        Logger.Log(LogLevel.Error, "ReverseHelper", $"Failed when hooking MaddieHelpingHand. Here's The Part1.");
-                    }
-                }
-                public static void Modifier(ILContext il)
-                {
-                    ILCursor ilc = new(il);
-                    if (ilc.TryGotoNext(MoveType.After, i => i.MatchNewobj(out _)))
-                    {
-                        ilc.EmitDelegate((Entity e) =>
-                        {
-                            (e as Solid)!.OnDashCollide ??= dashCollision;
-                            dashCollision = null;
-                            return e;
-                        });
-                    }
-                    else
-                    {
-                        Logger.Log(LogLevel.Error, "ReverseHelper", $"Failed when hooking MaddieHelpingHand. Here's The Part3.");
-                    }
-                }
-                public static void Pilferer(ILContext il)
-                {
-                    ILCursor ilc = new(il);
-                    if (ilc.TryGotoNext(i => { i.MatchCallvirt(out var m); return m?.Name == "Invoke"; }))
-                    {
-                        ilc.Remove();
-                        ilc.EmitDelegate((DashCollision self, Player p, Vector2 v) =>
-                        {
-                            dashCollision = self;
-                            return DashCollisionResults.NormalCollision;
-                        });
-                    }
-                    else
-                    {
-                        Logger.Log(LogLevel.Error, "ReverseHelper", $"Failed when hooking MaddieHelpingHand. Here's The Part2.");
-                    }
                 }
             }
         }
