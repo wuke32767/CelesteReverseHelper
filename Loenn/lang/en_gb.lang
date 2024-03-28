@@ -57,3 +57,11 @@ entities.ReverseHelper/SaferFireIceBarrier.attributes.description.iceBlock=Chang
 entities.ReverseHelper/SaferFireIceBarrier.attributes.description.topSafer=The top will be safer. You can wavedash on it.
 entities.ReverseHelper/SaferFireIceBarrier.attributes.description.topDangerous=The top will be more dangerous. You can't even touch it. Overrides TopSafer.
 entities.ReverseHelper/SaferFireIceBarrier.attributes.description.topRefillDash=You can refill dash when standing on it.
+
+entities.ReverseHelper/ImmovableBlendFancyTileDreamBlock.attributes.description.width=Can only be a multiple of 8. Do not resize it in game.
+entities.ReverseHelper/ImmovableBlendFancyTileDreamBlock.attributes.description.x=Can only be a multiple of 8. Do not move it in game.
+entities.ReverseHelper/ImmovableBlendFancyTileDreamBlock.attributes.description.y=Can only be a multiple of 8. Do not move it in game.
+entities.ReverseHelper/ImmovableBlendFancyTileDreamBlock.attributes.description.height=Can only be a multiple of 8. Do not resize it in game.
+entities.ReverseHelper/ImmovableBlendFancyTileDreamBlock.attributes.description.tileData=Requires fancy tile data.
+entities.ReverseHelper/ImmovableBlendFancyTileDreamBlock.attributes.description.highPriority=You can't enter a normal dreamblock if it is blocked by a wall. If checked, you can enter this one.
+entities.ReverseHelper/ImmovableBlendFancyTileDreamBlock.attributes.description.oneUse=Sometimes incorrect in visual (and only in visual). Not intended to be fixed.

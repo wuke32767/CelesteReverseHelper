@@ -7,14 +7,30 @@ RefillWallWrapper.name="ReverseHelper/ReversedDreamBlockContainer"
 
 RefillWallWrapper.canResize={true,true}
 
+RefillWallWrapper.fieldInformation = {
+    alwaysEnable = {
+        fieldType = "ReverseHelper.OptionalBool",
+    },
+    alwaysDisable = {
+        fieldType = "ReverseHelper.OptionalBool",
+    }, 
+    highPriority = {
+        fieldType = "ReverseHelper.OptionalBool",
+    },
+    reverse = {
+        fieldType = "ReverseHelper.OptionalBool",
+    },
+}
 
 
 RefillWallWrapper.placements={
-    name="Reversed Dream Block Container",
+    name="Dream Block Configurer (Container)",
     data={
             width = 8, height = 8,
-            alwaysEnable=false,
-            alwaysDisable=false,
+            alwaysEnable="",
+            alwaysDisable="",
+            highPriority="",
+            reverse=true,
         }
     }
 function RefillWallWrapper.sprite(room,entity)
