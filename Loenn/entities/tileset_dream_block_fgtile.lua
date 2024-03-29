@@ -4,10 +4,9 @@ local drawable = require("structs.drawable_rectangle")
 
 local cbarea = {
 }
-cbarea.name = "ReverseHelper/ImmovableBlendFancyTileDreamBlock"
-cbarea.depth = 8500
+cbarea.name = "ReverseHelper/FgTileDreamBlockExtractor"
+cbarea.depth = -10000000
 cbarea.associatedMods = { "ReverseHelper" }
-cbarea.nodeLimits = { 0, 1 }
 
 cbarea.fieldInformation = {
 
@@ -28,47 +27,44 @@ cbarea.fieldInformation = {
 
 cbarea.placements = {
 
-    name = "Immovable Blend Fancy Tile Dream Block",
+    name = "Fg Tile Dream Block Extractor",
 
     data = {
-        width = 8,
-        height = 8,
-        tileData = "",
+        width = 8, height = 8,
         lineColor="FFFFFFFF",
         fillColor="00000000",
         lineColorDeactivated="FFFFFFFF",
         fillColorDeactivated="0000003f",
-        below=false,
-        oneUse=false,
-        highPriority=false,
     }
     
 }
 
+--local fakeTilesSpriteFunction = fakeTilesHelper.getEntitySpriteFunction("tiles", false)
 
 function cbarea.sprite(room, entity)
     local x, y = entity.x or 0, entity.y or 0
     local width, height = entity.width or 8, entity.height or 8
-   
-    entity.x=math.floor(x/8)*8
-    entity.y=math.floor(y/8)*8
-    entity.width=math.floor(width/8)*8
-    entity.height=math.floor(height/8)*8
+    local lineColor, fillColor = entity.lineColor or "FFFFFFFF", entity.fillColor or "00000000"
+
+    entity.x=math.round(x/8)*8
+    entity.y=math.round(y/8)*8
+    entity.width=math.round(width/8)*8
+    entity.height=math.round(height/8)*8
     x=entity.x
     y=entity.y
     width=entity.width
     height=entity.height
-    local lineColor, blockColor = entity.lineColor or "FFFFFFFF", entity.fillColor or "00000000"
 
-    local sprites = fakeTilesSpriteFunction(room, entity)
-    --local rect2=drawable.fromRectangle("fill",x,y,width,height,fillColor)
+    --local sprites = fakeTilesSpriteFunction(room, entity)
+    local rect2=drawable.fromRectangle("fill",x,y,width,height,fillColor)
     local rect=drawable.fromRectangle("line",x,y,width,height,lineColor)
 
-    rect.depth = 0
+    rect.depth = -10000000
+    rect2.depth = -10000000
     --table.insert(sprites,rect2)
-    table.insert(sprites, rect)
+    --table.insert(rect, rect2)
 
-    return sprites
+    return {rect,rect2}
 end
 --function cbarea.sprite(room, entity)
 --    local x, y = entity.x or 0, entity.y or 0
@@ -84,21 +80,16 @@ end
 --    local x, y = entity.x or 0, entity.y or 0
 --    return utils.rectangle(x, y, entity.width or 8, entity.height or 8)
 --end
-function cbarea.selection(room, entity)
-    local x, y = entity.x or 0, entity.y or 0
-    local width, height = entity.width or 8, entity.height or 8
-    entity.x=math.floor(x/8)*8
-    entity.y=math.floor(y/8)*8
-    entity.width=math.floor(width/8)*8
-    entity.height=math.floor(height/8)*8
-    x=entity.x
-    y=entity.y
-    width=entity.width
-    height=entity.height
-
-    local main = utils.rectangle(x, y, width, height)
-
-
-    return main,{}
-end
+--function cbarea.selection(room, entity)
+--    local main = utils.rectangle(entity.x, entity.y, entity.width, entity.height)
+--    local nodes = {}
+--
+--    if entity.nodes then
+--        for i, node in ipairs(entity.nodes) do
+--            nodes[i] = utils.rectangle(node.x, node.y, entity.width, entity.height)
+--        end
+--    end
+--
+--    return main, nodes
+--end
 return cbarea

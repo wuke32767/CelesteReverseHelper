@@ -87,6 +87,7 @@ namespace Celeste.Mod.ReverseHelper
         /// <summary>
         /// If v is not null, set high priority mode to v.
         /// If v is null, get high priority mode.
+        /// It is not Platform.SurfaceSoundPriority.
         /// </summary>
         /// <returns><code>v ?? current</code> If high priority mode is not set, current is null. </returns>
         public static bool? ConfigureHighPriority(Entity e, bool? v)

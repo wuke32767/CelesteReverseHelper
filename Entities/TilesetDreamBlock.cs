@@ -159,7 +159,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
             public int Layer;
 
-            public Color Color(TilesetDreamBlock td)
+            public Color Color(Entity td)
             {
                 return ReversedDreamBlock.dreamblock_enabled(td) ? Colora : Colord;
             }
