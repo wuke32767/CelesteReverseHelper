@@ -1,4 +1,5 @@
 local utils = require "utils"
+local drawable = require("structs.drawable_rectangle")
 
 local cbarea = {
     fillColor = { 1, 1, 1, 0.1 },

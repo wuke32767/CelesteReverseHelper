@@ -46,6 +46,7 @@ namespace Celeste.Mod.ReverseHelper
             ReversedDreamBlock.Load();
             CustomInvisibleBarrier.Load();
             SaferFireIceBarrier.Load();
+            GridOrTilesDreamifier.Load();
 
             ZiplineZipmover.Load();
             //Everest.Events.Level.OnLoadLevel += Level_OnLoadLevel;
@@ -84,6 +85,7 @@ namespace Celeste.Mod.ReverseHelper
             ReversedDreamBlock.Unload();
             CustomInvisibleBarrier.Unload();
             SaferFireIceBarrier.Unload();
+            GridOrTilesDreamifier.Unload();
 
             ReverseHelperExtern.Unload();
             ZiplineZipmover.Unload();

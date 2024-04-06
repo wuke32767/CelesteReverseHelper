@@ -21,7 +21,7 @@ namespace Celeste.Mod.ReverseHelper
                 ReversedDreamBlock.ExternalDreamBlockLike[targetType] = (ActivateNoRoutine, DeactivateNoRoutine);
             }
         }
-        /// <summary>
+        /// <summary> 
         /// or, use this to check if your entity is enabled.
         /// notice that because of awake order, better to awake at the end of awake frame.
         /// </summary>

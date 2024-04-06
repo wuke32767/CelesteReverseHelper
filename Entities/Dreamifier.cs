@@ -5,14 +5,21 @@ using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
-    [CustomEntity("ReverseHelper/FgTileDreamBlockExtractor")]
+    [CustomEntity($"ReverseHelper/Dreamifier={nameof(ConstructDreamifier)}")]
     [Tracked(true)]
     [TrackedAs(typeof(DreamBlock), true)]
-    public class FgTileDreamBlockExtractor : DreamBlock
+    public class GridOrTilesDreamifier/*_AtLeastNow*/ : DreamBlock
     {
+        public static GridOrTilesDreamifier ConstructDreamifier(Level level, LevelData levelData, Vector2 offset, EntityData data)
+        {
+            return new GridOrTilesDreamifier(data, offset);
+        }
+
         private static readonly BlendState DreamParticleBlend = new()
         {
             ColorSourceBlend = Blend.DestinationAlpha,
@@ -30,22 +37,24 @@ namespace Celeste.Mod.ReverseHelper.Entities
             AlphaBlendFunction = BlendFunction.Add,
         };
 
-        ~FgTileDreamBlockExtractor()
-        {
-            VirtualRenderTarget.Target.Dispose();
-            VirtualRenderTarget.Target = null;
-        }
+        //~GridOrTilesDreamifier()
+        //{
+        //    VirtualRenderTarget.Target.Dispose();
+        //    VirtualRenderTarget.Target = null;
+        //}
+        TileGrid tileGrid;
         List<(Vector2 from, Vector2 to)> WobbleList = [];
         List<Vector2> CornerList = [];
-        VirtualRenderTarget VirtualRenderTarget;
+        //VirtualRenderTarget VirtualRenderTarget;
         Rectangle intersection;
+
 
         public Color lineColor;
         public Color fillColor;
         public Color linecolorDeact;
         public Color fillColorDeact;
 
-        public FgTileDreamBlockExtractor(Vector2 position, int width, int height, Color line, Color block,
+        public GridOrTilesDreamifier(Vector2 position, int width, int height, Color line, Color block,
             Color linede, Color fillde) : base(position, width, height, null, false, false, false)
         {
             lineColor = line;
@@ -53,12 +62,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
             linecolorDeact = linede;
             fillColorDeact = fillde;
             DreamBlockConfig.Get(this).HighPriority();
+            //vanilla uses 10
+            //for footstep ripple priority
             SurfaceSoundPriority = 11;
-            VirtualRenderTarget = new VirtualRenderTarget("ReverseHelper_TileDreamBlock", Math.Min((int)Width, 320), Math.Min((int)Height, 180), 0, false, true);
-
+            //VirtualRenderTarget = new VirtualRenderTarget("ReverseHelper_TileDreamBlock", Math.Min((int)Width, 320), Math.Min((int)Height, 180), 0, false, true);
         }
 
-        public FgTileDreamBlockExtractor(EntityData e, Vector2 offset)
+        public GridOrTilesDreamifier(EntityData e, Vector2 offset)
             : this(e.Position + offset, e.Width, e.Height,
                 e.HexaColor("lineColor"), e.HexaColor("fillColor"),
                 e.HexaColor("lineColorDeactivated"), e.HexaColor("fillColorDeactivated"))
@@ -90,7 +100,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 }
             }
             Collider = new Grid(8, 8, collidemap);
+            tileGrid=tg;
             Add(tg);
+            tg.Visible = false;
 
             var tilechar = scene.SolidsData;
             for (int i = 0; i < tilesX; i++)
@@ -237,8 +249,40 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
 
             Setup();
-            Add(new BeforeRenderHook(BeforeRender));
+            //Add(new BeforeRenderHook(BeforeRender));
+
+            var other = collidemap.Clone();
+            for (int i = 0; i < tilesX; i++)
+            {
+                for (int j = 0; j < tilesY; j++)
+                {
+                    if (other[i, j])
+                    {
+                        int it = i + 1;
+                        int jt = j + 1;
+                        other[i, j] = false;
+                        while (jt != tilesY && other[i, jt])
+                        {
+                            other[i, jt] = false;
+                            jt++;
+                        }
+                        while (it != tilesX)
+                        {
+                            if (!Enumerable.Range(j, jt - j).Select(j_ => other[it, j_]).Contains(false))
+                            {
+                                for (int j_ = j; j_ < jt; j_++)
+                                {
+                                    other[it, j_] = false;
+                                }
+                                it++;
+                            }
+                        }
+                        AltCollider.Add(new((int)X + 8 * i, (int)Y + 8 * j, (it - i) * 8, (jt - j) * 8));
+                    }
+                }
+            }
         }
+        List<Rectangle> AltCollider = new();
         enum _edges : byte
         {
             up = 1, left = 2, right = 4, down = 8,
@@ -274,47 +318,37 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         public bool playerHasDreamDash
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => ReversedDreamBlock.dreamblock_enabled(this);
         }
-        private void BeforeRender()
+        public override void Render()
         {
             Camera camera = SceneAs<Level>().Camera;
             Rectangle camerarect = new Rectangle((int)camera.X, (int)camera.Y, 320, 180);
-            Rectangle self = new Rectangle((int)X, (int)Y, Math.Min((int)Width, 320), Math.Min((int)Height, 180));
 
-            if (!camerarect.Intersects(self))
+            if (!camerarect.Intersects(new((int)X, (int)Y, (int)Width, (int)Height)))
             {
-                intersection = new(0, 0, 0, 0);
                 return;
             }
-            intersection = Rectangle.Intersect(camerarect, self);
+            //Components.Render();
+            tileGrid.Render();
 
-            //VirtualRenderTarget ??= new VirtualRenderTarget("ReverseHelper_TileDreamBlock", Math.Min((int)Width, 320), Math.Min((int)Height, 180), 0, false, true);
-            Engine.Graphics.GraphicsDevice.SetRenderTarget(VirtualRenderTarget);
-
-            Matrix cammat = camera.Matrix;
-            //seems TileGrid don't like this.
-            //var translation = camera.position - Position;
-            //cammat = Matrix.CreateTranslation(translation.X, translation.Y, 0) * cammat;
-            var mov = camera.position - new Vector2(intersection.Left, intersection.Top);
-            Position += mov;
-
-            Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.Opaque, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone, null, cammat);
-            Draw.Rect(camera.X, camera.Y, intersection.Width, intersection.Height, Color.Transparent);//Engine.Graphics.GraphicsDevice.Clear(Color.Transparent);
-            Components.Render();
-            Draw.SpriteBatch.End();
-
-
-            Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, DreamParticleBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone, null, cammat);
             Vector2 shake = new(0, 0);
-            Draw.Rect(shake.X + X, shake.Y + Y, Width, Height, playerHasDreamDash ? fillColor : fillColorDeact);
+            foreach(var r in AltCollider)
+            {
+                Draw.Rect(shake.X + r.X, shake.Y + r.Y, r.Width, r.Height, playerHasDreamDash ? fillColor : fillColorDeact);
+            }
             Vector2 position = SceneAs<Level>().Camera.Position;
             for (int i = 0; i < particles.Length; i++)
             {
                 int layer = particles[i].Layer;
                 Vector2 position2 = particles[i].Position;
                 position2 += position * (0.3f + 0.25f * layer);
-                position2 = PutInside2(position2);
+                position2 = PutInside(position2);
+                if (!Inside(position2))
+                {
+                    continue;
+                }
                 Color color = particles[i].Color(this);
                 MTexture mTexture;
                 switch (layer)
@@ -335,23 +369,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
                         mTexture = particleTextures[2];
                         break;
                 }
-                if (position2.X >= 2f && position2.Y >= 2f && position2.X < Width - 2f && position2.Y < Height - 2f)
+                //if (position2.X >= 2f && position2.Y >= 2f && position2.X < Width - 2f && position2.Y < Height - 2f)
                 {
-                    mTexture.DrawCentered(Position + position2 + shake, color);
+                    mTexture.DrawCentered(position2 + shake, color);
                 }
             }
-            Draw.SpriteBatch.End();
-
-            Position -= mov;
-        }
-
-        public override void Render()
-        {
-            if (intersection.IsEmpty)
-            {
-                return;
-            }
-            Draw.SpriteBatch.Draw(VirtualRenderTarget, intersection, new(0, 0, intersection.Width, intersection.Height), Color.White);
             //if (whiteFill > 0f)
             //{
             //    Draw.Rect(X + shake.X, Y + shake.Y, Width, Height * whiteHeight, Color.White * whiteFill);
@@ -448,42 +470,100 @@ namespace Celeste.Mod.ReverseHelper.Entities
         {
             throw new NotImplementedException("How? This should be relinked.");
         }
-        Vector2 PutInside2(Vector2 pos)
+        [MonoMod.MonoModLinkTo("Monocle.Entity", "System.Void Render()")]
+        public void Entity_Render()
         {
-            int i = (int)pos.X;
-            i /= (int)Width;
-            if (i < 0)
-            {
-                i = i - 1;
-            }
-            pos.X -= i * Width;
-            int j = (int)pos.Y;
-            j /= (int)Height;
-            if (j < 0)
-            {
-                j = j - 1;
-            }
-            pos.Y -= j * Height;
-            //if (pos.X > base.Right)
-            //{
-            //    pos.X -= (float)Math.Ceiling((pos.X - base.Right) / base.Width) * base.Width;
-            //}
-            //else if (pos.X < base.Left)
-            //{
-            //    pos.X += (float)Math.Ceiling((base.Left - pos.X) / base.Width) * base.Width;
-            //}
+            throw new NotImplementedException("How? This should be relinked.");
+        }
+        bool Inside(Vector2 pos)
+        {
+            // check if pos is inside Grid.
 
-            //if (pos.Y > base.Bottom)
-            //{
-            //    pos.Y -= (float)Math.Ceiling((pos.Y - base.Bottom) / base.Height) * base.Height;
-            //}
-            //else if (pos.Y < base.Top)
-            //{
-            //    pos.Y += (float)Math.Ceiling((base.Top - pos.Y) / base.Height) * base.Height;
-            //}
+            // a 8*8 cell can be sliced into 9 pieces.
+            // same number means they check same cell to determine if they is inside the grid.
+            // 11222233
+            // 11222233
+            // 44555566
+            // 44555566
+            // 44555566
+            // 44555566
+            // 77888899
+            // 77888899
+            // notice that [1] is same as (left-up cell)[9], (left cell)[7], (up cell)[3],
+            //             [2] is same as (up cell)[8],
+            //             [4] is same as (left cell)[6],
+            // (they check same cell)
+            // so we move pos by (2, -2),
+            // // why not (2, 2)?
+            pos.X += 2;
+            pos.Y -= 2;
+            // and a cell should become 
+            // 99778888
+            // 99778888
+            // 33112222
+            // 33112222
+            // 66445555
+            // 66445555
+            // 66445555
+            // 66445555
+            // just split it to 4 pieces.
+            Rectangle tileBounds = SceneAs<Level>().Session.MapData.TileBounds;
+            var tiledata = SceneAs<Level>().SolidsData;
+            // multiply result by 2,
+            int xm2 = (int)(pos.X / 8f * 2) - 2 * tileBounds.Left;
+            int ym2 = (int)(pos.Y / 8f * 2) - 2 * tileBounds.Top;
 
-            return pos;
+            bool b = true;
+            // and check lsb to determine which sub-cell it is in.
+            for (int i = xm2 & 1; i < 2; i++)
+            {
+                for (int j = ym2 & 1; j < 2; j++)
+                {
+                    if (tiledata[xm2 / 2 - 1 + i, ym2 / 2 - 1 + j] == tiledata.EmptyValue)
+                    {
+                        b = false;
+                        break;
+                    }
+                }
+            }
+            return b;
+        }
+        internal static void Load()
+        {
+            On.Celeste.DreamBlock.FootstepRipple += DreamBlock_FootstepRipple;
         }
 
+        private static void DreamBlock_FootstepRipple(On.Celeste.DreamBlock.orig_FootstepRipple orig, DreamBlock self, Vector2 position)
+        {
+            if (self is GridOrTilesDreamifier ex)
+            {
+                ex.FootstepRipple(position);
+            }
+            else
+            {
+                orig(self, position);
+            }
+        }
+        public void FootstepRipple(Vector2 position)
+        {
+            if (playerHasDreamDash)
+            {
+                foreach (GridOrTilesDreamifier rects in Scene.Tracker.Entities[typeof(GridOrTilesDreamifier)])
+                {
+                    foreach (var rec in rects.AltCollider)
+                    {
+                        var burst = SceneAs<Level>().Displacement.AddBurst(position, 0.5f, 0f, 40f);
+                        burst.WorldClipRect = rec;
+                        burst.WorldClipPadding = 1;
+                    }
+                }
+            }
+        }
+
+        internal static void Unload()
+        {
+            On.Celeste.DreamBlock.FootstepRipple -= DreamBlock_FootstepRipple;
+
+        }
     }
 }
