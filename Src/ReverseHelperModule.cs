@@ -1,13 +1,15 @@
 using Celeste.Mod.ReverseHelper.Entities;
+using Celeste.Mod.ReverseHelper.SourceGen.Loader;
 using Monocle;
 using MonoMod.ModInterop;
 using System;
 using System.Runtime.Serialization;
+using System.Text.RegularExpressions;
 using static Celeste.Mod.ReverseHelper.ReverseHelperExtern;
 
 namespace Celeste.Mod.ReverseHelper
 {
-    public class ReverseHelperModule : EverestModule
+    internal partial class ReverseHelperModule : EverestModule
     {
         public static bool playerHasDreamDash
         {
@@ -24,33 +26,15 @@ namespace Celeste.Mod.ReverseHelper
             ReverseHelperExtern.Load();
             Instance = this;
         }
-
         public override void LoadContent(bool firstLoad)
         {
-            base.LoadContent(firstLoad);
-            ReverseHelperExtern.LoadContent();
-
-            AnotherPurpleBooster.Hooks.LoadContent();
+            LoadContent();
         }
+        [LoadContenter]
+        public new partial void LoadContent();
 
-        public override void Load()
-        {
-            typeof(SpeedRunTool_Interop).ModInterop();
-            AnotherPurpleBooster.Hooks.Hook();
-
-            HoldableRefill.Load();
-            LongDashRefill.Load();
-            ForceyHoldables.Load();
-            CBAreaComponent.Load();
-            DreamToggleListener.Load();
-            ReversedDreamBlock.Load();
-            CustomInvisibleBarrier.Load();
-            SaferFireIceBarrier.Load();
-            GridOrTilesDreamifier.Load();
-
-            ZiplineZipmover.Load();
-            //Everest.Events.Level.OnLoadLevel += Level_OnLoadLevel;
-        }
+        [Loader]
+        public override partial void Load();
         public static bool ReversedDreamBlockContainerHooked = false;
         //private void Level_OnLoadLevel(Level level, Player.IntroTypes playerIntro, bool isFromLoader)
         //{
@@ -73,24 +57,8 @@ namespace Celeste.Mod.ReverseHelper
         //    }
         //}
 
-        public override void Unload()
-        {
-            AnotherPurpleBooster.Hooks.Unhook();
-
-            HoldableRefill.Unload();
-            LongDashRefill.Unload();
-            ForceyHoldables.Unload();
-            CBAreaComponent.Unload();
-            DreamToggleListener.Unload();
-            ReversedDreamBlock.Unload();
-            CustomInvisibleBarrier.Unload();
-            SaferFireIceBarrier.Unload();
-            GridOrTilesDreamifier.Unload();
-
-            ReverseHelperExtern.Unload();
-            ZiplineZipmover.Unload();
-            //Everest.Events.Level.OnLoadLevel -= Level_OnLoadLevel;
-        }
+        [Unloader]
+        public override partial void Unload();
         //public override void PrepareMapDataProcessors(MapDataFixup context)
         //{
         //    base.PrepareMapDataProcessors(context);
@@ -98,6 +66,44 @@ namespace Celeste.Mod.ReverseHelper
         //    context.Add<ReverseHelperMapDataProcessor>();
         //}
         public static bool failed_to_hook_reverse_dreamblock = false;
+    }
+    namespace SourceGen.Loader
+    {
+        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+        public class LoadAttribute : Attribute
+        {
+        }
+
+        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+        public class UnloadAttribute : Attribute
+        {
+        }
+
+        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+        public class LoadContentAttribute : Attribute
+        {
+        }
+
+        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+        public class LoaderAttribute : Attribute
+        {
+        }
+
+        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+        public class UnloaderAttribute : Attribute
+        {
+        }
+        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+        public class LoadContenterAttribute : Attribute
+        {
+        }
+    }
+    namespace SourceGen
+    {
+        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+        public class GeneratedAttribute : Attribute
+        {
+        }
     }
 }
 

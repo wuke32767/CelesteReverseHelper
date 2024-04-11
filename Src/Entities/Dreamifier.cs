@@ -528,6 +528,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             return b;
         }
+        [SourceGen.Loader.Load]
         internal static void Load()
         {
             On.Celeste.DreamBlock.FootstepRipple += DreamBlock_FootstepRipple;
@@ -560,6 +561,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
         }
 
+        [SourceGen.Loader.Unload]
         internal static void Unload()
         {
             On.Celeste.DreamBlock.FootstepRipple -= DreamBlock_FootstepRipple;

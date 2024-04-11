@@ -132,7 +132,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public CBAreaComponent() : base(false, false)
         {
         }
-
+        [SourceGen.Loader.Load]
         public static void Load()
         {
             On.Celeste.Player.Update += Player_Update;
@@ -155,6 +155,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             orig(self, particles, playSfx);
         }
 
+        [SourceGen.Loader.Unload]
         public static void Unload()
         {
             On.Celeste.Player.Update -= Player_Update;

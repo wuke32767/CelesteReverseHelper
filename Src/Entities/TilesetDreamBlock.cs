@@ -14,7 +14,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public char tiletype;
         public Color lineColor;
         public Color fillColor;
-        public Color linecolorDeact;
+        public Color linecolorDeact; 
         public Color fillColorDeact;
         public bool blendIn;
         public TilesetDreamBlock(Vector2 position, float width, float height, char tiletype, bool blendIn,

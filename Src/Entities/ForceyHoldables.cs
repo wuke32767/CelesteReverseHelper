@@ -115,7 +115,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public ForceyHoldables(EntityData e, Vector2 offset) : this(e.Position + offset, e.Width, e.Height, e.Attr("type", "Celeste.Grider"), e.Float("force", 80), e.Attr("flagBind", ""), e.Attr("flagEnabled", ""), e.Bool("bindOnRoomStart", true))
         {
         }
-
+        [SourceGen.Loader.Load]
         public static void Load()
         {
             On.Celeste.Player.Throw += ForceyHoldableOnThrow;
@@ -135,6 +135,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             orig_Throw(self);
         }
 
+        [SourceGen.Loader.Unload]
         public static void Unload()
         {
             On.Celeste.Player.Throw -= ForceyHoldableOnThrow;

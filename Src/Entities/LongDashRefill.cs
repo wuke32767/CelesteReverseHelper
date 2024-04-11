@@ -28,6 +28,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
     public class LongDashRefill : Entity
     {
         private bool disableSpring = true;
+        [SourceGen.Loader.Load]
 
         public static void Load()
         {
@@ -73,6 +74,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
         }
 
+        [SourceGen.Loader.Unload]
         public static void Unload()
         {
             On.Celeste.Player.DashBegin -= DashBegin;

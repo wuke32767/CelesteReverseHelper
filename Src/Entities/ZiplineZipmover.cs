@@ -286,6 +286,7 @@ namespace Celeste.Mod.ReverseHelper
 
             base.Render();
         }
+        [SourceGen.Loader.Load]
 
         internal static void Load()
         {
@@ -298,6 +299,7 @@ namespace Celeste.Mod.ReverseHelper
             On.Celeste.Player.UpdateSprite += UpdatePlayerVisuals;
         }
 
+        [SourceGen.Loader.Unload]
         internal static void Unload()
         {
             Everest.Events.Level.OnLoadLevel -= Level_OnLoadLevel;

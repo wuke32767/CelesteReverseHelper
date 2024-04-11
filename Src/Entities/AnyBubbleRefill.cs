@@ -6,7 +6,7 @@
 //using System.Reflection;
 
 //namespace Celeste.Mod.ReverseHelper.Entities
-//{
+//{ 
 //    internal class BubbleOneUseComponent:Component
 //    {
 //        BubbleOneUseComponent():base(true,false) { }

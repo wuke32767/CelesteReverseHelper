@@ -67,7 +67,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 }
             }
         }
-
+        [SourceGen.Loader.Load]
         public static void Load()
         {
             On.Celeste.Level.Update += Level_Update;
@@ -79,6 +79,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             orig(self);
             ImmediateUpdate();
         }
+        [SourceGen.Loader.Unload]
         public static void Unload()
         {
             On.Celeste.Level.Update -= Level_Update;

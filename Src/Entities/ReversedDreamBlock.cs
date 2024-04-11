@@ -118,6 +118,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
         {
         }
         static ILHook dashcoroutine;
+        [SourceGen.Loader.Load]
+
         public static void Load()
         {
             IL.Celeste.Player.DreamDashCheck += Player_DreamDashCheck;
@@ -459,6 +461,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
 
 
+        [SourceGen.Loader.Unload]
         public static void Unload()
         {
             IL.Celeste.Player.DreamDashCheck -= Player_DreamDashCheck;

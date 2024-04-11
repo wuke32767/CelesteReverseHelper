@@ -9,7 +9,7 @@ namespace Celeste.Mod.ReverseHelper
     public static class Interop
     {
         /// <summary>
-        /// if a entity acts like DreamBlock, use this.
+        /// if a entity acts like DreamBlock, use this. 
         /// it should access Inventory.DreamDash only when awaking, and save it to a field.
         /// then, it controls visuals with that field and [De]ActivateNoRoutine. 
         /// and NO game logic relys on Inventory.DreamDash and that field.

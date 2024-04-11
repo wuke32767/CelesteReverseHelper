@@ -18,11 +18,12 @@ namespace Celeste.Mod.ReverseHelper.Entities
         private Player player;
         private bool playerCollide = false;
         private bool better_held = false;
-
+        [SourceGen.Loader.Load]
         public static void Load()
         {
             On.Celeste.Player.NormalUpdate += normalupd;
         }
+        [SourceGen.Loader.Unload]
 
         public static void Unload()
         {

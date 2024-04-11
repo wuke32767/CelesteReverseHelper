@@ -1,6 +1,7 @@
 ﻿using Celeste.Mod.Entities;
 using Celeste.Mod.Meta;
 using Celeste.Mod.ReverseHelper._From_Vortex_Helper;
+using Celeste.Mod.ReverseHelper.SourceGen.Loader;
 using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.Cil;
@@ -718,6 +719,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         internal static class Hooks
         {
+            [SourceGen.Loader.Load]
             public static void Hook()
             {
                 On.Celeste.Player.ctor += Player_ctor;
@@ -753,7 +755,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             //        //ilc.nex
             //    }
             //}
-
+            [SourceGen.Loader.Unload]
             public static void Unhook()
             {
                 On.Celeste.Player.ctor -= Player_ctor;
@@ -776,13 +778,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     new Func<int>(PurpleDashingUpdate),
                     PurpleDashingCoroutine,
                     PurpleDashingBegin);
-            }
-
-            internal static void LoadContent()
-            {
-                //AnotherPurpleBooster.P_Burst = new ParticleType(Booster.P_Burst);
-                //AnotherPurpleBooster.P_Appear = new ParticleType(Booster.P_Appear);
-                //AnotherPurpleBooster.P_BurstExplode = new ParticleType(Booster.P_Burst);
             }
         }
     }

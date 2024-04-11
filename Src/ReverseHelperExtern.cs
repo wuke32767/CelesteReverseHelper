@@ -1,4 +1,5 @@
 ﻿using Celeste.Mod.ReverseHelper.Entities;
+using Celeste.Mod.ReverseHelper.SourceGen.Loader;
 using FMOD;
 using Microsoft.Xna.Framework;
 using Mono.Cecil;
@@ -16,7 +17,7 @@ using System.Xml;
 using static Celeste.Mod.ReverseHelper.ReverseHelperExtern.MaddieHelpingHandModule;
 
 namespace Celeste.Mod.ReverseHelper
-{
+{ 
     public static class ReverseHelperExtern
     {
         const BindingFlags bf = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
@@ -138,10 +139,6 @@ namespace Celeste.Mod.ReverseHelper
                 // Token: 0x06000794 RID: 1940 RVA: 0x0001A5AA File Offset: 0x000187AA
                 public static Action<int> CapJumpCount;
 
-            }
-            public static void LoadContent()
-            {
-                typeof(Interop).ModInterop();
             }
         }
         public static class CommunalHelper
@@ -267,17 +264,16 @@ namespace Celeste.Mod.ReverseHelper
 
         public static void Load()
         {
-            typeof(Interop).ModInterop();
             // later it will be moved
             Interop.RegisterDreamBlockLike(CommunalHelper.DreamTunnelEntry.Type,
                 (e) => CommunalHelper.DreamTunnelEntry.ActivateNoRoutine?.Invoke(e, null),
                 (e) => CommunalHelper.DreamTunnelEntry.DeactivateNoRoutine?.Invoke(e, null)
                 );
         }
+        [LoadContent]
         public static void LoadContent()
         {
             VortexHelperModule.LoadContent();
-            ExtendedVariantsModule.LoadContent();
             MaddieHelpingHandModule.LoadContent();
             IsaGrabBag.LoadContent();
             CommunalHelper.LoadContent();
@@ -288,6 +284,7 @@ namespace Celeste.Mod.ReverseHelper
         }
 
 
+        [SourceGen.Loader.Unload]
         public static void Unload()
         {
 
