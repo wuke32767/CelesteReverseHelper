@@ -17,7 +17,7 @@ using System.Xml;
 using static Celeste.Mod.ReverseHelper.ReverseHelperExtern.MaddieHelpingHandModule;
 
 namespace Celeste.Mod.ReverseHelper
-{ 
+{
     public static class ReverseHelperExtern
     {
         const BindingFlags bf = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
@@ -259,9 +259,24 @@ namespace Celeste.Mod.ReverseHelper
             public static Func<Type, string[], object>? RegisterStaticTypes;
             public static Action<object>? Unregister;
         }
-        //public static string[] debugger;//what if ReverseHelper is named as ConverseHelper in assembly?
-        //public static Assembly[] debugger_;
+        class BGswitch
+        {
+            [ModImportName("BGswitch")]
+            public static class Interop
+            {
+                // Returns the current BG mode
+                public static Func<bool> IsBGMode;
 
+                // Sets the BG mode
+                //   bool bgMode: the value to set the BG mode to
+                //   bool persistent: whether or not the value should be saved to the session
+                public static Action<bool, bool> SetBGMode;
+
+                // Creates and returns a BGModeListener as a Component.
+                //   Action<bool> action: the delegate that will be called when the BG mode changes
+                public static Func<Action<bool>, Component> GetBGModeListener;
+            }
+        }
         public static void Load()
         {
             // later it will be moved
@@ -279,7 +294,6 @@ namespace Celeste.Mod.ReverseHelper
             CommunalHelper.LoadContent();
 
             CustomInvisibleBarrier.LoadContent();
-            ReversedDreamBlock.LoadContent();
 
         }
 

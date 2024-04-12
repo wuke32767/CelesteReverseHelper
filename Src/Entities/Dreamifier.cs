@@ -10,6 +10,83 @@ using System.Runtime.CompilerServices;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
+    internal class DepthTracker : Component
+    {
+        public Entity target;
+        //if target.actualDepth is not set.
+        bool dirty = true;
+        public DepthTracker() : base(true, false)
+        {
+        }
+        public static DepthTracker Set(Entity trackto, Entity self)
+        {
+            DepthTracker v;
+            trackto.Add(v = new DepthTracker() { target = self });
+            v.Apply();
+            return v;
+        }
+        class some_cmp : IComparer<Entity>
+        {
+            public int Compare(Entity a, Entity b)
+            {
+                return Math.Sign(b.actualDepth - a.actualDepth);
+            }
+            public static some_cmp Instance = new();
+        }
+        public void Apply()
+        {
+            if (!Scene.Entities.unsorted)
+            {
+                var i = Scene.Entities.entities.BinarySearch(Entity, some_cmp.Instance);
+                if (i >= 0 && Scene.Entities.entities[i] == Entity)
+                {
+                    int d = Entity.Depth;
+                    foreach (var e in Scene.Entities.entities.Skip(i + 1).TakeWhile(e => e.actualDepth == d))
+                    {
+                        e.actualDepth -= 9.9999999747524271E-07;
+                        Scene.actualDepthLookup[d] += 9.9999999747524271E-07;
+                    }
+                    target.actualDepth = Entity.actualDepth - 9.9999999747524271E-07;
+                    Scene.Entities.MarkUnsorted();
+                    dirty = false;
+                    return;
+                }
+            }
+        }
+        public override void Update()
+        {
+            base.Update();
+            if (dirty)
+            {
+                Apply();
+            }
+        }
+        [SourceGen.Loader.Load]
+        public static void Load()
+        {
+            On.Monocle.Scene.SetActualDepth += Scene_SetActualDepth;
+        }
+
+        private static void Scene_SetActualDepth(On.Monocle.Scene.orig_SetActualDepth orig, Scene self, Entity entity)
+        {
+            orig(self, entity);
+            foreach (var dt in entity.Components.OfType<DepthTracker>())
+            {
+                dt.target.Depth = entity.Depth;
+                //if (dt.target.Scene is null)
+                //{
+                //    dt.RemoveSelf();
+                //}
+                dt.dirty = false;
+            }
+        }
+
+        [SourceGen.Loader.Unload]
+        public static void Unload()
+        {
+            On.Monocle.Scene.SetActualDepth -= Scene_SetActualDepth;
+        }
+    }
     [CustomEntity($"ReverseHelper/Dreamifier={nameof(ConstructDreamifier)}")]
     [Tracked(true)]
     [TrackedAs(typeof(DreamBlock), true)]
@@ -76,10 +153,12 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
 
 
+        DepthTracker Renderer;
         public override void Awake(Scene _scene)
         {
             base.Awake(_scene);
             var scene = SceneAs<Level>();
+            scene.SolidTiles.Add(Renderer = DepthTracker.Set(scene.SolidTiles, this));
             Rectangle tileBounds = scene.Session.MapData.TileBounds;
             var tiletex = scene.SolidTiles.Tiles.Tiles;
             int x = (int)(X / 8f) - tileBounds.Left;
@@ -87,7 +166,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             int tilesX = (int)Width / 8;
             int tilesY = (int)Height / 8;
             var collidemap = new VirtualMap<bool>(tilesX, tilesY, false);
-            var tg = new TileGrid(8, 8, tilesX, tilesY);
+            //var tg = new TileGrid(8, 8, tilesX, tilesY);
             for (int i = 0; i < tilesX; i++)
             {
                 for (int j = 0; j < tilesY; j++)
@@ -95,14 +174,14 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     if (tiletex[x + i, y + j] != tiletex.EmptyValue)
                     {
                         collidemap[i, j] = true;
-                        tg.Tiles[i, j] = tiletex[x + i, y + j];
+                        //tg.Tiles[i, j] = tiletex[x + i, y + j];
                     }
                 }
             }
             Collider = new Grid(8, 8, collidemap);
-            tileGrid=tg;
-            Add(tg);
-            tg.Visible = false;
+            //tileGrid=tg;
+            //Add(tg);
+            //tg.Visible = false;
 
             var tilechar = scene.SolidsData;
             for (int i = 0; i < tilesX; i++)
@@ -323,6 +402,15 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
         public override void Render()
         {
+            Render_NotNow();
+        }
+        public override void Removed(Scene scene)
+        {
+            base.Removed(scene);
+            Renderer.RemoveSelf();
+        }
+        public void Render_NotNow()
+        {
             Camera camera = SceneAs<Level>().Camera;
             Rectangle camerarect = new Rectangle((int)camera.X, (int)camera.Y, 320, 180);
 
@@ -331,10 +419,10 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 return;
             }
             //Components.Render();
-            tileGrid.Render();
+            //tileGrid.Render();
 
             Vector2 shake = new(0, 0);
-            foreach(var r in AltCollider)
+            foreach (var r in AltCollider)
             {
                 Draw.Rect(shake.X + r.X, shake.Y + r.Y, r.Width, r.Height, playerHasDreamDash ? fillColor : fillColorDeact);
             }
@@ -528,7 +616,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             return b;
         }
-        [SourceGen.Loader.Load]
         internal static void Load()
         {
             On.Celeste.DreamBlock.FootstepRipple += DreamBlock_FootstepRipple;
