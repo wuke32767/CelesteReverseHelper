@@ -38,17 +38,6 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
             }
             return isvoid;
         }
-        internal static string AccessibilityString(this Accessibility accessibility)
-        {
-            return accessibility switch
-            {
-                Accessibility.Public => "public",
-                Accessibility.Protected => "protected",
-                Accessibility.Internal => "internal",
-                Accessibility.Private => "private",
-                Accessibility.ProtectedAndInternal => "internal private",
-            };
-        }
     }
     [Generator]
     public class SourceGenerator : ISourceGenerator

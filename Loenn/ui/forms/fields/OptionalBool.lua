@@ -32,7 +32,7 @@ end
 
 local function fieldChanged(formField)
     return function(element, new)
-        local _ = LuaPanda and LuaPanda.BP()
+        --local _ = LuaPanda and LuaPanda.BP()
         local old = formField.currentValue
         if formField.checkbox and formField.checkbox.____has then
             formField.currentValue = formField.checkbox:getValue()
@@ -46,7 +46,7 @@ local function fieldChanged(formField)
     end
 end
 local function getCheckBox(name, value, options, selfx)
-        local _ = LuaPanda and LuaPanda.BP()
+    --local _ = LuaPanda and LuaPanda.BP()
     local rv = value
     if value == "" then
         rv = false

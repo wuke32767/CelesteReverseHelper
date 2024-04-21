@@ -13,8 +13,18 @@ zipline.nodeTexture = "isafriend/objects/zipline/handle_end"
 zipline.nodeLimits = {1, 1}
 zipline.nodeVisibility = "always"
 zipline.nodeLineRenderType = "line"
+local conserveoption = {
+    "None",
+    "SameDirection",
+    "All",
+    "AllWithDirection",
+}
 
-
+zipline.fieldInformation={
+    conserveSpeedMode = {
+        options = conserveoption
+    },
+}
 zipline.placements = {
     name = "Zipline Zipmover",
     data = {
@@ -23,6 +33,13 @@ zipline.placements = {
         maxSpeed="",
         strict=false,
         sprite="",
+        conserveSpeedMode="None",
+        conserveRate=1,
+        --conserveLimit=-1,
+        fixEndSpeed=true,
+        conserveMoving=false,
+        conserveReturning=false,
+        ignoreNegative=false,
     }
 }
 

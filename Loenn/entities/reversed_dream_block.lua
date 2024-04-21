@@ -24,7 +24,7 @@ RefillWallWrapper.fieldInformation = {
 
 
 RefillWallWrapper.placements={
-    name="Dream Block Configurer (Container)",
+    name="Dream Block Configurer (Reversed Dream Block Container)",
     data={
             width = 8, height = 8,
             alwaysEnable="",

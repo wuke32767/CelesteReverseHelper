@@ -259,7 +259,7 @@ namespace Celeste.Mod.ReverseHelper
             public static Func<Type, string[], object>? RegisterStaticTypes;
             public static Action<object>? Unregister;
         }
-        class BGswitch
+        public class BGswitch
         {
             [ModImportName("BGswitch")]
             public static class Interop

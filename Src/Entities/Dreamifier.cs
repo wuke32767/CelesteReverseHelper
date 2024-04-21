@@ -18,7 +18,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public DepthTracker() : base(true, false)
         {
         }
-        public static DepthTracker Set(Entity trackto, Entity self)
+        public static DepthTracker Track(Entity trackto, Entity self)
         {
             DepthTracker v;
             trackto.Add(v = new DepthTracker() { target = self });
@@ -41,7 +41,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 if (i >= 0 && Scene.Entities.entities[i] == Entity)
                 {
                     int d = Entity.Depth;
-                    foreach (var e in Scene.Entities.entities.Skip(i + 1).TakeWhile(e => e.actualDepth == d))
+                    foreach (var e in Scene.Entities.entities.Skip(i + 1).TakeWhile(e => e.Depth == d))
                     {
                         e.actualDepth -= 9.9999999747524271E-07;
                         Scene.actualDepthLookup[d] += 9.9999999747524271E-07;
@@ -87,14 +87,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
             On.Monocle.Scene.SetActualDepth -= Scene_SetActualDepth;
         }
     }
+
     [CustomEntity($"ReverseHelper/Dreamifier={nameof(ConstructDreamifier)}")]
-    [Tracked(true)]
-    [TrackedAs(typeof(DreamBlock), true)]
-    public class GridOrTilesDreamifier/*_AtLeastNow*/ : DreamBlock
+    public class DreamifierRenderer_Tiles/*_AtLeastNow*/ : DreamBlock
     {
-        public static GridOrTilesDreamifier ConstructDreamifier(Level level, LevelData levelData, Vector2 offset, EntityData data)
+        public static DreamifierRenderer_Tiles ConstructDreamifier(Level level, LevelData levelData, Vector2 offset, EntityData data)
         {
-            return new GridOrTilesDreamifier(data, offset);
+            return new DreamifierRenderer_Tiles(data, offset);
         }
 
         private static readonly BlendState DreamParticleBlend = new()
@@ -119,11 +118,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
         //    VirtualRenderTarget.Target.Dispose();
         //    VirtualRenderTarget.Target = null;
         //}
-        TileGrid tileGrid;
+        //TileGrid tileGrid;
         List<(Vector2 from, Vector2 to)> WobbleList = [];
         List<Vector2> CornerList = [];
         //VirtualRenderTarget VirtualRenderTarget;
-        Rectangle intersection;
+        //Rectangle intersection;
 
 
         public Color lineColor;
@@ -131,7 +130,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public Color linecolorDeact;
         public Color fillColorDeact;
 
-        public GridOrTilesDreamifier(Vector2 position, int width, int height, Color line, Color block,
+        public DreamifierRenderer_Tiles(Vector2 position, int width, int height, Color line, Color block,
             Color linede, Color fillde) : base(position, width, height, null, false, false, false)
         {
             lineColor = line;
@@ -145,7 +144,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             //VirtualRenderTarget = new VirtualRenderTarget("ReverseHelper_TileDreamBlock", Math.Min((int)Width, 320), Math.Min((int)Height, 180), 0, false, true);
         }
 
-        public GridOrTilesDreamifier(EntityData e, Vector2 offset)
+        public DreamifierRenderer_Tiles(EntityData e, Vector2 offset)
             : this(e.Position + offset, e.Width, e.Height,
                 e.HexaColor("lineColor"), e.HexaColor("fillColor"),
                 e.HexaColor("lineColorDeactivated"), e.HexaColor("fillColorDeactivated"))
@@ -158,9 +157,12 @@ namespace Celeste.Mod.ReverseHelper.Entities
         {
             base.Awake(_scene);
             var scene = SceneAs<Level>();
-            scene.SolidTiles.Add(Renderer = DepthTracker.Set(scene.SolidTiles, this));
+            SolidTiles solidTiles = scene.SolidTiles;
+            var tilechar = scene.SolidsData;
+
+            solidTiles.Add(Renderer = DepthTracker.Track(solidTiles, this));
             Rectangle tileBounds = scene.Session.MapData.TileBounds;
-            var tiletex = scene.SolidTiles.Tiles.Tiles;
+            var tiletex = solidTiles.Tiles.Tiles;
             int x = (int)(X / 8f) - tileBounds.Left;
             int y = (int)(Y / 8f) - tileBounds.Top;
             int tilesX = (int)Width / 8;
@@ -178,12 +180,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     }
                 }
             }
-            Collider = new Grid(8, 8, collidemap);
+            //Collider = new Grid(8, 8, collidemap);
             //tileGrid=tg;
             //Add(tg);
             //tg.Visible = false;
 
-            var tilechar = scene.SolidsData;
             for (int i = 0; i < tilesX; i++)
             {
                 for (int j = 0; j < tilesY; j++)
@@ -330,7 +331,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             Setup();
             //Add(new BeforeRenderHook(BeforeRender));
 
-            var other = collidemap.Clone();
+            var other = collidemap;//.Clone();
             for (int i = 0; i < tilesX; i++)
             {
                 for (int j = 0; j < tilesY; j++)
@@ -398,7 +399,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public bool playerHasDreamDash
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => ReversedDreamBlock.dreamblock_enabled(this);
+            get => DreamBlockConfigurer.dreamblock_enabled(this);
         }
         public override void Render()
         {
@@ -530,7 +531,14 @@ namespace Celeste.Mod.ReverseHelper.Entities
         private float wobbleTo = Calc.Random.NextFloat((float)Math.PI * 2f);
 
         private float wobbleEase;
-
+        public float animTimer;
+        public MTexture[] particleTextures =
+        [
+            GFX.Game["objects/dreamblock/particles"].GetSubtexture(14, 0, 7, 7),
+            GFX.Game["objects/dreamblock/particles"].GetSubtexture(7, 0, 7, 7),
+            GFX.Game["objects/dreamblock/particles"].GetSubtexture(0, 0, 7, 7),
+            GFX.Game["objects/dreamblock/particles"].GetSubtexture(7, 0, 7, 7)
+        ];
         public override void Update()
         {
             Entity_Update();
@@ -545,11 +553,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     wobbleTo = Calc.Random.NextFloat((float)Math.PI * 2f);
                 }
 
-                SurfaceSoundIndex = 12;
+                //SurfaceSoundIndex = 12;
             }
             else
             {
-                SurfaceSoundIndex = 11;
+                //SurfaceSoundIndex = 11;
             }
 
         }
@@ -616,27 +624,50 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             return b;
         }
+        [SourceGen.Loader.Load]
         internal static void Load()
         {
-            On.Celeste.DreamBlock.FootstepRipple += DreamBlock_FootstepRipple;
+            //On.Celeste.DreamBlock.FootstepRipple += DreamBlock_FootstepRipple;
+        }
+        Vector2 PutInside(Vector2 pos)
+        {
+            if (pos.X > base.Right)
+            {
+                pos.X -= (float)Math.Ceiling((pos.X - base.Right) / base.Width) * base.Width;
+            }
+            else if (pos.X < base.Left)
+            {
+                pos.X += (float)Math.Ceiling((base.Left - pos.X) / base.Width) * base.Width;
+            }
+
+            if (pos.Y > base.Bottom)
+            {
+                pos.Y -= (float)Math.Ceiling((pos.Y - base.Bottom) / base.Height) * base.Height;
+            }
+            else if (pos.Y < base.Top)
+            {
+                pos.Y += (float)Math.Ceiling((base.Top - pos.Y) / base.Height) * base.Height;
+            }
+
+            return pos;
         }
 
-        private static void DreamBlock_FootstepRipple(On.Celeste.DreamBlock.orig_FootstepRipple orig, DreamBlock self, Vector2 position)
-        {
-            if (self is GridOrTilesDreamifier ex)
-            {
-                ex.FootstepRipple(position);
-            }
-            else
-            {
-                orig(self, position);
-            }
-        }
+        //private static void DreamBlock_FootstepRipple(On.Celeste.DreamBlock.orig_FootstepRipple orig, DreamBlock self, Vector2 position)
+        //{
+        //    if (self is DreamifierRenderer_Tiles ex)
+        //    {
+        //        ex.FootstepRipple(position);
+        //    }
+        //    else
+        //    {
+        //        orig(self, position);
+        //    }
+        //}
         public void FootstepRipple(Vector2 position)
         {
             if (playerHasDreamDash)
             {
-                foreach (GridOrTilesDreamifier rects in Scene.Tracker.Entities[typeof(GridOrTilesDreamifier)])
+                foreach (DreamifierRenderer_Tiles rects in Scene.Tracker.Entities[typeof(DreamifierRenderer_Tiles)])
                 {
                     foreach (var rec in rects.AltCollider)
                     {
@@ -651,7 +682,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         [SourceGen.Loader.Unload]
         internal static void Unload()
         {
-            On.Celeste.DreamBlock.FootstepRipple -= DreamBlock_FootstepRipple;
+            //On.Celeste.DreamBlock.FootstepRipple -= DreamBlock_FootstepRipple;
 
         }
     }

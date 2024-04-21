@@ -78,7 +78,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
 
     [CustomEntity("ReverseHelper/ReversedDreamBlockContainer")]
-    public class ReversedDreamBlock : Entity
+    public class DreamBlockConfigurer : Entity
     {
 
         public new Level Scene { get => base.Scene as Level; }
@@ -96,7 +96,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             base.Update();
         }
         public static MTexture? invalid_img;
-        public ReversedDreamBlock(Vector2 position, float width, float height, bool? alwaysenable, bool? alw, bool? rev, bool? highPrior) : base(position)
+        public DreamBlockConfigurer(Vector2 position, float width, float height, bool? alwaysenable, bool? alw, bool? rev, bool? highPrior) : base(position)
         {
             alwaysEnable = alwaysenable;
             alwaysDisable = alw;
@@ -114,7 +114,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
 
         // Token: 0x06000EF3 RID: 3827 RVA: 0x0003A0EC File Offset: 0x000382EC
-        public ReversedDreamBlock(EntityData e, Vector2 offset) : this(e.Position + offset, e.Width, e.Height, e.OptionalBool("alwaysEnable"), e.OptionalBool("alwaysDisable"), e.OptionalBool("reverse", true)/*why it's called ReversedDreamBlockContainer*/, e.OptionalBool("highPriority"))
+        public DreamBlockConfigurer(EntityData e, Vector2 offset) : this(e.Position + offset, e.Width, e.Height, e.OptionalBool("alwaysEnable"), e.OptionalBool("alwaysDisable"), e.OptionalBool("reverse", true)/*why it's called ReversedDreamBlockContainer*/, e.OptionalBool("highPriority"))
         {
         }
         static ILHook dashcoroutine;

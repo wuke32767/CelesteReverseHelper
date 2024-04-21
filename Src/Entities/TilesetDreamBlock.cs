@@ -91,7 +91,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         public bool playerHasDreamDash
         {
-            get => ReversedDreamBlock.dreamblock_enabled(this);
+            get => DreamBlockConfigurer.dreamblock_enabled(this);
         }
         public override void Render()
         {
@@ -161,7 +161,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
             public Color Color(Entity td)
             {
-                return ReversedDreamBlock.dreamblock_enabled(td) ? Colora : Colord;
+                return DreamBlockConfigurer.dreamblock_enabled(td) ? Colora : Colord;
             }
 
             public Color Colord;

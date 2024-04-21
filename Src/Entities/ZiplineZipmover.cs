@@ -16,6 +16,12 @@ namespace Celeste.Mod.ReverseHelper
     [CustomEntity("ReverseHelper/ZiplineZipmover")]
     public class ZiplineZipmover : Entity
     {
+        public static Ease.Easer SineInEx = (float t) => t switch
+            {
+                < 1 => (float)(0.0 - (double)(float)Math.Cos(1.5707963705062866 * (double)t) + 1.0), //Ease.SineIn(t),
+                _ => (float)(1 + (t - 1) * Math.PI / 2)
+            };
+
         public const string NeverUsedZiplineFlag = "ReverseHelper_IsaGrabBag_NeverUsedZipline";
 
         private const float ZIP_SPEED = 120f;
@@ -39,12 +45,42 @@ namespace Celeste.Mod.ReverseHelper
         internal static Color ropeColor = Calc.HexToColor("663931");
         internal static Color ropeLightColor = Calc.HexToColor("9b6157");
 
+
+        float SinePosition = 0;
+        float ConservedPosition = 0;
+        enum Extension
+        {
+            None, SameDirection, All, AllWithDirection
+        }
+        bool IgnoreNegative;
+        float conservedSpeed = 0;
+        Extension conserveSpeedMode;
+        bool anotherConserveWaiting;
+        bool conserveMoving;
+        bool conserveReturning;
+        float extendRate;
+        float extendLimit;
+
+        bool fixEndSpeed;
+
+        bool acceptExtraSpeed = false;
+
         static Vector2 collide_offset;
         float speedRate = 2.0f;
         bool strict;
         static object? speedrun;
+        Vector2 deltaNormalized;
+        float deltaLength;
+
+        readonly Vector2 MaxSpeed;//=>
+                                  //{
+                                  //    var distance = deltaLength;
+                                  //    var orig_endspeed = distance * (Math.PI / 2);
+                                  //    MaxSpeed = deltaNormalized* speedRate * (float) orig_endspeed;
+                                  //}//cached
+
         public ZiplineZipmover(EntityData e, Vector2 offset)
-            : base(e.Position + offset)
+                : base(e.Position + offset)
         {
             //LeftEdge = X;
             //RightEdge = X;
@@ -56,7 +92,17 @@ namespace Celeste.Mod.ReverseHelper
             //from = _data.Position + offset;
             target = e.Nodes[0] + offset;
             start = Position;
+            deltaNormalized = target - start;
+            deltaLength = deltaNormalized.Length();
+            deltaNormalized = deltaNormalized.SafeNormalize();
             strict = e.Bool("strict");
+            conserveSpeedMode = e.Enum("conserveSpeedMode", Extension.None);
+            extendRate = e.Float("conserveRate", 1);
+            extendLimit = e.Float("conserveLimit", -1);
+            fixEndSpeed = e.Bool("fixEndSpeed", false);
+            conserveMoving = e.Bool("conserveMoving", false);
+            conserveReturning = e.Bool("conserveReturning", false);
+            IgnoreNegative = e.Bool("ignoreNegative", false);
             float p = e.Float("time", -2);
             if (p <= 0)
             {
@@ -64,7 +110,7 @@ namespace Celeste.Mod.ReverseHelper
                 if (p > 0)
                 {
                     //  distance / endspeed == 1 / (pi/2)
-                    var distance = (target - start).Length();
+                    var distance = deltaLength;
                     var orig_endspeed = distance * (Math.PI / 2);
                     speedRate = (float)(p / orig_endspeed);
                 }
@@ -72,6 +118,11 @@ namespace Celeste.Mod.ReverseHelper
             else
             {
                 speedRate = 1 / p;
+            }
+            {
+                var distance = deltaLength;
+                var orig_endspeed = distance * (Math.PI / 2);
+                MaxSpeed = deltaNormalized * speedRate * (float)orig_endspeed;
             }
             usesStamina = e.Bool("usesStamina", true);
             //height = (_data.Position + offset).Y;
@@ -108,25 +159,57 @@ namespace Celeste.Mod.ReverseHelper
         public override void Added(Scene scene)
         {
             base.Added(scene);
-            if(sprite is null)
+            if (sprite is null)
             {
-                RemoveSelf(); 
+                RemoveSelf();
                 return;
             }
             scene.Add(new ZiplineRender(this));
         }
-
+        bool fixframe = false;
         public override void Update()
         {
             base.Update();
+            Vector2 oPos = Position;
+            var clamp = ConservedPosition + SinePosition;
+            if (clamp < 0)
+            {
+                ConservedPosition = -SinePosition;
+                clamp = 0;
+
+                conservedSpeed += (conservedSpeed + SineSpeed) / 2 * -3;
+            }
+            else if (clamp > deltaLength)
+            {
+                ConservedPosition = deltaLength - SinePosition;
+                clamp = deltaLength;
+                conservedSpeed += (conservedSpeed + SineSpeed) / 2 * -3;
+            }
+            Position = Calc.Approach(start, target, clamp);
+
+            speed_mul_time_is_distance = Position - oPos;
+
+            if (fixframe)
+            {
+                speed_mul_time_is_distance = (MaxSpeed * (returning ? -1 : 1) + conservedSpeed * deltaNormalized) * Engine.DeltaTime;
+            }
+            fixframe = false;
             Player player = Engine.Scene.Tracker.GetEntity<Player>();
-            Position += speed_mul_time_is_distance;
 
             if (player == null || player.Dead)
             {
                 return;
             }
-
+            last_speed_grace -= Engine.DeltaTime;
+            if (last_speed_grace < 0)
+            {
+                last_speed_mul_time_is_distance = Vector2.Zero;
+            }
+            if (speed_mul_time_is_distance.LengthSquared() > last_speed_mul_time_is_distance.LengthSquared())
+            {
+                last_speed_mul_time_is_distance = speed_mul_time_is_distance;
+                last_speed_grace = 0.15f - Engine.DeltaTime;
+            }
             if (grabbed)
             {
                 //if (Math.Abs(player.Speed.X) > 20)
@@ -148,7 +231,11 @@ namespace Celeste.Mod.ReverseHelper
                 {
                     player.StateMachine.State = Player.StNormal;
                 };
-                player.LiftSpeed = speed;
+                player.LiftSpeed = /*speed*/fixEndSpeed switch
+                {
+                    true => last_speed,
+                    false => speed,
+                }; ;
                 player.MoveToX(Position.X - player.Collider.CenterX - collide_offset.X, onCollide);
                 player.MoveToY(Position.Y + 22 - collide_offset.Y, onCollide);
             }
@@ -156,7 +243,7 @@ namespace Celeste.Mod.ReverseHelper
             {
                 if (currentGrabbed == null && player != null && !player.Dead && player.CanUnDuck && Input.GrabCheck && CanGrabZip(this) && (!strict || !player.CollideCheck<Solid>(new Vector2(Position.X - player.Collider.CenterX, Position.Y + 22))))
                 {
-                    bool isTired = (bool)Player_IsTired.GetValue(player);//DynamicData.For(player).Get<bool>("IsTired");
+                    bool isTired = player.IsTired;//DynamicData.For(player).Get<bool>("IsTired");
                     if (player.CollideCheck(this) && !isTired)
                     {
                         var pos = player.Position;
@@ -187,82 +274,111 @@ namespace Celeste.Mod.ReverseHelper
                 //Position.Y = height;
             }
 
-            if (speed_mul_time_is_distance.LengthSquared() > last_speed_mul_time_is_distance.LengthSquared())
-            {
-                last_speed_mul_time_is_distance = speed_mul_time_is_distance;
-                last_speed_grace = 0.15f;
-            }
             speed_mul_time_is_distance = Vector2.Zero;
-            last_speed_grace -= Engine.DeltaTime;
-            if (last_speed_grace < 0)
-            {
-                last_speed_mul_time_is_distance = Vector2.Zero;
-            }
         }
+        bool returning = false;
+        float SineSpeed;
         private IEnumerator Sequence()
         {
-            Vector2 start = Position;
+
             while (true)
             {
+                SineSpeed = 0;
+                returning = false;
+                acceptExtraSpeed = true;
                 if (grabbed)
                 {
                     sfx.Play("event:/game/01_forsaken_city/zip_mover", null, 0f);
                     Input.Rumble(RumbleStrength.Medium, RumbleLength.Short);
+                    SinePosition = ConservedPosition = 0;
                     //this.StartShaking(0.1f);
                     yield return 0.1f;
+                    acceptExtraSpeed = conserveMoving;
+                    if (conservedSpeed < 0)
+                    {
+                        conservedSpeed = 0;
+                    }
+
                     //Tween tween = Tween.Create(Tween.TweenMode.Oneshot, Ease.SineIn, 0.5f, true);
                     float at = 0f;
-                    while (at < 1f)
+                    while (ConservedPosition + SinePosition < deltaLength)
                     {
                         yield return null;
-                        at = Calc.Approach(at, 1f, speedRate * Engine.DeltaTime);
-                        percent = Ease.SineIn(at);
-                        Vector2 vector = Vector2.Lerp(start, target, percent);
+                        ConservedPosition += conservedSpeed * Engine.DeltaTime;
+                        if (conservedSpeed < 0)
+                        {
+                            conservedSpeed += MaxSpeed.Length() * Engine.DeltaTime;
+                        }
+                        at += speedRate * Engine.DeltaTime;
+                        percent = SineInEx(at);
+
+                        float position = deltaLength * percent;
                         //this.ScrapeParticlesCheck(vector);
                         //if (this.Scene.OnInterval(0.1f))
                         //{
                         //    this.pathRenderer.CreateSparks();
                         //}
-                        MoveSpeedTo(vector);
-
+                        SineSpeed = (position - SinePosition) / Engine.DeltaTime;
+                        SinePosition = position;
                     }
 
                     //this.StartShaking(0.2f);
                     Input.Rumble(RumbleStrength.Strong, RumbleLength.Medium);
                     SceneAs<Level>().Shake(0.3f);
+                    fixframe = fixEndSpeed;
                     //this.StopPlayerRunIntoAnimation = true;
-                    yield return 0.5f;
+                    yield return 0.15f;
+                    returning = true;
+                    SinePosition = deltaLength;
+                    ConservedPosition = 0;
+                    yield return 0.25f;
+                    conservedSpeed = 0;
+                    acceptExtraSpeed = conserveReturning;
+                    yield return 0.10f;
 
-
+                    if (conservedSpeed > 0)
+                    {
+                        conservedSpeed = 0;
+                    }
                     //this.StopPlayerRunIntoAnimation = false;
                     //this.streetlight.SetAnimationFrame(2);
                     at = 0f;
-                    while (at < 1f)
+                    while (ConservedPosition + SinePosition > 0)
                     {
                         yield return null;
-                        at = Calc.Approach(at, 1f, speedRate / 4 * Engine.DeltaTime);
-                        percent = 1f - Ease.SineIn(at);
-                        Vector2 position = Vector2.Lerp(target, start, Ease.SineIn(at));
-                        MoveSpeedTo(position);
+                        ConservedPosition += conservedSpeed * Engine.DeltaTime;
+                        if (conservedSpeed > 0)
+                        {
+                            conservedSpeed -= MaxSpeed.Length() * Engine.DeltaTime / 4;
+                        }
+
+                        at += speedRate * Engine.DeltaTime / 4;
+                        percent = 1f - SineInEx(at);
+                        float position = MathHelper.Lerp(deltaLength, 0, SineInEx(at));
+                        SineSpeed = (position - SinePosition) / Engine.DeltaTime;
+                        SinePosition = position;
+
                     }
                     //this.StopPlayerRunIntoAnimation = true;
                     //this.StartShaking(0.2f);
                     //this.streetlight.SetAnimationFrame(1);
-
+                    conservedSpeed = 0;
+                    acceptExtraSpeed = false;
+                    fixframe = fixEndSpeed;
                     yield return 0.5f;
+                    SinePosition = ConservedPosition = 0;
+                    conservedSpeed = 0;
+                    returning = false;
                 }
                 else
                 {
+                    conservedSpeed = 0;
+                    ConservedPosition = 0;
                     yield return null;
                 }
             }
         }
 
-        private void MoveSpeedTo(Vector2 position)
-        {
-            var delta = position - Position;
-            speed_mul_time_is_distance = delta;
-        }
 
         public override void Render()
         {
@@ -272,7 +388,7 @@ namespace Celeste.Mod.ReverseHelper
                 {
                     //sprite.Visible = true;
                     var p = Engine.Scene.Tracker.GetEntity<Player>();
-                    if(p is not null)
+                    if (p is not null)
                     {
                         sprite.Play(p.Facing == Facings.Left ? "held_l" : "held_r");
                     }
@@ -375,7 +491,6 @@ namespace Celeste.Mod.ReverseHelper
 
             //Player self = Engine.Scene.Tracker.GetEntity<Player>();
             //Vector2 speed = self.Speed;
-            self.Speed = Vector2.Zero;
             //currentGrabbed.speed_mul_time = 0;
 
             self.Sprite.Play("pickup");
@@ -403,7 +518,43 @@ namespace Celeste.Mod.ReverseHelper
             //}
 
             currentGrabbed!.grabbed = true;
+            if (currentGrabbed.acceptExtraSpeed)
+            {
+                var del = currentGrabbed.deltaNormalized;
+                var dirx = self.Speed.X * del.X + self.Speed.Y * del.Y;
+                if (dirx == 0)
+                {
+                    dirx = (currentGrabbed.returning ? -1 : 1);
+                }
+                else
+                {
+                    dirx = Math.Sign(dirx);
+                }
+                var res = currentGrabbed.conserveSpeedMode switch
+                {
+                    Extension.SameDirection => self.Speed.X * del.X + self.Speed.Y * del.Y,
+                    Extension.All => (currentGrabbed.returning ? -1 : 1) * self.Speed.Length(),
+                    Extension.AllWithDirection => dirx * self.Speed.Length(),
+                    _ => 0,
+                };
+                if (Math.Abs(res) > currentGrabbed.extendLimit && currentGrabbed.extendLimit >= 0)
+                {
+                    res = Math.Sign(res) * currentGrabbed.extendLimit;
+                }
+                //if(currentGrabbed.returning)
+                //{
+                //    res = -res;
+                //}
+                if (currentGrabbed.IgnoreNegative && (res > 0 == currentGrabbed.returning/*(res>0&&currentGrabbed.returning)||(res<0&&!currentGrabbed.returning)*/))
+                {
 
+                }
+                else
+                {
+                    currentGrabbed.conservedSpeed += res * currentGrabbed.extendRate;
+                }
+            }
+            self.Speed = Vector2.Zero;
             //self.Speed = speed;
 
             //MoveEntityTo(self, playerLerp);
@@ -424,7 +575,6 @@ namespace Celeste.Mod.ReverseHelper
             ziplineBuffer = 0.35f;
             s1mpleend = false;
         }
-        static PropertyInfo Player_IsTired = typeof(Player).GetProperty("IsTired", BindingFlags.NonPublic | BindingFlags.Instance);
         //static FieldInfo Player_moveX = typeof(Player).GetField("moveX", BindingFlags.NonPublic | BindingFlags.Instance);
         private SoundSource sfx;
         internal float percent;

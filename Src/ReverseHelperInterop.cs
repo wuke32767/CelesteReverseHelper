@@ -18,7 +18,7 @@ namespace Celeste.Mod.ReverseHelper
         {
             if (targetType is not null && ActivateNoRoutine is not null && DeactivateNoRoutine is not null)
             {
-                ReversedDreamBlock.ExternalDreamBlockLike[targetType] = (ActivateNoRoutine, DeactivateNoRoutine);
+                DreamBlockConfigurer.ExternalDreamBlockLike[targetType] = (ActivateNoRoutine, DeactivateNoRoutine);
             }
         }
         /// <summary> 
@@ -28,7 +28,7 @@ namespace Celeste.Mod.ReverseHelper
         /// <param name="e">the entity to be checked.</param>
         public static bool PlayerHasDreamDash(Entity e)
         {
-            return ReversedDreamBlock.dreamblock_enabled(e);
+            return DreamBlockConfigurer.dreamblock_enabled(e);
         }
         /// <summary>
         /// If v is not null, set reverse mode to v.

@@ -36,7 +36,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 foreach (var v in level.Tracker.GetEntities<DreamBlock>())
                 {
                     var vv = (v as DreamBlock)!;
-                    if (ReversedDreamBlock.dreamblock_enabled(vv))
+                    if (DreamBlockConfigurer.dreamblock_enabled(vv))
                     {
                         playerHasDreamDashInfo.SetValue(vv, false);//for brokemia
                         vv.ActivateNoRoutine();
@@ -47,13 +47,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
                         vv.DeactivateNoRoutine();
                     }
                 }
-                foreach (var (t, call) in ReversedDreamBlock.ExternalDreamBlockLike)
+                foreach (var (t, call) in DreamBlockConfigurer.ExternalDreamBlockLike)
                 {
                     if (level.Tracker.Entities.TryGetValue(t, out var list))
                     {
                         foreach (var v in list)
                         {
-                            if (ReversedDreamBlock.dreamblock_enabled(v))
+                            if (DreamBlockConfigurer.dreamblock_enabled(v))
                             {
                                 call.activate?.Invoke(v);
                             }
