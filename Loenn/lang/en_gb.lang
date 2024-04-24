@@ -51,6 +51,7 @@ entities.ReverseHelper/ZiplineZipmover.attributes.description.strict=Madeline sh
 entities.ReverseHelper/ZiplineZipmover.attributes.description.sprite=Leave it blank to use IsaGrabBag ZipLine sprite.\nSame format with IsaGrabBag ZipLine.
 entities.ReverseHelper/ZiplineZipmover.attributes.description.fixEndSpeed=madeline will lose speed when the attribute group meets certain conditions. (default attribute group is not affected.) check this to fix it.\nit also fixed theoretical MaxSpeed, you could move as fast as you fill.\nhowever it breaks some back compatbility, so it's an attribute so you can close it for old project.
 entities.ReverseHelper/ZiplineZipmover.attributes.description.conserveSpeedMode=None: not conserve speed.\nSameDirection: discard vertical component of speed.\nAll: conserves absolute value.\nAllWithDirection: conserves all speed, with their positive and negative signs. (rotate it to the nearest move direction.)
+entities.ReverseHelper/ZiplineZipmover.attributes.description.ignoreNegative=if direction of conserved speed is different from moving direction, discard it.
 
 entities.ReverseHelper/SaferFireIceBarrier.attributes.description.cold=if checked, Appears when core mode is Cold. 
 entities.ReverseHelper/SaferFireIceBarrier.attributes.description.hot=if checked, Appears when core mode is Hot. 

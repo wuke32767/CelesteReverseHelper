@@ -25,6 +25,8 @@ zipline.fieldInformation={
         options = conserveoption
     },
 }
+zipline.fieldOrder={"x","y","sprite","maxSpeed","time","fixEndSpeed","strict","useStamina",
+"conserveSpeedMode","conserveRate","conserveLimit","conserveMoving","conserveReturning","ignoreNegative",}
 zipline.placements = {
     name = "Zipline Zipmover",
     data = {
