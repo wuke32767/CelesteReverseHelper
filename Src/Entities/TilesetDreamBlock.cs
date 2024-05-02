@@ -14,12 +14,16 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public char tiletype;
         public Color lineColor;
         public Color fillColor;
-        public Color linecolorDeact; 
+        public Color linecolorDeact;
         public Color fillColorDeact;
         public bool blendIn;
+
+        public bool bgtex;
+        public bool fgmod;
+        public bool bgmod;
         public TilesetDreamBlock(Vector2 position, float width, float height, char tiletype, bool blendIn,
             Color line, Color block, Color linede, Color fillde,
-            Vector2? Node, bool fastmov, bool oneuse, bool below)
+            Vector2? Node, bool fastmov, bool oneuse, bool below, bool bgt, bool fgc, bool bgc)
             : base(position, width, height, Node, fastmov, oneuse, below)
         {
             this.tiletype = tiletype;
@@ -28,11 +32,25 @@ namespace Celeste.Mod.ReverseHelper.Entities
             fillColor = block;
             linecolorDeact = linede;
             fillColorDeact = fillde;
+            bgtex = bgt;
+            fgmod = fgc;
+            bgmod = bgc;
+            void setCollidable(bool cur)
+            {
+                Collidable = cur ? bgmod : fgmod;
+            }
+            var col = ReverseHelperExtern.BGswitch.Interop.GetBGModeListener?.Invoke(setCollidable);
+            if (col is not null)
+            {
+                setCollidable(ReverseHelperExtern.BGswitch.Interop.IsBGMode?.Invoke() ?? false);
+                Add(col);
+            }
         }
         public TilesetDreamBlock(EntityData e, Vector2 offset)
             : this(e.Position + offset, e.Width, e.Height, e.Char("tiles", '3'), e.Bool("blendIn"),
                   e.HexaColor("lineColor"), e.HexaColor("fillColor"), e.HexaColor("lineColorDeactivated"), e.HexaColor("fillColorDeactivated"),
-                  e.FirstNodeNullable(offset), e.Bool("fastMoving"), e.Bool("oneUse"), e.Bool("below"))
+                  e.FirstNodeNullable(offset), e.Bool("fastMoving"), e.Bool("oneUse"), e.Bool("below"),
+                  e.Bool("bgAppearance", false), e.Bool("fgCollidable", true), e.Bool("bgCollidable", true))
         {
         }
         public override void Awake(Scene scene)
@@ -53,7 +71,14 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 int y = (int)(Y / 8f) - tileBounds.Top;
                 int tilesX = (int)Width / 8;
                 int tilesY = (int)Height / 8;
-                tileGrid = GFX.FGAutotiler.GenerateOverlay(tiletype, x, y, tilesX, tilesY, solidsData).TileGrid;
+                if (bgtex)
+                {
+                    tileGrid = GFX.BGAutotiler.GenerateOverlay(tiletype, x, y, tilesX, tilesY, solidsData).TileGrid;
+                }
+                else
+                {
+                    tileGrid = GFX.FGAutotiler.GenerateOverlay(tiletype, x, y, tilesX, tilesY, solidsData).TileGrid;
+                }
                 Add(new EffectCutout());
                 //Depth = -10501;
             }

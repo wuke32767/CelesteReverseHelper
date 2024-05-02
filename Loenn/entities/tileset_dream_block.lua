@@ -47,6 +47,9 @@ cbarea.placements = {
         fastMoving=false,
         oneUse=false,
         below=false,
+        bgAppearance=false,
+        fgCollidable=true,
+        bgCollidable=true,
     }
     
 }
