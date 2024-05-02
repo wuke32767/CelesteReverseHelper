@@ -138,18 +138,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
             type_resolved.Add(t);
             yield return (t.Name, t);
             yield return (t.FullName, t);
-            var fo = (System.Collections.ObjectModel.ReadOnlyCollection<CustomAttributeTypedArgument>?)(t
-                                .CustomAttributes
-                                .FirstOrDefault(x => x.AttributeType == typeof(CustomEntityAttribute))?
-                                .ConstructorArguments
-                                .First()
-                                .Value);
-            if (fo is not null)
+            foreach (var s in (Attribute.GetCustomAttribute(t, typeof(CustomEntityAttribute)) as CustomEntityAttribute)?.IDs ?? Enumerable.Empty<string>())
             {
-                foreach (var s in fo)
-                {
-                    yield return ((s.Value as string)!.Split('=')[0].Trim(), t);
-                }
+                yield return (s.Split('=')[0].Trim(), t);
             }
         }
         public override void Awake(Scene scene)

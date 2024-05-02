@@ -93,11 +93,7 @@ namespace Celeste.Mod.ReverseHelper
                 static Type? Type;
 
                 // static FieldInfo? OnDashCollide;
-                static MethodInfo? addSidewaysJumpthrusInHorizontalMoveMethods;
-                static MethodInfo? checkCollisionWithSidewaysJumpthruWhileMoving;
                 static MethodInfo? activatehooks;
-                public static ILHook? SomeLambdaHook;
-                public static ILHook? checkCollisionWithSidewaysJumpthruWhileMovingHook;
                 public static MethodInfo? TheTarget;
 
                 public static DashCollision? dashCollision;
@@ -105,8 +101,6 @@ namespace Celeste.Mod.ReverseHelper
                 public static void LoadContent()
                 {
                     Type = Assembly?.GetType("Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru");
-                    addSidewaysJumpthrusInHorizontalMoveMethods = Type?.GetMethod("addSidewaysJumpthrusInHorizontalMoveMethods", bf);
-                    checkCollisionWithSidewaysJumpthruWhileMoving = Type?.GetMethod("checkCollisionWithSidewaysJumpthruWhileMoving", bf);
                     activatehooks = Type?.GetMethod("activateHooks", bf);
                 }
 
@@ -302,10 +296,6 @@ namespace Celeste.Mod.ReverseHelper
         public static void Unload()
         {
 
-            SidewaysJumpThru.SomeLambdaHook?.Dispose();
-            SidewaysJumpThru.SomeLambdaHook = null;
-            SidewaysJumpThru.checkCollisionWithSidewaysJumpthruWhileMovingHook?.Dispose();
-            SidewaysJumpThru.checkCollisionWithSidewaysJumpthruWhileMovingHook = null;
         }
 
     }

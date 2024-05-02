@@ -213,7 +213,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     {
                         //(item is DreamBlock i2);
                         {
-                            if (dreamblock_enabled(item))
+                             if (dreamblock_enabled(item))
                             {
                                 //is_active
                                 db = item as DreamBlock;

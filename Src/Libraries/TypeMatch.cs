@@ -10,6 +10,7 @@ namespace Celeste.Mod.ReverseHelper.Libraries
     public struct TypeMatch
     {
         private HashSet<string> typesSet;
+        private HashSet<Type> cachedTypesSet = [];
 
         public TypeMatch(string types)
         {
@@ -18,22 +19,29 @@ namespace Celeste.Mod.ReverseHelper.Libraries
 
         public bool IsMatch(Type type)
         {
+            if(cachedTypesSet.Contains(type))
+            {
+                return true;
+            }
             var typesSet_cp = typesSet;
-            return
-                typesSet.Contains(type.FullName)
-                || (typesSet.Contains(type.Name)
-                || (type
-                    .CustomAttributes
-                    .FirstOrDefault(x => x.AttributeType == typeof(CustomEntityAttribute))?
-                    .ConstructorArguments
-                    .First()
-                    .Value as System.Collections.ObjectModel.ReadOnlyCollection<CustomAttributeTypedArgument>)
-                    .Select(x => (x.Value as string)!.Split('=')[0].Trim())
-                    .Any(x => typesSet_cp.Contains(x!)));
+            bool flag=typesSet.Contains(type.FullName)
+                || typesSet.Contains(type.Name)
+                || ((Attribute.GetCustomAttribute(type, typeof(CustomEntityAttribute)) as CustomEntityAttribute)?
+                    .IDs?
+                    .Select(x => x.Split('=')[0].Trim())
+                    .Any(x => typesSet_cp.Contains(x!))
+                    ?? false);
+            if(flag)
+            {
+                cachedTypesSet.Add(type);
+            }
+            return flag;
+                
         }
         public void Add(TypeMatch other)
         {
-
+            typesSet.UnionWith(other.typesSet);
+            cachedTypesSet.UnionWith(other.cachedTypesSet);
         }
 
         public bool Contains(Type type) => IsMatch(type);

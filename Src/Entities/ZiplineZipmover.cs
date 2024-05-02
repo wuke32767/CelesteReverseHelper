@@ -11,7 +11,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using YamlDotNet.Core.Tokens;
 
-namespace Celeste.Mod.ReverseHelper
+namespace Celeste.Mod.ReverseHelper.Entities
 {
     [CustomEntity("ReverseHelper/ZiplineZipmover")]
     public class ZiplineZipmover : Entity

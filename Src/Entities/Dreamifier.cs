@@ -14,7 +14,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
     {
         public Entity target;
         //if target.actualDepth is not set.
-        bool dirty = true;
+        //if it's not dirty, no need to update.
+        bool dirty { get => Active; set => Active = value; }
         public DepthTracker() : base(true, false)
         {
         }
@@ -56,7 +57,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public override void Update()
         {
             base.Update();
-            if (dirty)
+            //if (dirty)
             {
                 Apply();
             }
@@ -89,11 +90,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
     }
 
     [CustomEntity($"ReverseHelper/Dreamifier={nameof(ConstructDreamifier)}")]
-    public class DreamifierRenderer_Tiles/*_AtLeastNow*/ : DreamBlock
+    [Tracked]
+    [TrackedAs(typeof(DreamBlock))]
+    public class DreamifierRenderer_Grid/*_AtLeastNow*/ : DreamBlock
     {
-        public static DreamifierRenderer_Tiles ConstructDreamifier(Level level, LevelData levelData, Vector2 offset, EntityData data)
+        public static DreamifierRenderer_Grid ConstructDreamifier(Level level, LevelData levelData, Vector2 offset, EntityData data)
         {
-            return new DreamifierRenderer_Tiles(data, offset);
+            return new DreamifierRenderer_Grid(data, offset);
         }
 
         private static readonly BlendState DreamParticleBlend = new()
@@ -130,7 +133,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public Color linecolorDeact;
         public Color fillColorDeact;
 
-        public DreamifierRenderer_Tiles(Vector2 position, int width, int height, Color line, Color block,
+        public DreamifierRenderer_Grid(Vector2 position, int width, int height, Color line, Color block,
             Color linede, Color fillde) : base(position, width, height, null, false, false, false)
         {
             lineColor = line;
@@ -144,7 +147,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             //VirtualRenderTarget = new VirtualRenderTarget("ReverseHelper_TileDreamBlock", Math.Min((int)Width, 320), Math.Min((int)Height, 180), 0, false, true);
         }
 
-        public DreamifierRenderer_Tiles(EntityData e, Vector2 offset)
+        public DreamifierRenderer_Grid(EntityData e, Vector2 offset)
             : this(e.Position + offset, e.Width, e.Height,
                 e.HexaColor("lineColor"), e.HexaColor("fillColor"),
                 e.HexaColor("lineColorDeactivated"), e.HexaColor("fillColorDeactivated"))
@@ -180,7 +183,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     }
                 }
             }
-            //Collider = new Grid(8, 8, collidemap);
+            Collider = new Grid(8, 8, collidemap);
             //tileGrid=tg;
             //Add(tg);
             //tg.Visible = false;
@@ -331,7 +334,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             Setup();
             //Add(new BeforeRenderHook(BeforeRender));
 
-            var other = collidemap;//.Clone();
+            var other = collidemap.Clone();
             for (int i = 0; i < tilesX; i++)
             {
                 for (int j = 0; j < tilesY; j++)
@@ -355,6 +358,10 @@ namespace Celeste.Mod.ReverseHelper.Entities
                                     other[it, j_] = false;
                                 }
                                 it++;
+                            }
+                            else
+                            {
+                                break;
                             }
                         }
                         AltCollider.Add(new((int)X + 8 * i, (int)Y + 8 * j, (it - i) * 8, (jt - j) * 8));
@@ -667,7 +674,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         {
             if (playerHasDreamDash)
             {
-                foreach (DreamifierRenderer_Tiles rects in Scene.Tracker.Entities[typeof(DreamifierRenderer_Tiles)])
+                foreach (DreamifierRenderer_Grid rects in Scene.Tracker.Entities[typeof(DreamifierRenderer_Grid)])
                 {
                     foreach (var rec in rects.AltCollider)
                     {

@@ -73,6 +73,14 @@ namespace Celeste.Mod.ReverseHelper
         public class LoadAttribute : Attribute
         {
         }
+        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+        public class LazyLoadAttribute : Attribute
+        {
+        }
+        [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
+        public class LazyLoadDirectoryAttribute : Attribute
+        {
+        }
 
         [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
         public class UnloadAttribute : Attribute

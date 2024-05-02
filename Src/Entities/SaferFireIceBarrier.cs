@@ -271,27 +271,30 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 i => i.MatchCallOrCallvirt(out var v) && v.Name == "MoveH"))
             {
                 ic.Emit(OpCodes.Ldarg_0);
-                ic.EmitDelegate((Player p) =>
+                ic.EmitDelegate(nameless1);
+                static void nameless1(Player p)
                 {
                     if (p.CollideFirst<Solid>(p.Position + new Vector2(Math.Sign(p.Speed.X), 0)) is SaferFireIceBarrier safe)
                     {
                         safe.playertouch(new Vector2(Math.Sign(p.Speed.X), 0));
                     }
-                });
+                };
             }
             ic.Index = 0;
             while (ic.TryGotoNext(MoveType.After, i => i.MatchLdfld(out var v) && v.Name == "onCollideV",
                 i => i.MatchLdnull(),
                 i => i.MatchCallOrCallvirt(out var v) && v.Name == "MoveV"))
             {
+
                 ic.Emit(OpCodes.Ldarg_0);
-                ic.EmitDelegate((Player p) =>
+                ic.EmitDelegate(nameless2);
+                static void nameless2(Player p)
                 {
                     if (p.CollideFirst<Solid>(p.Position + new Vector2(0, Math.Sign(p.Speed.Y))) is SaferFireIceBarrier safe)
                     {
                         safe.playertouch(new Vector2(0, Math.Sign(p.Speed.Y)));
                     }
-                });
+                };
             }
         }
 

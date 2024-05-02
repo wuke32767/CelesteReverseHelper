@@ -42,7 +42,7 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
     [Generator]
     public class SourceGenerator : ISourceGenerator
     {
-        private const bool format_indent = true;
+        private const bool format_indent = false;
         private const string attr_namespace_base = "Celeste.Mod.ReverseHelper.SourceGen";
         private const string attr_namespace = attr_namespace_base + ".Loader";
 

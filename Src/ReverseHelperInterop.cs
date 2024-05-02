@@ -13,6 +13,8 @@ namespace Celeste.Mod.ReverseHelper
         /// it should access Inventory.DreamDash only when awaking, and save it to a field.
         /// then, it controls visuals with that field and [De]ActivateNoRoutine. 
         /// and NO game logic relys on Inventory.DreamDash and that field.
+        /// 
+        /// anyway, better to ask me for it.
         /// </summary>
         public static void RegisterDreamBlockLike(Type targetType, Action<Entity> ActivateNoRoutine, Action<Entity> DeactivateNoRoutine)
         {
@@ -23,7 +25,8 @@ namespace Celeste.Mod.ReverseHelper
         }
         /// <summary> 
         /// or, use this to check if your entity is enabled.
-        /// notice that because of awake order, better to awake at the end of awake frame.
+        /// notice that because of awake order, your entity might awake before reversed.
+        /// better to awake at the end of awake frame.
         /// </summary>
         /// <param name="e">the entity to be checked.</param>
         public static bool PlayerHasDreamDash(Entity e)
