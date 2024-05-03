@@ -46,14 +46,14 @@ namespace Celeste.Mod.ReverseHelper.Entities
             UpdatePosition();
             Add(hitWiggler = Wiggler.Create(1.2f, 2f, delegate (float v)
             {
-                spriteEvil.Position = hitDir * hitWiggler.Value * 8f;
+                spriteEvil.Position = hitDir * hitWiggler!.Value * 8f;
             }, false, false));
             Add(new CoreModeListener(OnChangeMode));
             MomentumFactor = momentumFactor;
         }
 
         // Token: 0x06000DCA RID: 3530 RVA: 0x00031075 File Offset: 0x0002F275
-        public MomentumBumper(EntityData data, Vector2 offset) : this(data.Position + offset, data.FirstNodeNullable(new Vector2?(offset)),data.Float("momentumFactor",-1))
+        public MomentumBumper(EntityData data, Vector2 offset) : this(data.Position + offset, data.FirstNodeNullable(new Vector2?(offset)), data.Float("momentumFactor", -1))
         {
         }
 
@@ -129,7 +129,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             else if (respawnTimer <= 0f)
             {
-                if ((Scene as Level).Session.Area.ID == 9)
+                if (SceneAs<Level>().Session.Area.ID == 9)
                 {
                     Audio.Play("event:/game/09_core/pinballbumper_hit", Position);
                 }
@@ -153,13 +153,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public static ParticleType P_Ambience { get => Bumper.P_Ambience; }
 
         // Token: 0x04000902 RID: 2306
-        public static ParticleType P_Launch { get=>Bumper.P_Launch; }
+        public static ParticleType P_Launch { get => Bumper.P_Launch; }
 
         // Token: 0x04000903 RID: 2307
         public static ParticleType P_FireAmbience { get => Bumper.P_FireAmbience; }
 
         // Token: 0x04000904 RID: 2308
-        public static ParticleType P_FireHit { get=>Bumper.P_FireHit; }
+        public static ParticleType P_FireHit { get => Bumper.P_FireHit; }
 
         // Token: 0x04000905 RID: 2309
         private const float RespawnTime = 0.6f;

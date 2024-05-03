@@ -19,7 +19,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
     [CustomEntity("ReverseHelper/DashConductionJumpThru = Ctor")]
     public static class DashConductionJumpThru
     {
-        public static JumpThru Ctor(Level level, LevelData levelData, Vector2 offset, EntityData data)
+        public static JumpThru? Ctor(Level level, LevelData levelData, Vector2 offset, EntityData data)
         {
             JumpThru? js = null ;
             if (Level.EntityLoaders.TryGetValue("VortexHelper/AttachedJumpThru", out var entityLoader))
@@ -53,7 +53,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
     [CustomEntity("GravityHelper/ReverseHelper/DashConductionJumpThruUpsideDown = Ctor")]
     public static class DashConductionJumpThruUpsideDown
     {
-        public static JumpThru Ctor(Level level,LevelData levelData, Vector2 offset,EntityData data)
+        public static JumpThru? Ctor(Level level,LevelData levelData, Vector2 offset,EntityData data)
         {
             JumpThru? js = null ;
             data.Values.TryAdd("attached", true);
@@ -88,7 +88,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
     [CustomEntity("ReverseHelper/DashConductionJumpThruSideways = Ctor")]
     public class DashConductionJumpThruSideways : Entity
     {
-        public static Entity Ctor(Level level, LevelData levelData, Vector2 offset, EntityData data)
+        public static Entity? Ctor(Level level, LevelData levelData, Vector2 offset, EntityData data)
         {
             Entity? js = null;
             ReverseHelperExtern.MaddieHelpingHandModule.SidewaysJumpThru.activateHooks();

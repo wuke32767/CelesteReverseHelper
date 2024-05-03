@@ -15,7 +15,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
     public class HoldableRefill : Actor
     {
         private float refillTime = 2.5f;
-        private Player player;
+        private Player? player;
         private bool playerCollide = false;
         private bool better_held = false;
         [SourceGen.Loader.Load]
@@ -145,23 +145,17 @@ namespace Celeste.Mod.ReverseHelper.Entities
             Hold.SpeedGetter = () => Speed;
             onCollideH = (data) =>
             {
-                if (data.Hit is DashSwitch)
-                {
-                    (data.Hit as DashSwitch).OnDashCollide(null, Vector2.UnitX * Math.Sign(Speed.X));
-                }
+                (data.Hit as DashSwitch)?.OnDashCollide(null, Vector2.UnitX * Math.Sign(Speed.X));
                 //Audio.Play("event:/game/05_mirror_temple/crystaltheo_hit_side", Position);
-                if (Math.Abs(Speed.X) > 100f)
-                {
-                    //this.ImpactParticles(data.Direction);
-                }
+                //if (Math.Abs(Speed.X) > 100f)
+                //{
+                //    //this.ImpactParticles(data.Direction);
+                //}
                 Speed.X = Speed.X * (slowFall ? -1f : -0.4f);
             };
             onCollideV = data =>
             {
-                if (data.Hit is DashSwitch)
-                {
-                    (data.Hit as DashSwitch).OnDashCollide(null, Vector2.UnitY * Math.Sign(Speed.Y));
-                }
+                (data.Hit as DashSwitch)?.OnDashCollide(null, Vector2.UnitY * Math.Sign(Speed.Y));
                 if (Speed.Y > 0f)
                 {
                     //if (hardVerticalHitSoundCooldown <= 0f)
@@ -223,13 +217,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
         {
         }
 
-        // Token: 0x06001A95 RID: 6805 RVA: 0x000ABB78 File Offset: 0x000A9D78
-        public override void Added(Scene scene)
-        {
-            base.Added(scene);
-            Level = SceneAs<Level>();
-        }
-
         // Token: 0x06001A96 RID: 6806 RVA: 0x000ABB90 File Offset: 0x000A9D90
         public override void Update()
         {
@@ -257,7 +244,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
             if (playerCollide)
             {
-                OnPlayer_should_later_than_holdcheck(player);
+                OnPlayer_should_later_than_holdcheck(player!);
             }
 
             playerCollide = false;
@@ -276,7 +263,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                         Collidable = false;
                         if (Hold.IsHeld)
                         {
-                            Vector2 speed2 = Hold.Holder.Speed;
+                            Vector2 speed2 = Hold.Holder!.Speed;
                             Hold.Holder.Drop();
                             Speed = speed2 * 0.333f;
                             Input.Rumble(RumbleStrength.Medium, RumbleLength.Medium);
@@ -674,7 +661,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         // Token: 0x04001744 RID: 5956
         private float respawnTimer;
 
-        public static ParticleType P_Impact;
+        //public static ParticleType P_Impact;
 
         // Token: 0x040017B1 RID: 6065
 
@@ -687,7 +674,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public Holdable Hold;
 
         // Token: 0x040017B6 RID: 6070
-        private Level Level;
+        private Level Level => SceneAs<Level>();
 
         // Token: 0x040017B7 RID: 6071
         private Collision onCollideH;

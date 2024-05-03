@@ -259,7 +259,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         public static void Load()
         {
-            orig_Update = new ILHook(typeof(Player).GetMethod("orig_Update", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance), Player_Update);
+            orig_Update = new ILHook(typeof(Player).GetMethod("orig_Update", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!, Player_Update);
             //IL.Celeste.Player.Update += Player_Update;
         }
 

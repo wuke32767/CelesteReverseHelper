@@ -10,7 +10,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 {
     public class ForceyHoldablesComponent : Component
     {
-        public new Level Scene { get => base.Scene as Level; }
+        public new Level Scene => SceneAs<Level>();
         private Dictionary<FlagMatch, float> flagControled = new Dictionary<FlagMatch, float>();
 
         public ForceyHoldablesComponent() : base(true, false)
@@ -82,7 +82,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
     [CustomEntity("ReverseHelper/ForceyHoldables")]
     public class ForceyHoldables : Entity
     {
-        public new Level Scene { get => base.Scene as Level; }
+        public new Level Scene => SceneAs<Level>();
         private bool bindOnRoomStart;
         private FlagMatch flagBind;
         private FlagMatch flagEnable;

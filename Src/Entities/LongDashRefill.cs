@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 using Monocle;
 using System;
 using System.Collections;
-
+#pragma warning disable
 namespace Celeste.Mod.ReverseHelper.Entities
 {
     public static class LongDashRefillInst
@@ -294,3 +294,4 @@ namespace Celeste.Mod.ReverseHelper.Entities
         private float dashTime;
     }
 }
+#pragma warning restore

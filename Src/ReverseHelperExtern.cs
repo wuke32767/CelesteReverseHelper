@@ -117,21 +117,19 @@ namespace Celeste.Mod.ReverseHelper
             [ModImportName("ExtendedVariantMode")]
             public static class Interop
             {
-                public static Func<string, object> GetCurrentVariantValue;
+                public static Func<string, object>? GetCurrentVariantValue;
 
-                public static Action<string, int, bool> TriggerIntegerVariant;
+                public static Action<string, int, bool>? TriggerIntegerVariant;
 
-                public static Action<string, bool, bool> TriggerBooleanVariant;
+                public static Action<string, bool, bool>? TriggerBooleanVariant;
 
-                public static Action<string, float, bool> TriggerFloatVariant;
+                public static Action<string, float, bool>? TriggerFloatVariant;
 
-                public static Action<string, object, bool> TriggerVariant;
+                public static Action<string, object, bool>? TriggerVariant;
 
-                // Token: 0x06000793 RID: 1939 RVA: 0x0001A5A1 File Offset: 0x000187A1
-                public static Action<int> SetJumpCount;
+                public static Action<int>? SetJumpCount;
 
-                // Token: 0x06000794 RID: 1940 RVA: 0x0001A5AA File Offset: 0x000187AA
-                public static Action<int> CapJumpCount;
+                public static Action<int>? CapJumpCount;
 
             }
         }
@@ -174,8 +172,6 @@ namespace Celeste.Mod.ReverseHelper
                     .Where(assembly => assembly.GetName().Name == "IsaMods")
                     .FirstOrDefault();
                 GrabBagModule.LoadContent();
-                DreamSpinner.LoadContent();
-                DreamSpinnerRenderer.LoadContent();
             }
             public static class GrabBagModule
             {
@@ -188,63 +184,7 @@ namespace Celeste.Mod.ReverseHelper
                     Type = Assembly?.GetType("Celeste.Mod.IsaGrabBag.GrabBagModule");
                     spritesinfo = Type?.GetProperty("sprites", bf);
                 }
-                public static SpriteBank? sprites { get => (SpriteBank)spritesinfo?.GetValue(null); }
-            }
-            public static class DreamSpinner
-            {
-                public static Type? Type;
-
-                public static MethodInfo? Update;
-                static FieldInfo? color;
-                static FieldInfo? OneUse;
-                static FieldInfo? block;
-                static MethodInfo? InViewr;
-
-                public static void LoadContent()
-                {
-                    Type = Assembly?.GetType("Celeste.Mod.IsaGrabBag.DreamSpinner");
-                    Update = Type?.GetMethod("Update", bf);
-                    color = Type?.GetField("color", bf);
-                    OneUse = Type?.GetField("OneUse", bf);
-                    block = Type?.GetField("block", bf);
-                    InViewr = Type?.GetMethod("InView", bf);
-                }
-                public static void set_color(Entity e, Color c)
-                {
-                    color!.SetValue(e, c);
-                }
-                public static bool get_OneUse(Entity e)
-                {
-                    return (bool)OneUse!.GetValue(e);
-                }
-                public static Entity get_block(Entity e)
-                {
-                    return (Entity)block!.GetValue(e);
-                }
-                public static bool InView(Entity e)
-                {
-                    return (bool)InViewr!.Invoke(e, []);
-                }
-            }
-            public static class DreamSpinnerRenderer
-            {
-                static Type? Type;
-
-                // static FieldInfo? OnDashCollide;
-                public static MethodInfo? BeforeRender;
-                public static MethodInfo? Render;
-                public static MethodInfo? GetSpinnersToRender;
-
-                public static FieldInfo? ReverseHelperSupported;
-                public static void LoadContent()
-                {
-                    Type = Assembly?.GetType("Celeste.Mod.IsaGrabBag.DreamSpinnerRenderer");
-                    BeforeRender = Type?.GetMethod("BeforeRender", bf);
-                    Render = Type?.GetMethod("Render", bf);
-                    GetSpinnersToRender = Type?.GetMethod("GetSpinnersToRender", bf);
-
-                    ReverseHelperSupported = Type?.GetField("_ReverseHelperSupported", bf);
-                }
+                public static SpriteBank? sprites { get => (SpriteBank?)spritesinfo?.GetValue(null); }
             }
         }
         [ModImportName("SpeedrunTool.SaveLoad")]
@@ -259,25 +199,25 @@ namespace Celeste.Mod.ReverseHelper
             public static class Interop
             {
                 // Returns the current BG mode
-                public static Func<bool> IsBGMode;
+                public static Func<bool>? IsBGMode;
 
                 // Sets the BG mode
                 //   bool bgMode: the value to set the BG mode to
                 //   bool persistent: whether or not the value should be saved to the session
-                public static Action<bool, bool> SetBGMode;
+                public static Action<bool, bool>? SetBGMode;
 
                 // Creates and returns a BGModeListener as a Component.
                 //   Action<bool> action: the delegate that will be called when the BG mode changes
-                public static Func<Action<bool>, Component> GetBGModeListener;
+                public static Func<Action<bool>, Component>? GetBGModeListener;
             }
         }
         public static void Load()
         {
             // later it will be moved
-            Interop.RegisterDreamBlockLike(CommunalHelper.DreamTunnelEntry.Type,
-                (e) => CommunalHelper.DreamTunnelEntry.ActivateNoRoutine?.Invoke(e, null),
-                (e) => CommunalHelper.DreamTunnelEntry.DeactivateNoRoutine?.Invoke(e, null)
-                );
+            //Interop.RegisterDreamBlockLike(CommunalHelper.DreamTunnelEntry.Type,
+            //    (e) => CommunalHelper.DreamTunnelEntry.ActivateNoRoutine?.Invoke(e, null),
+            //    (e) => CommunalHelper.DreamTunnelEntry.DeactivateNoRoutine?.Invoke(e, null)
+            //    );
         }
         [LoadContent]
         public static void LoadContent()

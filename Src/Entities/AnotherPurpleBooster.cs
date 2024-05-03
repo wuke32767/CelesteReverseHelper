@@ -9,7 +9,7 @@ using MonoMod.Utils;
 using System;
 using System.Collections;
 using System.Reflection;
-
+#nullable disable
 namespace Celeste.Mod.ReverseHelper.Entities
 {
     [CustomEntity("ReverseHelper/AnotherPurpleBooster")]
@@ -18,7 +18,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
     {
         internal const string POSSIBLE_EARLY_DASHSPEED = "purpleBoostPossibleEarlyDashSpeed";
 
-        private Sprite? sprite;
+        private Sprite sprite;
         private Wiggler wiggler;
         private Entity outline;
 
@@ -408,7 +408,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             else
             {
-                MapMetaModeProperties meta = level.Session.MapData.GetMeta();
+                MapMetaModeProperties meta = level.Session.MapData.Meta;
                 flag = meta?.TheoInBubble;
             }
             bool? flag2 = flag;
@@ -839,10 +839,12 @@ namespace Celeste.Mod.ReverseHelper._From_Vortex_Helper
     public static class Util
     {
         // https://github.com/CommunalHelper/CommunalHelper/blob/dev/src/CommunalHelperModule.cs#L196
-        public static bool TryGetPlayer(out Player? player)
+        public static bool TryGetPlayer(out Player player)
         {
             player = Engine.Scene?.Tracker?.GetEntity<Player>();
             return player != null;
         }
     }
 }
+
+#nullable restore

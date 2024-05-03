@@ -63,7 +63,7 @@ namespace Celeste.Mod.ReverseHelper.Triggers
         {
             if (Usable && cooldownTimer <= 0f)
             {
-                playSounds = true;
+                //playSounds = true;
                 Level level = base.SceneAs<Level>();
 
                 //if (level.CoreMode == Session.CoreModes.Cold)
@@ -116,8 +116,5 @@ namespace Celeste.Mod.ReverseHelper.Triggers
 
         // Token: 0x04000F7E RID: 3966
         private bool persistent;
-
-        // Token: 0x04000F7F RID: 3967
-        private bool playSounds;
     }
 }

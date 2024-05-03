@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 using Monocle;
 using System;
 using System.Collections.Generic;
-
+#nullable disable
 namespace Celeste.Mod.ReverseHelper.Entities
 {
     [CustomEntity("ReverseHelper/SquareSpinner")]
@@ -452,3 +452,4 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
     }
 }
+#nullable restore

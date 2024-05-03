@@ -114,13 +114,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
 
 
-        public bool playerHasDreamDash
+        public new bool playerHasDreamDash
         {
             get => DreamBlockConfigurer.dreamblock_enabled(this);
         }
         public override void Render()
         {
-            Comp_Render_refl.Invoke(Components, null);
+            Components.Render();
 
             Vector2 shake = new(0, 0);
             Camera camera = SceneAs<Level>().Camera;
@@ -178,7 +178,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             Draw.Rect(shake + new Vector2(X, Y + Height - 2f), 2f, 2f, playerHasDreamDash ? lineColor : lineColor);
             Draw.Rect(shake + new Vector2(X + Width - 2f, Y + Height - 2f), 2f, 2f, playerHasDreamDash ? lineColor : lineColor);
         }
-        public struct DreamParticle
+        public new struct DreamParticle
         {
             public Vector2 Position;
 
@@ -195,14 +195,12 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
             public float TimeOffset;
         }
-        public float animTimer;
-        public static FieldInfo particleTextures_refl = typeof(DreamBlock).GetField("particleTextures", BindingFlags.Instance | BindingFlags.NonPublic);
-        public MTexture[] particleTextures { get => (MTexture[])particleTextures_refl.GetValue(this); }
+        public new float animTimer;
+        //public static FieldInfo particleTextures_refl = typeof(DreamBlock).GetField("particleTextures", BindingFlags.Instance | BindingFlags.NonPublic);
+        //public MTexture[] particleTextures { get => (MTexture[])particleTextures_refl.GetValue(this); }
 
-        public DreamParticle[] particles = null!;
-        public static MethodInfo Comp_Render_refl = typeof(ComponentList).GetMethod("Render", BindingFlags.Instance | BindingFlags.NonPublic);
-        public static MethodInfo WobbleLine_refl = typeof(DreamBlock).GetMethod("WobbleLine", BindingFlags.Instance | BindingFlags.NonPublic);
-        private void WobbleLine(Vector2 from, Vector2 to, float offset)
+        public new DreamParticle[] particles = null!;
+        private new void WobbleLine(Vector2 from, Vector2 to, float offset)
         {
             float num = (to - from).Length();
             Vector2 vector = Vector2.Normalize(to - from);
@@ -234,20 +232,20 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 num2 = num4;
             }
         }
-        private float Lerp(float a, float b, float percent)
+        private new static float Lerp(float a, float b, float percent)
         {
             return a + (b - a) * percent;
         }
-        private float LineAmplitude(float seed, float index)
+        private static new float LineAmplitude(float seed, float index)
         {
             return (float)(Math.Sin((double)(seed + index / 16f) + Math.Sin(seed * 2f + index / 32f) * 6.2831854820251465) + 1.0) * 1.5f;
         }
 
-        private float wobbleFrom = Calc.Random.NextFloat((float)Math.PI * 2f);
+        private new float wobbleFrom = Calc.Random.NextFloat((float)Math.PI * 2f);
 
-        private float wobbleTo = Calc.Random.NextFloat((float)Math.PI * 2f);
+        private new float wobbleTo = Calc.Random.NextFloat((float)Math.PI * 2f);
 
-        private float wobbleEase;
+        private new float wobbleEase;
 
         public override void Update()
         {
@@ -272,7 +270,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         }
 
-        Vector2 PutInside(Vector2 pos)
+        new Vector2 PutInside(Vector2 pos)
         {
             if (pos.X > base.Right)
             {

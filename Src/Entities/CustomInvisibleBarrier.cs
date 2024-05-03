@@ -31,8 +31,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
     [Tracked(false)]
     public class CustomInvisibleBarrier : Solid
     {
-        HashSet<Type> typer;
-        List<string> resttype;
+        HashSet<Type>? typer;
+        List<string>? resttype;
         EntityData ed;
         bool awaken = false;
         bool reversed = false;
@@ -78,7 +78,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             IL.Celeste.JumpThru.MoveHExact += UniversalBarrier;
             IL.Celeste.JumpThru.MoveVExact += UniversalBarrier;
         }
-        static ILHook AttachedJumpThru;
+        static ILHook? AttachedJumpThru;
         //workaround here
         public static void LoadContent()
         {
@@ -95,7 +95,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
             while (ic.TryGotoNext(MoveType.After, x => { x.MatchCall(out var a); return a?.Name == "get_Current"; },
                 x => { return x.MatchCastclass<Actor>(); }))
             {
-                ic.EmitDelegate((Actor a) =>
+                ic.EmitDelegate(nameless1);
+                static Actor nameless1(Actor a)
                 {
                     if (!has_actor)
                     {
@@ -104,15 +105,16 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     var tar = Engine.Scene.Tracker.Entities[typeof(CustomInvisibleBarrier)].Cast<CustomInvisibleBarrier>();
                     foreach (var r in tar)
                     {
-                        r.Collidable = r.reversed != r.typer.Contains(a.GetType());
+                        r.Collidable = r.reversed != r.typer!.Contains(a.GetType());
                     }
                     return a;
-                });
+                }
             }
             ic = new ILCursor(il);
             while (ic.TryGotoNext(MoveType.Before, x => x.MatchRet()))
             {
-                ic.EmitDelegate(() =>
+                ic.EmitDelegate(nameless2);
+                static void nameless2()
                 {
                     if (!has_actor)
                     {
@@ -123,7 +125,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     {
                         r.Collidable = r.reversed;
                     }
-                });
+                }
                 ic.Index++;
             }
         }
@@ -137,7 +139,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             type_resolved.Add(t);
             yield return (t.Name, t);
-            yield return (t.FullName, t);
+            yield return (t.FullName!, t);
             foreach (var s in (Attribute.GetCustomAttribute(t, typeof(CustomEntityAttribute)) as CustomEntityAttribute)?.IDs ?? Enumerable.Empty<string>())
             {
                 yield return (s.Split('=')[0].Trim(), t);
@@ -193,7 +195,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 ed.Values.Add("_resttype", resttype = new List<string>(s.Split(',').Select(x => x.Trim())));
             }
             var r_resttype = new List<string>();
-            foreach (var v in resttype)
+            foreach (var v in resttype!)
             {
                 if (resolved_type.TryGetValue(v, out var type))
                 {
@@ -272,7 +274,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             {
                 return;
             }
-            MethodInfo update = type.GetMethod("Update", BindingFlags.Instance | BindingFlags.Public);
+            MethodInfo? update = type.GetMethod("Update", BindingFlags.Instance | BindingFlags.Public);
             //while (update is null)
             //{
             //    type = type.BaseType;
@@ -289,7 +291,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             Hook h = new(update, (Action<Entity> orig, Entity self) =>
             {
-                var tar = Engine.Scene.Tracker.Entities[typeof(CustomInvisibleBarrier)].Cast<CustomInvisibleBarrier>().Where(x => x.typer.Contains(type));
+                var tar = Engine.Scene.Tracker.Entities[typeof(CustomInvisibleBarrier)].Cast<CustomInvisibleBarrier>().Where(x => x.typer!.Contains(type));
                 foreach (var r in tar)
                 {
                     r.Collidable = !r.reversed;

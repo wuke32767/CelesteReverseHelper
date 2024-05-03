@@ -16,21 +16,17 @@ namespace Celeste.Mod.ReverseHelper.Entities
         //if target.actualDepth is not set.
         //if it's not dirty, no need to update.
         bool dirty { get => Active; set => Active = value; }
-        public DepthTracker() : base(true, false)
+        public DepthTracker(Entity trackto, Entity self) : base(true, false)
         {
-        }
-        public static DepthTracker Track(Entity trackto, Entity self)
-        {
-            DepthTracker v;
-            trackto.Add(v = new DepthTracker() { target = self });
-            v.Apply();
-            return v;
+            target = self;
+            trackto.Add(this);
+            Apply();
         }
         class some_cmp : IComparer<Entity>
         {
-            public int Compare(Entity a, Entity b)
+            public int Compare(Entity? a, Entity? b)
             {
-                return Math.Sign(b.actualDepth - a.actualDepth);
+                return Math.Sign(b!.actualDepth - a!.actualDepth);
             }
             public static some_cmp Instance = new();
         }
@@ -42,10 +38,10 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 if (i >= 0 && Scene.Entities.entities[i] == Entity)
                 {
                     int d = Entity.Depth;
+                    Scene.actualDepthLookup[d] += 9.9999999747524271E-07;
                     foreach (var e in Scene.Entities.entities.Skip(i + 1).TakeWhile(e => e.Depth == d))
                     {
                         e.actualDepth -= 9.9999999747524271E-07;
-                        Scene.actualDepthLookup[d] += 9.9999999747524271E-07;
                     }
                     target.actualDepth = Entity.actualDepth - 9.9999999747524271E-07;
                     Scene.Entities.MarkUnsorted();
@@ -144,6 +140,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
             //vanilla uses 10
             //for footstep ripple priority
             SurfaceSoundPriority = 11;
+            Renderer = null!;
+            particles = null!;
             //VirtualRenderTarget = new VirtualRenderTarget("ReverseHelper_TileDreamBlock", Math.Min((int)Width, 320), Math.Min((int)Height, 180), 0, false, true);
         }
 
@@ -163,7 +161,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             SolidTiles solidTiles = scene.SolidTiles;
             var tilechar = scene.SolidsData;
 
-            solidTiles.Add(Renderer = DepthTracker.Track(solidTiles, this));
+            solidTiles.Add(Renderer = new DepthTracker(solidTiles, this));
             Rectangle tileBounds = scene.Session.MapData.TileBounds;
             var tiletex = solidTiles.Tiles.Tiles;
             int x = (int)(X / 8f) - tileBounds.Left;
@@ -374,7 +372,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
         {
             up = 1, left = 2, right = 4, down = 8,
         }
-        TilesetDreamBlock.DreamParticle[] particles;
+
+        new TilesetDreamBlock.DreamParticle[] particles;
         public new void Setup()
         {
             particles = new TilesetDreamBlock.DreamParticle[(int)(base.Width / 8f * (base.Height / 8f) * 0.7f)];
@@ -403,7 +402,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
 
 
-        public bool playerHasDreamDash
+        public new bool playerHasDreamDash
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => DreamBlockConfigurer.dreamblock_enabled(this);
@@ -492,7 +491,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             //Draw.Rect(shake + new Vector2(X, Y + Height - 2f), 2f, 2f, playerHasDreamDash ? lineColor : lineColor);
             //Draw.Rect(shake + new Vector2(X + Width - 2f, Y + Height - 2f), 2f, 2f, playerHasDreamDash ? lineColor : lineColor);
         }
-        private void WobbleLine(Vector2 from, Vector2 to, float offset)
+        private new void WobbleLine(Vector2 from, Vector2 to, float offset)
         {
             float num = (to - from).Length();
             Vector2 vector = Vector2.Normalize(to - from);
@@ -524,22 +523,22 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 num2 = num4;
             }
         }
-        private float Lerp(float a, float b, float percent)
+        private static new float Lerp(float a, float b, float percent)
         {
             return a + (b - a) * percent;
         }
-        private float LineAmplitude(float seed, float index)
+        private static new float LineAmplitude(float seed, float index)
         {
             return (float)(Math.Sin((double)(seed + index / 16f) + Math.Sin(seed * 2f + index / 32f) * 6.2831854820251465) + 1.0) * 1.5f;
         }
 
-        private float wobbleFrom = Calc.Random.NextFloat((float)Math.PI * 2f);
+        private new float wobbleFrom = Calc.Random.NextFloat((float)Math.PI * 2f);
 
-        private float wobbleTo = Calc.Random.NextFloat((float)Math.PI * 2f);
+        private new float wobbleTo = Calc.Random.NextFloat((float)Math.PI * 2f);
 
-        private float wobbleEase;
-        public float animTimer;
-        public MTexture[] particleTextures =
+        private new float wobbleEase;
+        public new float animTimer;
+        public new MTexture[] particleTextures =
         [
             GFX.Game["objects/dreamblock/particles"].GetSubtexture(14, 0, 7, 7),
             GFX.Game["objects/dreamblock/particles"].GetSubtexture(7, 0, 7, 7),
@@ -636,7 +635,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
         {
             //On.Celeste.DreamBlock.FootstepRipple += DreamBlock_FootstepRipple;
         }
-        Vector2 PutInside(Vector2 pos)
+
+        new Vector2 PutInside(Vector2 pos)
         {
             if (pos.X > base.Right)
             {
@@ -670,7 +670,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         //        orig(self, position);
         //    }
         //}
-        public void FootstepRipple(Vector2 position)
+        public new void FootstepRipple(Vector2 position)
         {
             if (playerHasDreamDash)
             {

@@ -13,11 +13,13 @@ namespace Celeste.Mod.ReverseHelper
     {
         public static bool playerHasDreamDash
         {
-            get => (Engine.Scene as Level)?.Session.Inventory.DreamDash ?? (Engine.Scene as LevelLoader).Level.Session.Inventory.DreamDash;
-            set => (Engine.Scene as Level).Session.Inventory.DreamDash = value;
+            get => (Engine.Scene as Level)?.Session.Inventory.DreamDash ?? (Engine.Scene as LevelLoader)?.Level.Session.Inventory.DreamDash ?? false;
+            set => (Engine.Scene as Level)!.Session.Inventory.DreamDash = value;
         }
 
+#pragma warning disable CS8618
         public static ReverseHelperModule Instance;
+#pragma warning restore CS8618
         public static int AnotherPurpleBoosterDashState;
         public static int AnotherPurpleBoosterState;
 

@@ -3,6 +3,7 @@ using Celeste.Mod.ReverseHelper.Libraries;
 using Microsoft.Xna.Framework;
 using Monocle;
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
@@ -100,22 +101,22 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public override void Update()
         {
             base.Update();
-            if (!(Entity as Player).CollideCheck(src))
+            if (!(Entity as Player)!.CollideCheck(src))
             {
                 src = null;
             }
         }
+        
+        public CornerBoostArea? _src;
 
-        public CornerBoostArea _src;
-
-        public CornerBoostArea src
+        public CornerBoostArea? src
         {
             get => _src;
             set
             {
                 if (src != value)
                 {
-                    if (!(_src is null))
+                    if (_src is not null)
                     {
                         _src.count_times = 0;
                     }
@@ -123,7 +124,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     {
                         src.count_cooldown = 0;
                     }
-                    Active = !(value is null);
+                    Active = value is not null;
                     _src = value;
                 }
             }
@@ -163,21 +164,17 @@ namespace Celeste.Mod.ReverseHelper.Entities
             On.Celeste.Player.SuperJump -= Player_SuperJump;
         }
 
-        private static System.Reflection.MethodInfo player_climb_jump_refl = typeof(Player).GetMethod("ClimbJump", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        private static readonly object[] empty = new object[0];
-        private static System.Reflection.FieldInfo player_oncollide_refl = typeof(Player).GetField("onCollideH", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
         private static void Player_Update(On.Celeste.Player.orig_Update orig, Player self)
         {
             var spd = self.Speed.X;
             orig(self);
             var com = self.Get<CBAreaComponent>();
-            if (!(com is null) && com.Active)
+            if (com is not null && com.Active)
             {
                 if (hyperjmped)
                 {
                     jmped = true;
-                    if (com.src.cornerhyper)
+                    if (com.src!.cornerhyper)
                     {
                         self.Speed.X = spd;
                     }
@@ -191,8 +188,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     {
                         if (com.TryCB(self))
                         {
-                            (player_oncollide_refl.GetValue(self) as Collision)(new CollisionData());
-                            player_climb_jump_refl.Invoke(self, empty);
+                            self.onCollideH(new CollisionData());
+                            self.ClimbJump();
                             if (self.StateMachine.State == Player.StDash || self.StateMachine.State == Player.StRedDash)
                             {
                                 self.StateMachine.ForceState(Player.StNormal);
@@ -211,7 +208,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         private bool TryCB(Player self)
         {
-            if (src.count_cooldown == 0 && src.count_times != src.times && src.count_totaltimes != src.totaltimes)
+            if (src!.count_cooldown == 0 && src.count_times != src.times && src.count_totaltimes != src.totaltimes)
             {
                 if (src.onlyRCB != true || Math.Sign(self.Speed.X) == -(int)self.Facing)
                 {

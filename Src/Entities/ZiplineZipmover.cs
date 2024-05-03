@@ -55,7 +55,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         bool IgnoreNegative;
         float conservedSpeed = 0;
         Extension conserveSpeedMode;
-        bool anotherConserveWaiting;
+        //bool anotherConserveWaiting;
         bool conserveMoving;
         bool conserveReturning;
         float extendRate;

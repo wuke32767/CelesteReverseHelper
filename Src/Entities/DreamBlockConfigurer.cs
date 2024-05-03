@@ -81,7 +81,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
     public class DreamBlockConfigurer : Entity
     {
 
-        public new Level Scene { get => base.Scene as Level; }
+        public new Level Scene => SceneAs<Level>();
         private bool bindOnRoomStart;
         //private FlagMatch flagBind;
         //private FlagMatch flagEnable;
@@ -117,17 +117,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public DreamBlockConfigurer(EntityData e, Vector2 offset) : this(e.Position + offset, e.Width, e.Height, e.OptionalBool("alwaysEnable"), e.OptionalBool("alwaysDisable"), e.OptionalBool("reverse", true)/*why it's called ReversedDreamBlockContainer*/, e.OptionalBool("highPriority"))
         {
         }
-        static ILHook dashcoroutine;
+        static ILHook? dashcoroutine;
         [SourceGen.Loader.Load]
-
         public static void Load()
         {
             IL.Celeste.Player.DreamDashCheck += Player_DreamDashCheck;
             //IL.Celeste.Player.DashCoroutine += Player_DashCoroutine;
-            var mi = typeof(Player).GetMethod("DashCoroutine", BindingFlags.Instance | BindingFlags.NonPublic).GetStateMachineTarget();
-            dashcoroutine = new ILHook(mi, Player_DashCoroutine);
-
-
+            dashcoroutine = new ILHook(typeof(Player).GetMethod("DashCoroutine", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)!.GetStateMachineTarget()!, Player_DashCoroutine);
         }
         static class Player_DashCoroutine_Helper
         {
@@ -202,18 +198,18 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
         static class Player_DreamDashCheck_Helper
         {
-            internal static DreamBlock CollideFirst(Player self, Vector2 at)
+            internal static DreamBlock? CollideFirst(Player self, Vector2 at)
             {
                 Vector2 position = self.Position;
                 self.Position = at;
-                DreamBlock db = null;
+                DreamBlock? db = null;
                 foreach (Entity item in self.Scene.Tracker.Entities[typeof(DreamBlock)])
                 {
                     if (Collide.Check(self, item))
                     {
                         //(item is DreamBlock i2);
                         {
-                             if (dreamblock_enabled(item))
+                            if (dreamblock_enabled(item))
                             {
                                 //is_active
                                 db = item as DreamBlock;
@@ -362,7 +358,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     }
                 }
             }
-            (scene as Level).OnEndOfFrame += DreamToggleListener.ForceUpdate;
+            Scene.OnEndOfFrame += DreamToggleListener.ForceUpdate;
             //(scene as Level).Background.Backdrop
         }
 
