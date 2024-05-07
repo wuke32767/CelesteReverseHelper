@@ -11,11 +11,12 @@ purpleBooster.placements = {
         name = "Another Purple Booster",
         data = {
             redirect=true,
-            addDashAttack=false,--can i make it public?
+            addDashAttack=false,
             --NewAction=false,
             conserveSpeed= false,
             conserveSpeedV=true,
-            conserveMovingSpeedCutOff=283
+            conserveMovingSpeedCutOff=1000,
+            fixDashDir=false,
         }
     
 }

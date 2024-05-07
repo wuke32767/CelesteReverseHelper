@@ -8,8 +8,10 @@ using MonoMod.Cil;
 using MonoMod.Utils;
 using System;
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 #nullable disable
+#pragma warning disable CS8632
 namespace Celeste.Mod.ReverseHelper.Entities
 {
     [CustomEntity("ReverseHelper/AnotherPurpleBooster")]
@@ -56,6 +58,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         //public static bool DashAtt = true;
         public bool dashatt = false;
+        public bool fixdashdir = false;
         public const float usingDashAtt = 0.1f;
 
         //public static bool FixSomething1 = true;
@@ -66,12 +69,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public bool neverSlowDown;//not used. never slow down now for sure.
         public AnotherPurpleBooster(EntityData data, Vector2 offset)
             : this(data.Position + offset, data.Bool("redirect", true), data.Bool("addDashAttack", false), data.Bool("NewAction", false),
-                  data.Bool("conserveSpeed", false), data.Bool("conserveSpeedV", true), data.Float("conserveMovingSpeedCutOff", 100000), /*data.Bool("neverSlowDown", false)*/true)
+                  data.Bool("conserveSpeed", false), data.Bool("conserveSpeedV", true), data.Float("conserveMovingSpeedCutOff", 100000), /*data.Bool("neverSlowDown", false)*/true,
+                  data.Bool("fixDashDir", false))
         {
         }
 
         public AnotherPurpleBooster(Vector2 position, bool redirected, bool dashattack, bool fix1,
-            bool conserveSpeed, bool conserveSpeedV, float conserveMovingSpeed, bool neverSlowDown)
+            bool conserveSpeed, bool conserveSpeedV, float conserveMovingSpeed, bool neverSlowDown, bool fixdashdir)
             : base(position)
         {
 
@@ -118,6 +122,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 conserveMovingSpeedCutOff = 0;
             }
             this.neverSlowDown = neverSlowDown;
+            this.fixdashdir = fixdashdir;
         }
 
         public override void Added(Scene scene)
@@ -190,6 +195,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             playerData.Set("USSRNAME_ConserveSpeedV", booster.conserveSpeedV);
             playerData.Set("USSRNAME_NeverSlowDown", booster.neverSlowDown);
             playerData.Set("USSRNAME_ConserveMovingSpeedCutOff", booster.conserveMovingSpeedCutOff);
+            playerData.Set("USSRNAME_fixdashdir", booster.fixdashdir);
         }
 
         public void PlayerBoosted(Player player, Vector2 direction)
@@ -499,20 +505,35 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 }
             }
         }
+        private static void PurpleDashingEnd()
+        {
+            if (Util.TryGetPlayer(out Player? player) && player.GetData().Get<bool>("USSRNAME_fixdashdir"))
+            {
+                player.DashDir = player.Speed.SafeNormalize(player.DashDir);
+            }
+        }
 
         public static int PurpleDashingUpdate()
         {
-            addDashAttack();
-            if (Input.DashPressed || Input.CrouchDashPressed)
+            if (Util.TryGetPlayer(out Player? player))
             {
-                Util.TryGetPlayer(out Player player);
                 DynData<Player> playerData = player.GetData();
 
-                player.LiftSpeed += playerData.Get<Vector2>(POSSIBLE_EARLY_DASHSPEED);
+                if (/*DashAtt*/playerData.Get<bool>("USSRNAME_DashAtt"))
+                {
+                    player.dashAttackTimer = usingDashAtt;
+                }
+                if (playerData.Get<bool>("USSRNAME_fixdashdir"))
+                {
+                    player.DashDir = player.Speed.SafeNormalize(player.DashDir);
+                }
+                if (Input.DashPressed || Input.CrouchDashPressed)
+                {
+                    player.LiftSpeed += playerData.Get<Vector2>(POSSIBLE_EARLY_DASHSPEED);
 
-                return player.StartDash();
+                    return player.StartDash();
+                }
             }
-
             return ReverseHelperModule.AnotherPurpleBoosterDashState;
         }
 
@@ -660,18 +681,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
             PurpleBoosterExplodeLaunch(player, playerData, player.Center - dir, origin, (float)rate);
         }
 
-        private static void addDashAttack()
-        {
-            if (Util.TryGetPlayer(out Player player))
-            {
-                var data = player.GetData();
-                if (/*DashAtt*/data.Get<bool>("USSRNAME_DashAtt"))
-                {
-                    data.Set("dashAttackTimer", usingDashAtt);
-                }
-            }
-        }
-
         public static void PurpleBoosterExplodeLaunch(Player player, DynData<Player> playerData, Vector2 from, Vector2? origin, float factor = 1f)
         {
             Input.Rumble(RumbleStrength.Strong, RumbleLength.Medium);
@@ -777,7 +786,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 ReverseHelperModule.AnotherPurpleBoosterDashState = self.StateMachine.AddState(
                     new Func<int>(PurpleDashingUpdate),
                     PurpleDashingCoroutine,
-                    PurpleDashingBegin);
+                    PurpleDashingBegin,
+                    PurpleDashingEnd);
             }
         }
     }
@@ -839,7 +849,7 @@ namespace Celeste.Mod.ReverseHelper._From_Vortex_Helper
     public static class Util
     {
         // https://github.com/CommunalHelper/CommunalHelper/blob/dev/src/CommunalHelperModule.cs#L196
-        public static bool TryGetPlayer(out Player player)
+        public static bool TryGetPlayer([MaybeNullWhen(false)] out Player? player)
         {
             player = Engine.Scene?.Tracker?.GetEntity<Player>();
             return player != null;
