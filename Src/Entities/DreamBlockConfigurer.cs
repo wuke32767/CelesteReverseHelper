@@ -295,7 +295,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 Logger.Log(LogLevel.Error, "ReverseHelper", "Failed to load ReversedDreamBlock");
                 try
                 {
-                    Logger.Log(LogLevel.Error, "ReverseHelper", ic.ToString());
+                    Logger.Log(LogLevel.Error, "ReverseHelper", il.ToString());
 
 
                 }
