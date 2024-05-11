@@ -265,37 +265,56 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         private static void Player_Update(ILContext il)
         {
+            int opos;
             ILCursor ic = new(il);
-            while (ic.TryGotoNext(MoveType.After, i => i.MatchLdfld(out var v) && v.Name == "onCollideH",
-                i => i.MatchLdnull(),
-                i => i.MatchCallOrCallvirt(out var v) && v.Name == "MoveH"))
+            void check_distance()
             {
-                ic.Emit(OpCodes.Ldarg_0);
-                ic.EmitDelegate(nameless1);
-                static void nameless1(Player p)
+                if (ic.Index - opos > 10)
                 {
-                    if (p.CollideFirst<Solid>(p.Position + new Vector2(Math.Sign(p.Speed.X), 0)) is SaferFireIceBarrier safe)
+                    Logger.Log(LogLevel.Error, nameof(ReverseHelper), "something should went wrong. ping USSRNAME.");
+                    //Logger.Log(LogLevel.Error, nameof(ReverseHelper), il.ToString());
+                }
+            }
+            while (ic.TryGotoNext(MoveType.After, i => i.MatchLdfld(out var v) && v.Name == "onCollideH",
+                i => i.MatchLdnull()))
+            {
+                opos = ic.Index;
+                if (ic.TryGotoNext(MoveType.After,
+                   i => i.MatchCallOrCallvirt(out var v) && v.Name == "MoveH"))
+                {
+                    check_distance();
+                    ic.Emit(OpCodes.Ldarg_0);
+                    ic.EmitDelegate(nameless1);
+                    static void nameless1(Player p)
                     {
-                        safe.playertouch(new Vector2(Math.Sign(p.Speed.X), 0));
-                    }
-                };
+                        if (p.CollideFirst<Solid>(p.Position + new Vector2(Math.Sign(p.Speed.X), 0)) is SaferFireIceBarrier safe)
+                        {
+                            safe.playertouch(new Vector2(Math.Sign(p.Speed.X), 0));
+                        }
+                    };
+                }
             }
             ic.Index = 0;
             while (ic.TryGotoNext(MoveType.After, i => i.MatchLdfld(out var v) && v.Name == "onCollideV",
-                i => i.MatchLdnull(),
-                i => i.MatchCallOrCallvirt(out var v) && v.Name == "MoveV"))
+                i => i.MatchLdnull()))
             {
-
-                ic.Emit(OpCodes.Ldarg_0);
-                ic.EmitDelegate(nameless2);
-                static void nameless2(Player p)
+                opos = ic.Index;
+                if (ic.TryGotoNext(MoveType.After,
+                i => i.MatchCallOrCallvirt(out var v) && v.Name == "MoveV"))
                 {
-                    if (p.CollideFirst<Solid>(p.Position + new Vector2(0, Math.Sign(p.Speed.Y))) is SaferFireIceBarrier safe)
+                    check_distance();
+                    ic.Emit(OpCodes.Ldarg_0);
+                    ic.EmitDelegate(nameless2);
+                    static void nameless2(Player p)
                     {
-                        safe.playertouch(new Vector2(0, Math.Sign(p.Speed.Y)));
-                    }
-                };
+                        if (p.CollideFirst<Solid>(p.Position + new Vector2(0, Math.Sign(p.Speed.Y))) is SaferFireIceBarrier safe)
+                        {
+                            safe.playertouch(new Vector2(0, Math.Sign(p.Speed.Y)));
+                        }
+                    };
+                }
             }
+
         }
 
         [SourceGen.Loader.Unload]
