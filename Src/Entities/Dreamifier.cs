@@ -56,6 +56,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
         }
         [SourceGen.Loader.Load]
+        [SourceGen.Loader.LazyLoad]
         public static void Load()
         {
             On.Monocle.Scene.SetActualDepth += Scene_SetActualDepth;
@@ -82,7 +83,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
     }
 
-
+    [SourceGen.Loader.Dependency<DepthTracker>]
     [CustomEntity($"ReverseHelper/Dreamifier")]
     public class Dreamifier(Vector2 position, int width, int height, Color color1, Color color2, Color color3, Color color4) : Entity(position)
     {
@@ -674,6 +675,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
     }
     [Tracked]
     [TrackedAs(typeof(DreamBlock))]
+    [SourceGen.Loader.Dependency<DepthTracker>]
     public class DreamifierRenderer_Hitbox : DreamBlock
     {
 

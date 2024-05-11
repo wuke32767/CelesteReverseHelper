@@ -1,8 +1,11 @@
 using Celeste.Mod.ReverseHelper.Entities;
 using Celeste.Mod.ReverseHelper.SourceGen.Loader;
+using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.ModInterop;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Text.RegularExpressions;
 using static Celeste.Mod.ReverseHelper.ReverseHelperExtern;
@@ -64,10 +67,50 @@ namespace Celeste.Mod.ReverseHelper
         //public override void PrepareMapDataProcessors(MapDataFixup context)
         //{
         //    base.PrepareMapDataProcessors(context);
-
         //    context.Add<ReverseHelperMapDataProcessor>();
         //}
         public static bool failed_to_hook_reverse_dreamblock = false;
+        [Load]
+        public static void PrepareLazyLoad()
+        {
+            On.Celeste.LevelLoader.ctor += onLevelLoad;
+            On.Celeste.OverworldLoader.ctor += onOverworldLoad;
+        }
+        private static void onOverworldLoad(On.Celeste.OverworldLoader.orig_ctor orig, OverworldLoader self, Overworld.StartMode startMode, HiresSnow snow)
+        {
+            orig(self, startMode, snow);
+            Clear();
+        }
+        private static void Clear()
+        {
+            foreach (var (_, unl) in lazylist)
+            {
+                unl.unload();
+            }
+        }
+        private static void onLevelLoad(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session, Vector2? startPosition)
+        {
+            orig(self, session, startPosition);
+            if (lazylist.Count > 0)
+            {
+                foreach (var name in session.MapData?.Levels?.SelectMany(level => level.Entities?.Select(entity => entity.Name) ?? []) ?? [])
+                {
+                    if (lazylist.TryGetValue(name, out var val))
+                    {
+                        val.load();
+                    }
+                }
+            }
+        }
+        [LazyLoadDirectory]
+        static Dictionary<string, (Action load, Action unload)> lazylist = new();
+        [Unload]
+        public static void UnloadLazyLoad()
+        {
+            On.Celeste.LevelLoader.ctor -= onLevelLoad;
+            On.Celeste.OverworldLoader.ctor -= onOverworldLoad;
+            Clear();
+        }
     }
     namespace SourceGen.Loader
     {
@@ -105,6 +148,10 @@ namespace Celeste.Mod.ReverseHelper
         }
         [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
         public class LoadContenterAttribute : Attribute
+        {
+        }
+        [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+        public class DependencyAttribute<Depedency>() : Attribute()
         {
         }
     }

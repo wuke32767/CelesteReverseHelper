@@ -69,6 +69,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         }
         [SourceGen.Loader.Load]
+        [SourceGen.Loader.LazyLoad]
         public static void Load()
         {
             //On.Celeste.LevelLoader.ctor += LevelLoader_ctor; ;
@@ -83,7 +84,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public static void LoadContent()
         {
             var mov = ReverseHelperExtern.VortexHelperModule.AttachedJumpThru.MoveHExact;
-            if (mov is not null)
+            if (mov is not null && AttachedJumpThru is null)
             {
                 AttachedJumpThru = new ILHook(mov, UniversalBarrier);
             }
@@ -328,6 +329,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             IL.Celeste.JumpThru.MoveVExact -= UniversalBarrier;
 
             AttachedJumpThru?.Dispose();
+            AttachedJumpThru = null;
             //Everest.Events.Level.OnLoadEntity -= Level_OnLoadEntity;
         }
         public override void Update()

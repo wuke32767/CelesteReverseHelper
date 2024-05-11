@@ -134,6 +134,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         {
         }
         [SourceGen.Loader.Load]
+        [SourceGen.Loader.LazyLoad]
         public static void Load()
         {
             On.Celeste.Player.Update += Player_Update;
