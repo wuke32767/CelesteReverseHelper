@@ -337,7 +337,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 //        }
                 //    }
                 //}
-                foreach (Entity playerCollider in Scene.Tracker.Entities[typeof(DreamBlock)])
+                foreach (Entity playerCollider in this.CollidableAll<DreamBlock>())
                 {
                     if (playerCollider.Collider.Collide(Collider))
                     {

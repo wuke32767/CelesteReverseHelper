@@ -105,7 +105,7 @@ namespace Celeste.Mod.ReverseHelper
         [LazyLoadDirectory]
         static Dictionary<string, (Action load, Action unload)> lazylist = new();
         [Unload]
-        public static void UnloadLazyLoad()
+        public static void UnloadLazyLoad() 
         {
             On.Celeste.LevelLoader.ctor -= onLevelLoad;
             On.Celeste.OverworldLoader.ctor -= onOverworldLoad;
@@ -151,7 +151,7 @@ namespace Celeste.Mod.ReverseHelper
         {
         }
         [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-        public class DependencyAttribute<Depedency>() : Attribute()
+        public class DependencyAttribute(Type type) : Attribute()
         {
         }
     }

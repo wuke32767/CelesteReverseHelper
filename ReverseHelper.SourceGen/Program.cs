@@ -56,6 +56,12 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
             StringBuilder load = new();
             StringBuilder unload = new();
             StringBuilder loadcontent = new();
+            Dictionary<ITypeSymbol, ITypeSymbol> types = new();
+            Dictionary<string, ITypeSymbol> names = new();
+            Dictionary<ITypeSymbol, IMethodSymbol> loads = new();
+            Dictionary<ITypeSymbol, IMethodSymbol> unloads = new();
+            Dictionary<ITypeSymbol, string> alloc = new();
+            //Debugger.Launch();
             foreach (var type in context.Compilation.GetSymbolsWithName(_ => true).OfType<ITypeSymbol>())
             {
                 foreach (var attr in type.GetAttributes())
@@ -66,6 +72,31 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
                             || attr.AttributeClass.Name == "ModImportNameAttribute")
                         {
                             load.Append($"global::MonoMod.ModInterop.ModInteropManager.ModInterop(typeof(global::{type.FullName()}));");
+                        }
+                    }
+                    else if (attr.AttributeClass.FullNamespace() == attr_namespace)
+                    {
+                        if (attr.AttributeClass.Name == "DependencyAttribute")
+                        {
+                            types.Add(type, attr.AttributeClass.TypeArguments.FirstOrDefault());
+                        }
+                    }
+                    else if (attr.AttributeClass.FullNamespace() == "Celeste.Mod.Entities")
+                    {
+                        if (attr.AttributeClass.Name == "CustomEntityAttribute")
+                        {
+                            var a = attr.ConstructorArguments;
+                            if (a.Length == 1)
+                            {
+                                var b = a.First();
+                                if (b.Kind == TypedConstantKind.Array)
+                                {
+                                    foreach (var name in b.Values.Select(x => x.Value).OfType<string>())
+                                    {
+                                        names.Add(name,type);
+                                    }
+                                }
+                            }
                         }
                     }
                 }

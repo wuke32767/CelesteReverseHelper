@@ -10,50 +10,66 @@ using System.Runtime.CompilerServices;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
-    internal class DepthTracker : Component
+    public enum Groupmode
     {
-        public Entity target;
-        //if target.actualDepth is not set.
-        //if it's not dirty, no need to update.
-        bool dirty { get => Active; set => Active = value; }
-        public DepthTracker(Entity trackto, Entity self) : base(true, false)
+        none = 0, collider = 1, entity = 2, all = 3,
+    }
+    [SourceGen.Loader.Dependency(typeof(DepthTracker))]
+    [CustomEntity($"ReverseHelper/Dreamifier")]
+    public class Dreamifier(Vector2 position, int width, int height, Color color1, Color color2,
+        Color color3, Color color4, Groupmode connect, Groupmode blend, TypeMatch typeMatch, bool fg)
+        : Entity(position)
+    {
+        static ConditionalWeakTable<Solid, List<DreamifierRenderer_Base>> table = new();
+        public Dreamifier(EntityData e, Vector2 offset)
+        : this(e.Position + offset, e.Width, e.Height,
+        e.HexaColor("lineColor"), e.HexaColor("fillColor"),
+        e.HexaColor("lineColorDeactivated"), e.HexaColor("fillColorDeactivated"),
+        e.Enum("ConnectMode", Groupmode.none), e.Enum("BlendInMode", Groupmode.collider),
+        e.Attr("ignoreType"), e.Bool("fgTile", true))
         {
-            target = self;
-            trackto.Add(this);
-            Apply();
         }
-        class some_cmp : IComparer<Entity>
+        public override void Added(Scene scene)
         {
-            public int Compare(Entity? a, Entity? b) => Math.Sign(b!.actualDepth - a!.actualDepth);
-            public static some_cmp Instance = new();
-        }
-        public void Apply()
-        {
-            if (!Scene.Entities.unsorted)
+            base.Added(scene);
+            AfterAdded.Reg(scene, delegate ()
             {
-                var i = Scene.Entities.entities.BinarySearch(Entity, some_cmp.Instance);
-                if (i >= 0 && Scene.Entities.entities[i] == Entity)
+                Collider = new Hitbox(width, height);
+
+                foreach (Solid s in this.CollidableAll<Solid>()
+                .Where(x => fg || x != SceneAs<Level>().SolidTiles)
+                .Where(x => !typeMatch.IsMatch(x.GetType()))
+                .Where(x => x is not DreamBlock))
                 {
-                    int d = Entity.Depth;
-                    Scene.actualDepthLookup[d] += 9.9999999747524271E-07;
-                    foreach (var e in Scene.Entities.entities.Skip(i + 1).TakeWhile(e => e.Depth == d))
+                    var r = GetDreamifier(s);
+                    if (r is not null)
                     {
-                        e.actualDepth -= 9.9999999747524271E-07;
+                        var list = table.GetOrCreateValue(s);
+                        list.AddRange(r.OfType<DreamifierRenderer_Base>());
+                        Scene.Add(r);
                     }
-                    target.actualDepth = Entity.actualDepth - 9.9999999747524271E-07;
-                    Scene.Entities.MarkUnsorted();
-                    dirty = false;
-                    return;
                 }
-            }
-        }
-        public override void Update()
-        {
-            base.Update();
-            //if (dirty)
-            {
-                Apply();
-            }
+                //RemoveSelf();
+                DreamifierRenderer_Base?[]? GetDreamifier(Solid solid) => GetDreamifier2(solid.Collider, solid, solid.Collider);
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                DreamifierRenderer_Base?[]? GetDreamifier2(Collider collider, Solid solid, Collider groupby)
+                {
+                    switch (collider)
+                    {
+                        case Grid grid:
+                            return [new DreamifierRenderer_Grid(Position, width, height, color1, color2, color3, color4, solid, grid, blend, connect)];
+                        case Hitbox hitbox:
+                            return [new DreamifierRenderer_Hitbox(Position, width, height, color1, color2, color3, color4, solid, hitbox, blend, connect)];
+                        case ColliderList cl:
+                        //return cl.colliders.SelectMany(x => GetDreamifier2(x, solid, cl) ?? []).ToArray();
+                        //not supported
+                        case Circle:
+                        default:
+                            break;
+                    }
+                    return null;
+                }
+            });
         }
         [SourceGen.Loader.Load]
         [SourceGen.Loader.LazyLoad]
@@ -64,15 +80,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         private static void Scene_SetActualDepth(On.Monocle.Scene.orig_SetActualDepth orig, Scene self, Entity entity)
         {
-            orig(self, entity);
-            foreach (var dt in entity.Components.OfType<DepthTracker>())
+            if (entity is not DreamifierRenderer_Base)
             {
-                dt.target.Depth = entity.Depth;
-                //if (dt.target.Scene is null)
-                //{
-                //    dt.RemoveSelf();
-                //}
-                dt.dirty = false;
+                orig(self, entity);
             }
         }
 
@@ -82,104 +92,272 @@ namespace Celeste.Mod.ReverseHelper.Entities
             On.Monocle.Scene.SetActualDepth -= Scene_SetActualDepth;
         }
     }
-
-    [SourceGen.Loader.Dependency<DepthTracker>]
-    [CustomEntity($"ReverseHelper/Dreamifier")]
-    public class Dreamifier(Vector2 position, int width, int height, Color color1, Color color2, Color color3, Color color4) : Entity(position)
+    [Tracked(true)]
+    [TrackedAs(typeof(DreamBlock), true)]
+    public abstract class DreamifierRenderer_Base : DreamBlock
     {
-        static ConditionalWeakTable<Solid, List<DreamBlock>> table = new();
-        public Dreamifier(EntityData e, Vector2 offset)
-        : this(e.Position + offset, e.Width, e.Height,
-        e.HexaColor("lineColor"), e.HexaColor("fillColor"),
-        e.HexaColor("lineColorDeactivated"), e.HexaColor("fillColorDeactivated"))
-        {
-        }
-        public override void Awake(Scene scene)
-        {
-            Collider = new Hitbox(width, height);
-            base.Awake(scene);
-
-            foreach (Solid s in Scene.Tracker.Entities[typeof(Solid)])
-            {
-                if (s.Collider != null && Collider.Collide(s))
-                {
-                    {
-                        var r = GetDreamifier(s);
-                        if (r is not null)
-                        {
-                            var list = table.GetOrCreateValue(s);
-                            list.Add(r);
-                            Scene.Add(r);
-                        }
-                    }
-                }
-            }
-            //RemoveSelf();
-            DreamBlock? GetDreamifier(Solid solid)
-            {
-                switch (solid.Collider)
-                {
-                    case Grid:
-                        return new DreamifierRenderer_Grid(position, width, height, color1, color2, color3, color4, solid);
-                    case Hitbox:
-                        return new DreamifierRenderer_Hitbox(position, width, height, color1, color2, color3, color4, solid);
-                    //not supported
-                    case Circle:
-                        break;
-                    case ColliderList:
-                        break;
-                }
-                return null;
-            }
-        }
-    }
-    [Tracked]
-    [TrackedAs(typeof(DreamBlock))]
-    public class DreamifierRenderer_Grid : DreamBlock
-    {
-        //public static DreamifierRenderer_Grid ConstructDreamifier(Level level, LevelData levelData, Vector2 offset, EntityData data)
-        //{
-        //    return new DreamifierRenderer_Grid(data, offset);
-        //}
-
-        List<(Vector2 from, Vector2 to)> WobbleList = [];
-        List<Vector2> CornerList = [];
-
-        Solid solid;
+        protected List<(Vector2 from, Vector2 to)> WobbleList = [];
+        protected List<Vector2> CornerList = [];
+        public List<Rectangle> AltCollider = new();
 
         public Color lineColor;
         public Color fillColor;
         public Color linecolorDeact;
         public Color fillColorDeact;
+        public Solid solid;
+        public Collider _solidcollider;
+        public Groupmode solidConnect;
+        public Groupmode dreamConnect;
 
-        public DreamifierRenderer_Grid(Vector2 position, int width, int height, Color line, Color block,
-            Color linede, Color fillde, Solid solid) : base(position, width, height, null, false, false, false)
+
+        internal DepthTracker depthTracker;
+
+        StaticMover staticmover = default!;
+        public override void Added(Scene scene)
+        {
+            prepareRenderer();
+            base.Added(scene);
+        }
+        protected abstract void prepareRenderer();
+        public override void Awake(Scene scene)
+        {
+            AllowStaticMovers = false;
+            base.Awake(scene);
+            depthTracker = DepthTracker.Track(solid, this);
+            Setup();
+            //offset = solid.Position - Position;
+
+            Add(staticmover = new StaticMover());
+            solid.staticMovers.Add(staticmover);
+            staticmover.Platform = solid;
+            staticmover.OnAttach?.Invoke(solid);
+
+            var dashcollide = solid.OnDashCollide;
+            if (dashcollide is not null)
+            {
+                solid.OnDashCollide = (p, dir) =>
+                {
+                    if (p.CollideCheck(this, p.Position + dir))
+                    {
+                        return DashCollisionResults.NormalOverride;
+                    }
+                    return dashcollide(p, dir);
+                };
+            }
+        }
+        //public Vector2 offset;
+
+        public new TilesetDreamBlock.DreamParticle[] particles;
+        public new MTexture[] particleTextures =
+        [
+            GFX.Game["objects/dreamblock/particles"].GetSubtexture(14, 0, 7, 7),
+            GFX.Game["objects/dreamblock/particles"].GetSubtexture(7, 0, 7, 7),
+            GFX.Game["objects/dreamblock/particles"].GetSubtexture(0, 0, 7, 7),
+            GFX.Game["objects/dreamblock/particles"].GetSubtexture(7, 0, 7, 7)
+        ];
+
+        private new float wobbleFrom = Calc.Random.NextFloat((float)Math.PI * 2f);
+
+        private new float wobbleTo = Calc.Random.NextFloat((float)Math.PI * 2f);
+
+        private new float wobbleEase;
+        public new float animTimer;
+
+        public DreamifierRenderer_Base(Vector2 position, int width, int height, Color line, Color block,
+                Color linede, Color fillde, Solid solid, Collider collider, Groupmode solidconnect, Groupmode dreamconnect) : base(position, width, height, null, false, false, false)
         {
             lineColor = line;
             fillColor = block;
             linecolorDeact = linede;
             fillColorDeact = fillde;
+            this.solid = solid;
+            _solidcollider = collider;
+
             DreamBlockConfig.Get(this).HighPriority();
             //vanilla uses 10
             //for footstep ripple priority
             SurfaceSoundPriority = 11;
-            Renderer = null!;
+            depthTracker = null!;
             particles = null!;
             this.solid = solid;
+            solidConnect = solidconnect;
+            dreamConnect = dreamconnect;
         }
 
+        public new void Setup()
+        {
+            particles = new TilesetDreamBlock.DreamParticle[(int)(Width / 8f * (Height / 8f) * 0.7f)];
+            for (int i = 0; i < particles.Length; i++)
+            {
+                particles[i].Position = new Vector2(Calc.Random.NextFloat(Width), Calc.Random.NextFloat(Height));
+                particles[i].Layer = Calc.Random.Choose(0, 1, 1, 2, 2, 2);
+                particles[i].TimeOffset = Calc.Random.NextFloat();
+                particles[i].Colord = Color.LightGray * (0.5f + particles[i].Layer / 2f * 0.5f);
+                //if (playerHasDreamDash)
+                {
+                    switch (particles[i].Layer)
+                    {
+                        case 0:
+                            particles[i].Colora = Calc.Random.Choose(Calc.HexToColor("FFEF11"), Calc.HexToColor("FF00D0"), Calc.HexToColor("08a310"));
+                            break;
+                        case 1:
+                            particles[i].Colora = Calc.Random.Choose(Calc.HexToColor("5fcde4"), Calc.HexToColor("7fb25e"), Calc.HexToColor("E0564C"));
+                            break;
+                        case 2:
+                            particles[i].Colora = Calc.Random.Choose(Calc.HexToColor("5b6ee1"), Calc.HexToColor("CC3B3B"), Calc.HexToColor("7daa64"));
+                            break;
+                    }
+                }
+            }
+        }
+        public new bool playerHasDreamDash
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => DreamBlockConfigurer.dreamblock_enabled(this);
+        }
+        public override void Removed(Scene scene)
+        {
+            base.Removed(scene);
+            depthTracker.RemoveSelf();
+        }
+        public override void Update()
+        {
+            if (solid.Scene is null)
+            {
+                RemoveSelf();
+                return;
+            }
+            Collidable = solid.Collidable;
+            Visible = solid.Visible;
+            this.Entity_Update();
+            if (playerHasDreamDash)
+            {
+                animTimer += 6f * Engine.DeltaTime;
+                wobbleEase += Engine.DeltaTime * 2f;
+                if (wobbleEase > 1f)
+                {
+                    wobbleEase = 0f;
+                    wobbleFrom = wobbleTo;
+                    wobbleTo = Calc.Random.NextFloat((float)Math.PI * 2f);
+                }
 
-        DepthTracker Renderer;
-        public override void Awake(Scene _scene)
+                //SurfaceSoundIndex = 12;
+            }
+            else
+            {
+                //SurfaceSoundIndex = 11;
+            }
+            //MoveTo(solid.Position - offset);
+        }
+        public new void WobbleLine(Vector2 from, Vector2 to, float offset)
+        {
+            float num = (to - from).Length();
+            Vector2 vector = Vector2.Normalize(to - from);
+            Vector2 vector2 = new Vector2(vector.Y, 0f - vector.X) / 2f;
+
+            float num2 = 0f;
+            int num3 = 16;
+            for (int i = 0; i < num; i += num3)
+            {
+                float num4 = Lerp(LineAmplitude(wobbleFrom + offset, i), LineAmplitude(wobbleTo + offset, i), wobbleEase);
+                if (i + num3 >= num)
+                {
+                    num4 = 0f;
+                }
+
+                float num5 = Math.Min(num3, num - i);
+                Vector2 vector3 = from + vector * i + vector2 * num2;
+                Vector2 vector4 = from + vector * (i + num5) + vector2 * num4;
+                Draw.Line(vector3, vector4, playerHasDreamDash ? lineColor : linecolorDeact);
+                num2 = num4;
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public virtual bool Inside(Vector2 pos)
+        {
+            if (pos.X >= Left + 2f && pos.Y >= Top + 2f && pos.X < Right - 2f && pos.Y < Bottom - 2f)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public override void Render()
+        {
+            Camera camera = SceneAs<Level>().Camera;
+            Rectangle camerarect = new Rectangle((int)camera.X, (int)camera.Y, 320, 180);
+
+            if (!camerarect.Intersects(new((int)X, (int)Y, (int)Width, (int)Height)))
+            {
+                return;
+            }
+
+            Vector2 shake = new(0, 0);
+            foreach (var r in AltCollider)
+            {
+                Draw.Rect(shake.X + r.X, shake.Y + r.Y, r.Width, r.Height, playerHasDreamDash ? fillColor : fillColorDeact);
+            }
+            Vector2 position = SceneAs<Level>().Camera.Position;
+            for (int i = 0; i < particles.Length; i++)
+            {
+                int layer = particles[i].Layer;
+                Vector2 position2 = particles[i].Position;
+                position2 += position * (0.3f + 0.25f * layer);
+                position2 = PutInside(position2);
+                if (!Inside(position2))
+                {
+                    continue;
+                }
+                Color color = particles[i].Color(this);
+                MTexture mTexture;
+                switch (layer)
+                {
+                    case 0:
+                        {
+                            int num2 = (int)((particles[i].TimeOffset * 4f + animTimer) % 4f);
+                            mTexture = particleTextures[3 - num2];
+                            break;
+                        }
+                    case 1:
+                        {
+                            int num = (int)((particles[i].TimeOffset * 2f + animTimer) % 2f);
+                            mTexture = particleTextures[1 + num];
+                            break;
+                        }
+                    default:
+                        mTexture = particleTextures[2];
+                        break;
+                }
+                //if (position2.X >= 2f && position2.Y >= 2f && position2.X < Width - 2f && position2.Y < Height - 2f)
+                {
+                    mTexture.DrawCentered(position2 + shake, color);
+                }
+            }
+            float off = 0;
+            foreach (var (f, t) in WobbleList)
+            {
+                WobbleLine(f + Position, t + Position, off += 0.75f);
+            }
+            foreach (var r in CornerList)
+            {
+                Draw.Rect(shake + r + Position, 1, 1, playerHasDreamDash ? lineColor : linecolorDeact);
+            }
+        }
+    }
+    public class DreamifierRenderer_Grid(Vector2 position, int width, int height, Color line, Color block,
+        Color linede, Color fillde, Solid solid, Grid collider, Groupmode solidconnect, Groupmode dreamconnect)
+        : DreamifierRenderer_Base(position, width, height, line, block, linede, fillde, solid, collider, solidconnect, dreamconnect)
+    {
+        Grid solidtarget => (Grid)_solidcollider;
+
+        protected override void prepareRenderer()
         {
             //todo: these "8" are hardcoded
-            base.Awake(_scene);
             //var scene = SceneAs<Level>();
             Solid solidTiles = solid;//scene.SolidTiles;
-            Grid? solidCollider = solidTiles.Collider as Grid;
+            Grid? solidCollider = solidtarget;
             var tilechar = solidCollider!.Data;// scene.SolidsData;
 
-            solidTiles.Add(Renderer = new DepthTracker(solidTiles, this));
             Rectangle tileBounds = solidCollider.Bounds;//scene.Session.MapData.TileBounds;
             var tiletex = solidCollider.Data;//solidTiles.Tiles.Tiles;
             int x = (int)(X / 8f) - tileBounds.Left / 8;
@@ -195,7 +373,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     if (tiletex[x + i, y + j] != tiletex.EmptyValue)
                     {
                         collidemap[i, j] = true;
-                        //tg.Tiles[i, j] = tiletex[x + i, y + j];
                     }
                 }
             }
@@ -204,54 +381,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
             //Add(tg);
             //tg.Visible = false;
 
-            for (int i = 0; i < tilesX; i++)
+            if (solidConnect < Groupmode.collider)
             {
-                for (int j = 0; j < tilesY; j++)
-                {
-                    if (tilechar[x + i, y + j] != tilechar.EmptyValue)
-                    {
-                        if (tilechar[x + i + 1, y + j] == tilechar.EmptyValue && tilechar[x + i, y + j + 1] == tilechar.EmptyValue)
-                        {
-                            CornerList.Add(new(i * 8 + 6, j * 8 + 6));
-                        }
-                        if (tilechar[x + i, y + j + 1] == tilechar.EmptyValue && tilechar[x + i - 1, y + j] == tilechar.EmptyValue)
-                        {
-                            CornerList.Add(new(i * 8 + 1, j * 8 + 6));
-                        }
-                        if (tilechar[x + i - 1, y + j] == tilechar.EmptyValue && tilechar[x + i, y + j - 1] == tilechar.EmptyValue)
-                        {
-                            CornerList.Add(new(i * 8 + 1, j * 8 + 1));
-                        }
-                        if (tilechar[x + i, y + j - 1] == tilechar.EmptyValue && tilechar[x + i + 1, y + j] == tilechar.EmptyValue)
-                        {
-                            CornerList.Add(new(i * 8 + 6, j * 8 + 1));
-                        }
-                        if (tilechar[x + i + 1, y + j] != tilechar.EmptyValue
-                         && tilechar[x + i, y + j + 1] != tilechar.EmptyValue
-                         && tilechar[x + i + 1, y + j + 1] == tilechar.EmptyValue)
-                        {
-                            CornerList.Add(new(i * 8 + 7, j * 8 + 7));
-                        }
-                        if (tilechar[x + i, y + j + 1] != tilechar.EmptyValue
-                         && tilechar[x + i - 1, y + j] != tilechar.EmptyValue
-                         && tilechar[x + i - 1, y + j + 1] == tilechar.EmptyValue)
-                        {
-                            CornerList.Add(new(i * 8 + 0, j * 8 + 7));
-                        }
-                        if (tilechar[x + i - 1, y + j] != tilechar.EmptyValue
-                         && tilechar[x + i, y + j - 1] != tilechar.EmptyValue
-                         && tilechar[x + i - 1, y + j - 1] == tilechar.EmptyValue)
-                        {
-                            CornerList.Add(new(i * 8 + 0, j * 8 + 0));
-                        }
-                        if (tilechar[x + i, y + j - 1] != tilechar.EmptyValue
-                         && tilechar[x + i + 1, y + j] != tilechar.EmptyValue
-                         && tilechar[x + i + 1, y + j - 1] == tilechar.EmptyValue)
-                        {
-                            CornerList.Add(new(i * 8 + 7, j * 8 + 0));
-                        }
-                    }
-                }
+                tilechar = collidemap;
             }
             for (int i = 0; i < tilesX; i++)
             {
@@ -347,9 +479,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 }
             }
 
-            Setup();
-            //Add(new BeforeRenderHook(BeforeRender));
-
             var other = collidemap.Clone();
             for (int i = 0; i < tilesX; i++)
             {
@@ -384,207 +513,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     }
                 }
             }
-            offset = solid.Position - Position;
-        }
-        Vector2 offset;
-
-        List<Rectangle> AltCollider = new();
-        enum _edges : byte
-        {
-            up = 1, left = 2, right = 4, down = 8,
         }
 
-        new TilesetDreamBlock.DreamParticle[] particles;
-        public new void Setup()
+        // check if pos is inside Grid with 2 paddings.
+        public override bool Inside(Vector2 pos)
         {
-
-
-            particles = new TilesetDreamBlock.DreamParticle[(int)(base.Width / 8f * (base.Height / 8f) * 0.7f)];
-            for (int i = 0; i < particles.Length; i++)
-            {
-                particles[i].Position = new Vector2(Calc.Random.NextFloat(base.Width), Calc.Random.NextFloat(base.Height));
-                particles[i].Layer = Calc.Random.Choose(0, 1, 1, 2, 2, 2);
-                particles[i].TimeOffset = Calc.Random.NextFloat();
-                particles[i].Colord = Color.LightGray * (0.5f + particles[i].Layer / 2f * 0.5f);
-                //if (playerHasDreamDash)
-                {
-                    switch (particles[i].Layer)
-                    {
-                        case 0:
-                            particles[i].Colora = Calc.Random.Choose(Calc.HexToColor("FFEF11"), Calc.HexToColor("FF00D0"), Calc.HexToColor("08a310"));
-                            break;
-                        case 1:
-                            particles[i].Colora = Calc.Random.Choose(Calc.HexToColor("5fcde4"), Calc.HexToColor("7fb25e"), Calc.HexToColor("E0564C"));
-                            break;
-                        case 2:
-                            particles[i].Colora = Calc.Random.Choose(Calc.HexToColor("5b6ee1"), Calc.HexToColor("CC3B3B"), Calc.HexToColor("7daa64"));
-                            break;
-                    }
-                }
-            }
-        }
-
-
-        public new bool playerHasDreamDash
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => DreamBlockConfigurer.dreamblock_enabled(this);
-        }
-        public override void Removed(Scene scene)
-        {
-            base.Removed(scene);
-            Renderer.RemoveSelf();
-        }
-        public override void Render()
-        {
-            Camera camera = SceneAs<Level>().Camera;
-            Rectangle camerarect = new Rectangle((int)camera.X, (int)camera.Y, 320, 180);
-
-            if (!camerarect.Intersects(new((int)X, (int)Y, (int)Width, (int)Height)))
-            {
-                return;
-            }
-
-            Vector2 shake = new(0, 0);
-            foreach (var r in AltCollider)
-            {
-                Draw.Rect(shake.X + r.X, shake.Y + r.Y, r.Width, r.Height, playerHasDreamDash ? fillColor : fillColorDeact);
-            }
-            Vector2 position = SceneAs<Level>().Camera.Position;
-            for (int i = 0; i < particles.Length; i++)
-            {
-                int layer = particles[i].Layer;
-                Vector2 position2 = particles[i].Position;
-                position2 += position * (0.3f + 0.25f * layer);
-                position2 = PutInside(position2);
-                if (!Inside(position2))
-                {
-                    continue;
-                }
-                Color color = particles[i].Color(this);
-                MTexture mTexture;
-                switch (layer)
-                {
-                    case 0:
-                        {
-                            int num2 = (int)((particles[i].TimeOffset * 4f + animTimer) % 4f);
-                            mTexture = particleTextures[3 - num2];
-                            break;
-                        }
-                    case 1:
-                        {
-                            int num = (int)((particles[i].TimeOffset * 2f + animTimer) % 2f);
-                            mTexture = particleTextures[1 + num];
-                            break;
-                        }
-                    default:
-                        mTexture = particleTextures[2];
-                        break;
-                }
-                //if (position2.X >= 2f && position2.Y >= 2f && position2.X < Width - 2f && position2.Y < Height - 2f)
-                {
-                    mTexture.DrawCentered(position2 + shake, color);
-                }
-            }
-            float off = 0;
-            foreach (var (f, t) in WobbleList)
-            {
-                WobbleLine(f + Position, t + Position, off += 0.75f);
-            }
-            foreach (var r in CornerList)
-            {
-                Draw.Rect(shake + r + Position, 1, 1, playerHasDreamDash ? lineColor : linecolorDeact);
-            }
-        }
-        private new void WobbleLine(Vector2 from, Vector2 to, float offset)
-        {
-            float num = (to - from).Length();
-            Vector2 vector = Vector2.Normalize(to - from);
-            Vector2 vector2 = new Vector2(vector.Y, 0f - vector.X) / 2f;
-
-            float num2 = 0f;
-            int num3 = 16;
-            for (int i = 0; i < num; i += num3)
-            {
-                float num4 = Lerp(LineAmplitude(wobbleFrom + offset, i), LineAmplitude(wobbleTo + offset, i), wobbleEase);
-                if (i + num3 >= num)
-                {
-                    num4 = 0f;
-                }
-
-                float num5 = Math.Min(num3, num - i);
-                Vector2 vector3 = from + vector * i + vector2 * num2;
-                Vector2 vector4 = from + vector * (i + num5) + vector2 * num4;
-                Draw.Line(vector3, vector4, playerHasDreamDash ? lineColor : linecolorDeact);
-                num2 = num4;
-            }
-        }
-        private static new float Lerp(float a, float b, float percent)
-        {
-            return a + (b - a) * percent;
-        }
-        private static new float LineAmplitude(float seed, float index)
-        {
-            return (float)(Math.Sin((double)(seed + index / 16f) + Math.Sin(seed * 2f + index / 32f) * 6.2831854820251465) + 1.0) * 1.5f;
-        }
-
-        private new float wobbleFrom = Calc.Random.NextFloat((float)Math.PI * 2f);
-
-        private new float wobbleTo = Calc.Random.NextFloat((float)Math.PI * 2f);
-
-        private new float wobbleEase;
-        public new float animTimer;
-        public new MTexture[] particleTextures =
-        [
-            GFX.Game["objects/dreamblock/particles"].GetSubtexture(14, 0, 7, 7),
-            GFX.Game["objects/dreamblock/particles"].GetSubtexture(7, 0, 7, 7),
-            GFX.Game["objects/dreamblock/particles"].GetSubtexture(0, 0, 7, 7),
-            GFX.Game["objects/dreamblock/particles"].GetSubtexture(7, 0, 7, 7)
-        ];
-
-        public override void Update()
-        {
-            if (solid.Scene is null)
-            {
-                RemoveSelf();
-                return;
-            }
-            Collidable = solid.Collidable;
-            Visible = solid.Visible;
-            Entity_Update();
-            if (playerHasDreamDash)
-            {
-                animTimer += 6f * Engine.DeltaTime;
-                wobbleEase += Engine.DeltaTime * 2f;
-                if (wobbleEase > 1f)
-                {
-                    wobbleEase = 0f;
-                    wobbleFrom = wobbleTo;
-                    wobbleTo = Calc.Random.NextFloat((float)Math.PI * 2f);
-                }
-
-                //SurfaceSoundIndex = 12;
-            }
-            else
-            {
-                //SurfaceSoundIndex = 11;
-            }
-            MoveTo(solid.Position - offset);
-        }
-        [MonoMod.MonoModLinkTo("Monocle.Entity", "System.Void Update()")]
-        public void Entity_Update()
-        {
-            throw new NotImplementedException("How? This should be relinked.");
-        }
-        [MonoMod.MonoModLinkTo("Monocle.Entity", "System.Void Render()")]
-        public void Entity_Render()
-        {
-            throw new NotImplementedException("How? This should be relinked.");
-        }
-        bool Inside(Vector2 pos)
-        {
-            // check if pos is inside Grid.
-
             // a 8*8 cell can be sliced into 9 pieces.
             // same number means they check same cell to determine if they is inside the grid.
             // 11222233
@@ -612,9 +545,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
             // 66445555
             // 66445555
             // just split it to 4 pieces.
-            Rectangle tileBounds = solid.Collider.Bounds;
-            var tiledata = (solid.Collider as Grid)!.Data;
-            // multiply result by 2,
+            Rectangle tileBounds = solidtarget.Bounds;
+            var tiledata = solidtarget.Data;
+            // by just divide result by 4, (8 is a cell)
             int xm2 = (int)(pos.X / 8f * 2) - 2 * tileBounds.Left / 8;
             int ym2 = (int)(pos.Y / 8f * 2) - 2 * tileBounds.Top / 8;
 
@@ -654,9 +587,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
         {
             if (playerHasDreamDash)
             {
-                foreach (DreamifierRenderer_Grid rects in Scene.Tracker.Entities[typeof(DreamifierRenderer_Grid)])
+                //foreach (DreamifierRenderer_Grid rects in Scene.Tracker.Entities[typeof(DreamifierRenderer_Grid)])
                 {
-                    foreach (var rec in rects.AltCollider)
+                    foreach (var rec in AltCollider)
                     {
                         var burst = SceneAs<Level>().Displacement.AddBurst(position, 0.5f, 0f, 40f);
                         burst.WorldClipRect = rec;
@@ -670,273 +603,47 @@ namespace Celeste.Mod.ReverseHelper.Entities
         internal static void Unload()
         {
             On.Celeste.DreamBlock.FootstepRipple -= DreamBlock_FootstepRipple;
-
         }
     }
-    [Tracked]
-    [TrackedAs(typeof(DreamBlock))]
-    [SourceGen.Loader.Dependency<DepthTracker>]
-    public class DreamifierRenderer_Hitbox : DreamBlock
+    public class DreamifierRenderer_Hitbox(Vector2 position, int width, int height, Color line, Color block,
+        Color linede, Color fillde, Solid solid, Hitbox collider, Groupmode solidconnect, Groupmode dreamconnect)
+        : DreamifierRenderer_Base(position, width, height, line, block, linede, fillde, solid, collider, solidconnect, dreamconnect)
     {
+        Hitbox solidtarget => (Hitbox)_solidcollider;
 
-        List<(Vector2 from, Vector2 to)> WobbleList = [];
-        List<Vector2> CornerList = [];
-
-        Solid solid;
-
-        public Color lineColor;
-        public Color fillColor;
-        public Color linecolorDeact;
-        public Color fillColorDeact;
-
-        public DreamifierRenderer_Hitbox(Vector2 position, int width, int height, Color line, Color block,
-            Color linede, Color fillde, Solid solid) : base(position, width, height, null, false, false, false)
+        protected override void prepareRenderer()
         {
-            lineColor = line;
-            fillColor = block;
-            linecolorDeact = linede;
-            fillColorDeact = fillde;
-            DreamBlockConfig.Get(this).HighPriority();
-            //vanilla uses 10
-            //for footstep ripple priority
-            SurfaceSoundPriority = 11;
-            Renderer = null!;
-            particles = null!;
-            this.solid = solid;
-        }
-
-        Vector2 offset;
-        DepthTracker Renderer;
-        public override void Awake(Scene _scene)
-        {
-            base.Awake(_scene);
-            solid.Add(Renderer = new DepthTracker(solid, this));
-
-            var rect = Rectangle.Intersect(solid.Hitbox.Bounds, Hitbox.Bounds);
+            var rect = Rectangle.Intersect(Collider.Bounds, solidtarget.Bounds);
             Position = new(rect.X, rect.Y);
             Collider = new Hitbox(rect.Width, rect.Height);
 
-            bool top = false, bottom = false, left = false, right = false;
-            if (solid.Top == Top)
+            if (solidConnect < Groupmode.collider)
             {
-                top = true;
                 WobbleList.Add((Collider.TopLeft, Collider.TopRight));
-            }
-            if (solid.Bottom == Bottom)
-            {
-                bottom = true;
                 WobbleList.Add((Collider.BottomRight, Collider.BottomLeft));
-            }
-            if (solid.Left == Left)
-            {
-                left = true;
                 WobbleList.Add((Collider.BottomLeft, Collider.TopLeft));
-            }
-            if (solid.Right == Right)
-            {
-                right = true;
                 WobbleList.Add((Collider.TopRight, Collider.BottomRight));
-            }
-
-            if (top && left)
-            {
-                CornerList.Add(Collider.TopLeft + new Vector2(1, 1));
-            }
-            if (bottom && left)
-            {
-                CornerList.Add(Collider.BottomLeft + new Vector2(1, -2));
-            }
-            if (bottom && right)
-            {
-                CornerList.Add(Collider.BottomRight + new Vector2(-2, -2));
-            }
-            if (top && right)
-            {
-                CornerList.Add(Collider.TopRight + new Vector2(-2, 1));
-            }
-            Setup();
-
-            offset = solid.Position - Position;
-        }
-        new TilesetDreamBlock.DreamParticle[] particles;
-        public new void Setup()
-        {
-
-
-            particles = new TilesetDreamBlock.DreamParticle[(int)(base.Width / 8f * (base.Height / 8f) * 0.7f)];
-            for (int i = 0; i < particles.Length; i++)
-            {
-                particles[i].Position = new Vector2(Calc.Random.NextFloat(base.Width), Calc.Random.NextFloat(base.Height));
-                particles[i].Layer = Calc.Random.Choose(0, 1, 1, 2, 2, 2);
-                particles[i].TimeOffset = Calc.Random.NextFloat();
-                particles[i].Colord = Color.LightGray * (0.5f + particles[i].Layer / 2f * 0.5f);
-                //if (playerHasDreamDash)
-                {
-                    switch (particles[i].Layer)
-                    {
-                        case 0:
-                            particles[i].Colora = Calc.Random.Choose(Calc.HexToColor("FFEF11"), Calc.HexToColor("FF00D0"), Calc.HexToColor("08a310"));
-                            break;
-                        case 1:
-                            particles[i].Colora = Calc.Random.Choose(Calc.HexToColor("5fcde4"), Calc.HexToColor("7fb25e"), Calc.HexToColor("E0564C"));
-                            break;
-                        case 2:
-                            particles[i].Colora = Calc.Random.Choose(Calc.HexToColor("5b6ee1"), Calc.HexToColor("CC3B3B"), Calc.HexToColor("7daa64"));
-                            break;
-                    }
-                }
-            }
-        }
-
-
-        public new bool playerHasDreamDash
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => DreamBlockConfigurer.dreamblock_enabled(this);
-        }
-        public override void Removed(Scene scene)
-        {
-            base.Removed(scene);
-            Renderer.RemoveSelf();
-        }
-        public override void Render()
-        {
-            Camera camera = SceneAs<Level>().Camera;
-            Rectangle camerarect = new Rectangle((int)camera.X, (int)camera.Y, 320, 180);
-
-            if (!camerarect.Intersects(new((int)X, (int)Y, (int)Width, (int)Height)))
-            {
-                return;
-            }
-
-            Vector2 shake = new(0, 0);
-            Draw.Rect(shake.X + X, shake.Y + Y, Width, Height, playerHasDreamDash ? fillColor : fillColorDeact);
-            Vector2 position = SceneAs<Level>().Camera.Position;
-            for (int i = 0; i < particles.Length; i++)
-            {
-                int layer = particles[i].Layer;
-                Vector2 position2 = particles[i].Position;
-                position2 += position * (0.3f + 0.25f * layer);
-                position2 = PutInside(position2);
-
-                Color color = particles[i].Color(this);
-                MTexture mTexture;
-                switch (layer)
-                {
-                    case 0:
-                        {
-                            int num2 = (int)((particles[i].TimeOffset * 4f + animTimer) % 4f);
-                            mTexture = particleTextures[3 - num2];
-                            break;
-                        }
-                    case 1:
-                        {
-                            int num = (int)((particles[i].TimeOffset * 2f + animTimer) % 2f);
-                            mTexture = particleTextures[1 + num];
-                            break;
-                        }
-                    default:
-                        mTexture = particleTextures[2];
-                        break;
-                }
-                //if (position2.X >= 2f && position2.Y >= 2f && position2.X < Width - 2f && position2.Y < Height - 2f)
-                {
-                    mTexture.DrawCentered(position2 + shake, color);
-                }
-            }
-            float off = 0;
-            foreach (var (f, t) in WobbleList)
-            {
-                WobbleLine(Position + f, Position + t, off += 0.75f);
-            }
-            foreach (var r in CornerList)
-            {
-                Draw.Rect(Position + shake + r, 1, 1, playerHasDreamDash ? lineColor : linecolorDeact);
-            }
-        }
-        private new void WobbleLine(Vector2 from, Vector2 to, float offset)
-        {
-            float num = (to - from).Length();
-            Vector2 vector = Vector2.Normalize(to - from);
-            Vector2 vector2 = new Vector2(vector.Y, 0f - vector.X) / 2f;
-
-            float num2 = 0f;
-            int num3 = 16;
-            for (int i = 0; i < num; i += num3)
-            {
-                float num4 = Lerp(LineAmplitude(wobbleFrom + offset, i), LineAmplitude(wobbleTo + offset, i), wobbleEase);
-                if (i + num3 >= num)
-                {
-                    num4 = 0f;
-                }
-
-                float num5 = Math.Min(num3, num - i);
-                Vector2 vector3 = from + vector * i + vector2 * num2;
-                Vector2 vector4 = from + vector * (i + num5) + vector2 * num4;
-                Draw.Line(vector3, vector4, playerHasDreamDash ? lineColor : linecolorDeact);
-                num2 = num4;
-            }
-        }
-        private static new float Lerp(float a, float b, float percent)
-        {
-            return a + (b - a) * percent;
-        }
-        private static new float LineAmplitude(float seed, float index)
-        {
-            return (float)(Math.Sin((double)(seed + index / 16f) + Math.Sin(seed * 2f + index / 32f) * 6.2831854820251465) + 1.0) * 1.5f;
-        }
-
-        private new float wobbleFrom = Calc.Random.NextFloat((float)Math.PI * 2f);
-
-        private new float wobbleTo = Calc.Random.NextFloat((float)Math.PI * 2f);
-
-        private new float wobbleEase;
-        public new float animTimer;
-        public new MTexture[] particleTextures =
-        [
-            GFX.Game["objects/dreamblock/particles"].GetSubtexture(14, 0, 7, 7),
-            GFX.Game["objects/dreamblock/particles"].GetSubtexture(7, 0, 7, 7),
-            GFX.Game["objects/dreamblock/particles"].GetSubtexture(0, 0, 7, 7),
-            GFX.Game["objects/dreamblock/particles"].GetSubtexture(7, 0, 7, 7)
-        ];
-        public override void Update()
-        {
-            if (solid.Scene is null)
-            {
-                RemoveSelf();
-                return;
-            }
-            Collidable = solid.Collidable;
-            Visible = solid.Visible;
-            Entity_Update();
-            if (playerHasDreamDash)
-            {
-                animTimer += 6f * Engine.DeltaTime;
-                wobbleEase += Engine.DeltaTime * 2f;
-                if (wobbleEase > 1f)
-                {
-                    wobbleEase = 0f;
-                    wobbleFrom = wobbleTo;
-                    wobbleTo = Calc.Random.NextFloat((float)Math.PI * 2f);
-                }
-
-                //SurfaceSoundIndex = 12;
             }
             else
             {
-                //SurfaceSoundIndex = 11;
+                if (solidtarget.AbsoluteTop == Top)
+                {
+                    WobbleList.Add((Collider.TopLeft, Collider.TopRight));
+                }
+                if (solidtarget.AbsoluteBottom == Bottom)
+                {
+                    WobbleList.Add((Collider.BottomRight, Collider.BottomLeft));
+                }
+                if (solidtarget.AbsoluteLeft == Left)
+                {
+                    WobbleList.Add((Collider.BottomLeft, Collider.TopLeft));
+                }
+                if (solidtarget.AbsoluteRight == Right)
+                {
+                    WobbleList.Add((Collider.TopRight, Collider.BottomRight));
+                }
             }
-            MoveTo(solid.Position - offset);
-        }
-        [MonoMod.MonoModLinkTo("Monocle.Entity", "System.Void Update()")]
-        public void Entity_Update()
-        {
-            throw new NotImplementedException("How? This should be relinked.");
-        }
-        [MonoMod.MonoModLinkTo("Monocle.Entity", "System.Void Render()")]
-        public void Entity_Render()
-        {
-            throw new NotImplementedException("How? This should be relinked.");
+            AltCollider.Add(rect);
         }
     }
 }
