@@ -3,6 +3,11 @@ using System;
 
 namespace Celeste.Mod.ReverseHelper.Libraries
 {
+    /// <summary>
+    /// a entity that can do something after all entity added.
+    /// it will automatically move to the end of the adding list so
+    /// it should be the last entity to add.
+    /// </summary>
     class AfterAdded : Entity
     {
         Action action = default!;

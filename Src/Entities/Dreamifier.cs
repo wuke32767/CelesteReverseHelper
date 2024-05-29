@@ -20,7 +20,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         Color color3, Color color4, Groupmode connect, Groupmode blend, TypeMatch typeMatch, bool fg)
         : Entity(position)
     {
-        static ConditionalWeakTable<Solid, List<DreamifierRenderer_Base>> table = new();
+        public static ConditionalWeakTable<Solid, List<DreamifierRenderer_Base>> table = new();
         public Dreamifier(EntityData e, Vector2 offset)
         : this(e.Position + offset, e.Width, e.Height,
         e.HexaColor("lineColor"), e.HexaColor("fillColor"),
@@ -117,6 +117,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
         {
             prepareRenderer();
             base.Added(scene);
+            if (Collider.Bounds.IsEmpty)
+            {
+                Dreamifier.table.GetOrCreateValue(solid).Remove(this);
+                RemoveSelf();
+            }
         }
         protected abstract void prepareRenderer();
         public override void Awake(Scene scene)
@@ -144,6 +149,35 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     return dashcollide(p, dir);
                 };
             }
+            var bound = Collider.Bounds;
+            bound.X -= 1; bound.Y -= 1;
+            bound.Width += 2;
+            bound.Height += 2;
+            var con = dreamConnect switch
+            {
+                Groupmode.collider => Dreamifier.table.GetOrCreateValue(solid).Where(x => x._solidcollider == _solidcollider).ToList(),
+                Groupmode.entity => Dreamifier.table.GetOrCreateValue(solid),
+                Groupmode.all => Scene.CollideAll<DreamifierRenderer_Base>(bound),
+                _ => [],
+            };
+            var blend = (solidConnect switch
+            {
+                Groupmode.collider => Enumerable.Repeat(_solidcollider, 1),
+                Groupmode.entity => expand(solid.Collider),
+                Groupmode.all => Scene.CollideAll<Solid>(bound).SelectMany(x => expand(x.Collider)),
+                _ => Enumerable.Empty<Collider>(),
+            }).Concat(con.Select(x => x.Collider)).Distinct().ToList();
+            IEnumerable<Collider> expand(Collider c)
+            {
+                return c switch
+                {
+                    Grid grid => Enumerable.Repeat(c, 1),
+                    Hitbox hitbox => Enumerable.Repeat(c, 1),
+                    ColliderList cl => cl.colliders.SelectMany(x => expand(x)),
+                    _ => Enumerable.Empty<Collider>(),
+                };
+            }
+
         }
         //public Vector2 offset;
 
@@ -613,36 +647,33 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         protected override void prepareRenderer()
         {
-            var rect = Rectangle.Intersect(Collider.Bounds, solidtarget.Bounds);
+            var srect = solidtarget.Bounds;
+            var rect = Rectangle.Intersect(Collider.Bounds, srect);
             Position = new(rect.X, rect.Y);
             Collider = new Hitbox(rect.Width, rect.Height);
 
             if (solidConnect < Groupmode.collider)
             {
+                srect = rect;
+            }
+
+            if (srect.Top == rect.Top)
+            {
                 WobbleList.Add((Collider.TopLeft, Collider.TopRight));
+            }
+            if (srect.Bottom == rect.Bottom)
+            {
                 WobbleList.Add((Collider.BottomRight, Collider.BottomLeft));
+            }
+            if (srect.Left == rect.Left)
+            {
                 WobbleList.Add((Collider.BottomLeft, Collider.TopLeft));
+            }
+            if (srect.Right == rect.Right)
+            {
                 WobbleList.Add((Collider.TopRight, Collider.BottomRight));
             }
-            else
-            {
-                if (solidtarget.AbsoluteTop == Top)
-                {
-                    WobbleList.Add((Collider.TopLeft, Collider.TopRight));
-                }
-                if (solidtarget.AbsoluteBottom == Bottom)
-                {
-                    WobbleList.Add((Collider.BottomRight, Collider.BottomLeft));
-                }
-                if (solidtarget.AbsoluteLeft == Left)
-                {
-                    WobbleList.Add((Collider.BottomLeft, Collider.TopLeft));
-                }
-                if (solidtarget.AbsoluteRight == Right)
-                {
-                    WobbleList.Add((Collider.TopRight, Collider.BottomRight));
-                }
-            }
+
             AltCollider.Add(rect);
         }
     }
