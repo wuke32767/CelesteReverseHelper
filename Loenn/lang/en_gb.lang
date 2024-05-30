@@ -38,7 +38,7 @@ entities.ReverseHelper/CornerBoostArea.attributes.description.legacyTransparent=
 
 entities.ReverseHelper/CustomInvisibleBarrier.attributes.description.type=type of what you want to block. Can be Entity Name or Type Name.\nFor example, name of Dream Jellyfish (from Communal Helper) is Celeste.Mod.CommunalHelper.Entities.DreamJellyfish or just DreamJellyfish, and entity name is CommunalHelper/DreamJellyfish.\nYou can get any type name you want in game. Just press "~", and left click on the entity with your mouse, and it shows in the panel in the upper left corner of the screen.\nEntity name can be found the Map Editor. Right click on the entity, and you could find entity name at the popup window title.(vanilla entity should have its first letter capitalized.)\nor ask USSRNAME or other coder to help you. 
 entities.ReverseHelper/CustomInvisibleBarrier.attributes.description.reversed=if checked, the barrier will NOT block entities you selected.
-entities.ReverseHelper/CustomInvisibleBarrier.placements.description.Custom Invisible Barrier=Block entities in specific type.
+entities.ReverseHelper/CustomInvisibleBarrier.placements.description.Custom Invisible Barrier=Block entities in specific type.\nBAD IN PERFORMANCE. make sure you really need it.
 
 entities.ReverseHelper/DashConductionJumpThruUpsideDown.attributes.description.overrideCollisionResult=Sorry for that, but please re-put this entity.
 entities.ReverseHelper/DashConductionJumpThruUpsideDown.attributes.description.triggerStaticMovers=Sorry for that, but please re-put this entity.

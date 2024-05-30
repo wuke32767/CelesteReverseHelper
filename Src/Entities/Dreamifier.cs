@@ -115,7 +115,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         StaticMover staticmover = default!;
         public override void Added(Scene scene)
         {
-            prepareRenderer();
+            WobbleList = prepareRenderer().Select(x => (x.Key, x.Value)).ToList();
             base.Added(scene);
             if (Collider.Bounds.IsEmpty)
             {
@@ -123,7 +123,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 RemoveSelf();
             }
         }
-        protected abstract void prepareRenderer();
+        protected abstract Dictionary<Vector2, Vector2> prepareRenderer();
         public override void Awake(Scene scene)
         {
             AllowStaticMovers = false;
@@ -384,8 +384,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
     {
         Grid solidtarget => (Grid)_solidcollider;
 
-        protected override void prepareRenderer()
+        protected override Dictionary<Vector2, Vector2> prepareRenderer()
         {
+            Dictionary<Vector2, Vector2> WobbleList = [];
             //todo: these "8" are hardcoded
             //var scene = SceneAs<Level>();
             Solid solidTiles = solid;//scene.SolidTiles;
@@ -436,7 +437,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     {
                         if (froml is not null)
                         {
-                            WobbleList.Add((new(i * 8, j * 8), froml.Value));
+                            WobbleList.Add(new(i * 8, j * 8), froml.Value);
                             froml = null;
                         }
                     }
@@ -451,18 +452,18 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     {
                         if (fromr is not null)
                         {
-                            WobbleList.Add((fromr.Value + new Vector2(8, 0), new(8 + i * 8, j * 8)));
+                            WobbleList.Add(fromr.Value + new Vector2(8, 0), new(8 + i * 8, j * 8));
                             fromr = null;
                         }
                     }
                 }
                 if (froml is not null)
                 {
-                    WobbleList.Add((new(i * 8, tilesY * 8), froml.Value));
+                    WobbleList.Add(new(i * 8, tilesY * 8), froml.Value);
                 }
                 if (fromr is not null)
                 {
-                    WobbleList.Add((fromr.Value + new Vector2(8, 0), new(8 + i * 8, tilesY * 8)));
+                    WobbleList.Add(fromr.Value + new Vector2(8, 0), new(8 + i * 8, tilesY * 8));
                 }
 
             }
@@ -483,7 +484,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     {
                         if (fromu is not null)
                         {
-                            WobbleList.Add((fromu.Value, new(i * 8, j * 8)));
+                            WobbleList.Add(fromu.Value, new(i * 8, j * 8));
                             fromu = null;
                         }
                     }
@@ -498,18 +499,18 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     {
                         if (fromd is not null)
                         {
-                            WobbleList.Add((new(i * 8, j * 8 + 8), fromd.Value + new Vector2(0, 8)));
+                            WobbleList.Add(new(i * 8, j * 8 + 8), fromd.Value + new Vector2(0, 8));
                             fromd = null;
                         }
                     }
                 }
                 if (fromu is not null)
                 {
-                    WobbleList.Add((fromu.Value, new(tilesX * 8, j * 8)));
+                    WobbleList.Add(fromu.Value, new(tilesX * 8, j * 8));
                 }
                 if (fromd is not null)
                 {
-                    WobbleList.Add((new(tilesX * 8, j * 8 + 8), fromd.Value + new Vector2(0, 8)));
+                    WobbleList.Add(new(tilesX * 8, j * 8 + 8), fromd.Value + new Vector2(0, 8));
                 }
             }
 
@@ -547,6 +548,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     }
                 }
             }
+            return WobbleList;
         }
 
         // check if pos is inside Grid with 2 paddings.
@@ -645,7 +647,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
     {
         Hitbox solidtarget => (Hitbox)_solidcollider;
 
-        protected override void prepareRenderer()
+        protected override Dictionary<Vector2, Vector2> prepareRenderer()
         {
             var srect = solidtarget.Bounds;
             var rect = Rectangle.Intersect(Collider.Bounds, srect);
@@ -656,25 +658,27 @@ namespace Celeste.Mod.ReverseHelper.Entities
             {
                 srect = rect;
             }
+            Dictionary<Vector2,  Vector2 > WobbleList = [];
 
             if (srect.Top == rect.Top)
             {
-                WobbleList.Add((Collider.TopLeft, Collider.TopRight));
+                WobbleList.Add(Collider.TopLeft, Collider.TopRight);
             }
             if (srect.Bottom == rect.Bottom)
             {
-                WobbleList.Add((Collider.BottomRight, Collider.BottomLeft));
+                WobbleList.Add(Collider.BottomRight, Collider.BottomLeft);
             }
             if (srect.Left == rect.Left)
             {
-                WobbleList.Add((Collider.BottomLeft, Collider.TopLeft));
+                WobbleList.Add(Collider.BottomLeft, Collider.TopLeft);
             }
             if (srect.Right == rect.Right)
             {
-                WobbleList.Add((Collider.TopRight, Collider.BottomRight));
+                WobbleList.Add(Collider.TopRight, Collider.BottomRight);
             }
 
             AltCollider.Add(rect);
+            return WobbleList;
         }
     }
 }

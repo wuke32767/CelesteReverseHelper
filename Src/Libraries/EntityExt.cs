@@ -16,10 +16,14 @@ namespace Celeste.Mod.ReverseHelper.Libraries
     {
         public static IEnumerable<(Vector2 from, Vector2 to)> CollideVHLine(this Collider collider, Vector2 from, Vector2 to)
         {
+            if (collider is ColliderList cl)
+            {
+                return cl.colliders.SelectMany(x => x.CollideVHLine(from, to));
+            }
             return (to - from) switch
             {
-                Vector2 { X: 0 } v => CollideVLine(collider, from, v),
-                Vector2 { Y: 0 } v => CollideHLine(collider, from, v),
+                { X: 0 } v => CollideVLine(collider, from, v),
+                { Y: 0 } v => CollideHLine(collider, from, v),
                 _ => [],
             };
         }
@@ -29,10 +33,22 @@ namespace Celeste.Mod.ReverseHelper.Libraries
             {
                 case Hitbox hb:
                     {
-                        var r = TryClampLine(collider, from, from + dst);
-                        if (r is not null)
+                        var to = from + dst;
+                        if (from.Y < hb.AbsoluteBottom && hb.AbsoluteTop <= from.Y)
                         {
-                            yield return r.Value;
+                            var r = TryClampLine(from.X, to.X, hb.AbsoluteLeft, hb.AbsoluteRight);
+                            if (r is not null)
+                            {
+                                var (f, t) = r.Value;
+                                if (f != from.X)
+                                {
+                                    yield return (new(from.X, from.Y), new(f, from.Y));
+                                }
+                                if (t != to.X)
+                                {
+                                    yield return (new(t, from.Y), new(to.X, from.Y));
+                                }
+                            }
                         }
                         break;
                     }
@@ -41,17 +57,18 @@ namespace Celeste.Mod.ReverseHelper.Libraries
                         var f2 = from - gd.AbsolutePosition;
 
                         var _f3 = (f2 / new Vector2(gd.CellWidth, gd.CellHeight)).Floor();
-                        var _t3 = float.Ceiling((f2.X + dst.X - Math.Sign(dst.X)) / gd.CellWidth);
+                        var _t3 = float.Ceiling((f2.X + dst.X) / gd.CellWidth);
 
                         var fx = (int)_f3.X;
                         var y = (int)_f3.Y;
                         var t = (int)_t3;
+                        swap(ref fx, ref t);
 
                         bool beg = false;
                         int fr = 0;
-                        for (int i = 0; i < t; i++)
+                        for (int i = fx; i < t; i++)
                         {
-                            if (gd.Data[fx + i, y])
+                            if (!gd[fx, y])
                             {
                                 if (!beg)
                                 {
@@ -68,48 +85,52 @@ namespace Celeste.Mod.ReverseHelper.Libraries
                                 }
                             }
                         }
-                        //todo:optimization
                         break;
                     }
                 default:
                     break;
             };
+
         }
         public static IEnumerable<(Vector2 from, Vector2 to)> CollideVLine(this Collider collider, Vector2 from, Vector2 dst)
         {
             switch (collider)
             {
                 case Hitbox:
-                    var r = TryClampLine(collider, from, from + dst);
-                    if (r is not null)
-                    {
-                        yield return r.Value;
-                    }
                     break;
                 case Grid gd:
-
-                    //todo
                     break;
                 default:
                     break;
             };
-
+            yield break;
         }
-        static (Vector2 from, Vector2 to)? TryClampLine(Collider collider, Vector2 from, Vector2 to)
+        static (float from, float to)? TryClampLine(float xf, float xt, float yf, float yt)
         {
-            return TryClampLine(collider.Bounds, from, to);
-        }
-        static (Vector2 from, Vector2 to)? TryClampLine(Rectangle collider, Vector2 from, Vector2 to)
-        {
-            var d = to - from;
-            Rectangle r = new((int)from.X, (int)from.Y, (int)d.X, (int)d.Y);
-
-            //if (collider.Intersects())
+            var mov = Math.Sign(xt - xf);
+            swap(ref xf, ref xt);
+            swap(ref yf, ref yt);
+            float f = Math.Max(xf, yf), t = Math.Min(xt, yt);
+            if (t < f)
             {
-                return (from.Clamp(collider.Left, collider.Top, collider.Right - 1, collider.Bottom - 1),
-                to.Clamp(collider.Left - 1, collider.Top - 1, collider.Right, collider.Bottom));
+                return null;
             }
-            return (new(), new());
+            swap(ref f, ref t, Math.Sign(mov));
+            return (f, t);
+        }
+        static void swap(ref float f, ref float t, int tar = 1)
+        {
+            if ((t > f) != (tar > 0))
+            {
+                (f, t) = (t + tar, f + tar);
+            }
+        }
+        static void swap(ref int f, ref int t, int tar = 1)
+        {
+            if ((t > f) != (tar > 0))
+            {
+                (f, t) = (t + tar, f + tar);
+            }
         }
         static (Vector2 from, Vector2 to) ClampLine(Rectangle collider, Vector2 from, Vector2 to)
         {
@@ -125,6 +146,10 @@ namespace Celeste.Mod.ReverseHelper.Libraries
     }
     internal static class EntityExt
     {
+        public static Point ToPoint(this Vector2 vec)
+        {
+            return new Point((int)vec.X, (int)vec.Y);
+        }
         static ILHook? some_il_hook;
         [MonoMod.MonoModLinkTo("Monocle.Entity", "System.Void Update()")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
