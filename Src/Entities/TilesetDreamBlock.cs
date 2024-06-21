@@ -3,7 +3,6 @@ using Celeste.Mod.ReverseHelper.Libraries;
 using Microsoft.Xna.Framework;
 using Monocle;
 using System;
-using System.Reflection;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
@@ -88,6 +87,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
         public new void Setup()
         {
+            base.playerHasDreamDash = playerHasDreamDash;
             particles = new DreamParticle[(int)(base.Width / 8f * (base.Height / 8f) * 0.7f)];
             for (int i = 0; i < particles.Length; i++)
             {
@@ -173,10 +173,10 @@ namespace Celeste.Mod.ReverseHelper.Entities
             WobbleLine(new Vector2(X + Width, Y), new Vector2(X + Width, Y + Height), 0.7f);
             WobbleLine(new Vector2(X + Width, Y + Height), new Vector2(X, Y + Height), 1.5f);
             WobbleLine(new Vector2(X, Y + Height), new Vector2(X, Y), 2.5f);
-            Draw.Rect(shake + new Vector2(X, Y), 2f, 2f, playerHasDreamDash ? lineColor : lineColor);
-            Draw.Rect(shake + new Vector2(X + Width - 2f, Y), 2f, 2f, playerHasDreamDash ? lineColor : lineColor);
-            Draw.Rect(shake + new Vector2(X, Y + Height - 2f), 2f, 2f, playerHasDreamDash ? lineColor : lineColor);
-            Draw.Rect(shake + new Vector2(X + Width - 2f, Y + Height - 2f), 2f, 2f, playerHasDreamDash ? lineColor : lineColor);
+            Draw.Rect(shake + new Vector2(X, Y), 2f, 2f, playerHasDreamDash ? lineColor : linecolorDeact);
+            Draw.Rect(shake + new Vector2(X + Width - 2f, Y), 2f, 2f, playerHasDreamDash ? lineColor : linecolorDeact);
+            Draw.Rect(shake + new Vector2(X, Y + Height - 2f), 2f, 2f, playerHasDreamDash ? lineColor : linecolorDeact);
+            Draw.Rect(shake + new Vector2(X + Width - 2f, Y + Height - 2f), 2f, 2f, playerHasDreamDash ? lineColor : linecolorDeact);
         }
         public new struct DreamParticle
         {
@@ -292,8 +292,5 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
             return pos;
         }
-
-
-
     }
 }

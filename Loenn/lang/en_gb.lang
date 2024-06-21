@@ -91,7 +91,8 @@ triggers.ReverseHelper/DreamDashInventoryTrigger.attributes.name.onlyDisable=Can
 triggers.ReverseHelper/DreamDashInventoryTrigger.attributes.name.onlyEnable=Cannot Disable
 
 triggers.ReverseHelper/EnableTrigger.attributes.description.reversed=If unchecked, Disable a trigger when level start, and enable it when triggered.\nIf checked, enable a trigger when level start, and disable it when triggered.
-triggers.ReverseHelper/EnableTrigger.placements.description.EnableTrigger=Disable a trigger when level start, and enable it when player enter.\nSimiliar to Flag Trigger which can control another trigger.
-triggers.ReverseHelper/EnableTrigger.placements.description.DisableTrigger=Enable a trigger when level start, and disable it when player enter.\nSimiliar to Flag Trigger which can control another trigger.
+triggers.ReverseHelper/EnableTrigger.placements.description.EnableTrigger=Disable a trigger when level start, and enable it when player enter.\nSimilar to Flag Trigger which can control another trigger.
+triggers.ReverseHelper/EnableTrigger.placements.description.DisableTrigger=Enable a trigger when level start, and disable it when player enter.\nSimilar to Flag Trigger which can control another trigger.
 triggers.ReverseHelper/EnableTrigger.placements.name.EnableTrigger=Enable Trigger
 triggers.ReverseHelper/EnableTrigger.placements.name.DisableTrigger=Disable Trigger
+triggers.ReverseHelper/EnableTrigger.attributes.description.mode=Determines how "disable" works.\nDisable: set Active to false.\nCollidable: Set Collidable to false.\nShrink: Resize to (0, 0).\n MoveAway: Move it to somewhere. Add a Enable Trigger Move Mode Target and point at it with a new node to determine where it will be moved to.

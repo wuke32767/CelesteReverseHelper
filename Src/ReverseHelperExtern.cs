@@ -211,13 +211,9 @@ namespace Celeste.Mod.ReverseHelper
                 public static Func<Action<bool>, Component>? GetBGModeListener;
             }
         }
+        [Load]
         public static void Load()
         {
-            // later it will be moved
-            //Interop.RegisterDreamBlockLike(CommunalHelper.DreamTunnelEntry.Type,
-            //    (e) => CommunalHelper.DreamTunnelEntry.ActivateNoRoutine?.Invoke(e, null),
-            //    (e) => CommunalHelper.DreamTunnelEntry.DeactivateNoRoutine?.Invoke(e, null)
-            //    );
         }
         [LoadContent]
         public static void LoadContent()
