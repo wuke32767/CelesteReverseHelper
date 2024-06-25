@@ -72,8 +72,8 @@ namespace Celeste.Mod.ReverseHelper.Libraries
             }
         }
 
-        [SourceGen.Loader.Load]
-        [SourceGen.Loader.LazyLoad]
+        //[SourceGen.Loader.Load]
+        //[SourceGen.Loader.LazyLoad]
         public static void Load()
         {
             On.Monocle.Scene.SetActualDepth += Scene_SetActualDepth;
@@ -123,7 +123,7 @@ namespace Celeste.Mod.ReverseHelper.Libraries
             }
         }
 
-        [SourceGen.Loader.Unload]
+        //[SourceGen.Loader.Unload]
         public static void Unload()
         {
             On.Monocle.Scene.SetActualDepth -= Scene_SetActualDepth;

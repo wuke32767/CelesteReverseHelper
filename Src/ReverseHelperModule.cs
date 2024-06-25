@@ -14,6 +14,15 @@ namespace Celeste.Mod.ReverseHelper
 {
     internal partial class ReverseHelperModule : EverestModule
     {
+        public static ref bool playerHasDreamDashBetter(Level level)
+        {
+            if(level is null)
+            {
+                return ref (Engine.Scene as Level)!.Session.Inventory.DreamDash;
+            }
+            return ref level.Session.Inventory.DreamDash;
+        }
+
         public static bool playerHasDreamDash
         {
             get => (Engine.Scene as Level)?.Session.Inventory.DreamDash ?? (Engine.Scene as LevelLoader)?.Level.Session.Inventory.DreamDash ?? false;

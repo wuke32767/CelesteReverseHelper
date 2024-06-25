@@ -14,7 +14,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
     {
         none = 0, collider = 1, entity = 2, all = 3,
     }
-    [SourceGen.Loader.Dependency(typeof(DepthTracker))]
+    //[SourceGen.Loader.Dependency(typeof(DepthTracker))]
     [CustomEntity($"ReverseHelper/Dreamifier")]
     public class Dreamifier(Vector2 position, int width, int height, Color color1, Color color2,
         Color color3, Color color4, Groupmode connect, Groupmode blend, TypeMatch typeMatch, bool fg)
@@ -32,7 +32,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public override void Added(Scene scene)
         {
             base.Added(scene);
-            AfterAdded.Reg(scene, ()=>
+            AfterAdded.Reg(scene, () =>
             {
                 Collider = new Hitbox(width, height);
 
@@ -71,31 +71,54 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 }
             });
         }
-        [SourceGen.Loader.Load]
-        [SourceGen.Loader.LazyLoad]
-        public static void Load()
-        {
-            On.Monocle.Scene.SetActualDepth += Scene_SetActualDepth;
-        }
-
-        private static void Scene_SetActualDepth(On.Monocle.Scene.orig_SetActualDepth orig, Scene self, Entity entity)
-        {
-            if (entity is not DreamifierRenderer_Base)
-            {
-                orig(self, entity);
-            }
-        }
-
-        [SourceGen.Loader.Unload]
-        public static void Unload()
-        {
-            On.Monocle.Scene.SetActualDepth -= Scene_SetActualDepth;
-        }
+        //[SourceGen.Loader.Load]
+        //[SourceGen.Loader.LazyLoad]
+        //public static void Load()
+        //{
+        //    On.Monocle.Scene.SetActualDepth += Scene_SetActualDepth;
+        //}
+        //
+        //private static void Scene_SetActualDepth(On.Monocle.Scene.orig_SetActualDepth orig, Scene self, Entity entity)
+        //{
+        //    if (entity is not DreamifierRenderer_Base)
+        //    {
+        //        orig(self, entity);
+        //    }
+        //}
+        //
+        //[SourceGen.Loader.Unload]
+        //public static void Unload()
+        //{
+        //    On.Monocle.Scene.SetActualDepth -= Scene_SetActualDepth;
+        //}
     }
     [Tracked(true)]
     [TrackedAs(typeof(DreamBlock), true)]
     public abstract class DreamifierRenderer_Base : DreamBlock
     {
+        class prevent_depth_fight_i_g(DreamifierRenderer_Base db) : Entity()
+        {
+            public override void Awake(Scene scene)
+            {
+                base.Awake(scene);
+                Depth = db.solid.Depth;
+            }
+
+            public override void Update()
+            {
+                base.Update();
+                Depth = db.solid.Depth;
+            }
+
+            public override void Render()
+            {
+                base.Render();
+                if (db.Visible)
+                {
+                    db.RRender();
+                }
+            }
+        }
         protected List<(Vector2 from, Vector2 to)> WobbleList = [];
         protected List<Vector2> CornerList = [];
         public List<Rectangle> AltCollider = new();
@@ -110,26 +133,26 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public Groupmode dreamConnect;
 
 
-        internal DepthTracker depthTracker;
+        //internal DepthTracker depthTracker;
 
         StaticMover staticmover = default!;
         public override void Added(Scene scene)
         {
-            WobbleList = prepareRenderer().ToList();
             base.Added(scene);
             if (Collider.Bounds.IsEmpty)
             {
                 Dreamifier.table.GetOrCreateValue(solid).Remove(this);
                 RemoveSelf();
             }
+
+            scene.Add(preventer = new prevent_depth_fight_i_g(this));
         }
         protected abstract IEnumerable<(Vector2 from, Vector2 to)> prepareRenderer();
         public override void Awake(Scene scene)
         {
             AllowStaticMovers = false;
             base.Awake(scene);
-            depthTracker = DepthTracker.Track(solid, this);
-            Setup();
+            //depthTracker = DepthTracker.Track(solid, this);
             //offset = solid.Position - Position;
 
             Add(staticmover = new StaticMover());
@@ -149,10 +172,20 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     return dashcollide(p, dir);
                 };
             }
+
             var bound = Collider.Bounds;
             bound.X -= 1; bound.Y -= 1;
             bound.Width += 2;
             bound.Height += 2;
+
+            var a = prepareRenderer().Select(x =>
+            {
+                var t = x.to - x.from;
+                t.Normalize();
+                //t.Rotate((float)(double.Pi / 2.0));
+                (t.X, t.Y) = (t.Y, -t.X);
+                return (from: x.from + t + Position, to: x.to + t + Position);
+            }).ToList();
             var con = dreamConnect switch
             {
                 Groupmode.collider => Dreamifier.table.GetOrCreateValue(solid).Where(x => x._solidcollider == _solidcollider).ToList(),
@@ -162,21 +195,84 @@ namespace Celeste.Mod.ReverseHelper.Entities
             };
             var blend = (solidConnect switch
             {
-                Groupmode.collider => Enumerable.Repeat(_solidcollider, 1),
+                Groupmode.collider => [_solidcollider],
                 Groupmode.entity => expand(solid.Collider),
                 Groupmode.all => Scene.CollideAll<Solid>(bound).SelectMany(x => expand(x.Collider)),
-                _ => Enumerable.Empty<Collider>(),
+                _ => [],
             }).Concat(con.Select(x => x.Collider)).Distinct().ToList();
             IEnumerable<Collider> expand(Collider c)
             {
                 return c switch
                 {
-                    Grid grid => Enumerable.Repeat(c, 1),
-                    Hitbox hitbox => Enumerable.Repeat(c, 1),
+                    Grid grid => [c],
+                    Hitbox hitbox => [c],
                     ColliderList cl => cl.colliders.SelectMany(x => expand(x)),
                     _ => [],
                 };
             }
+
+            a = blend.Aggregate(a, (current, cur) => current.SelectMany(x => cur.CollideVHLine(x.from, x.to)).ToList());
+            WobbleList = a.Select(x =>
+            {
+                var t = x.to - x.from;
+                t.Normalize();
+                //t.Rotate((float)(double.Pi / 2.0));
+                (t.X, t.Y) = (t.Y, -t.X);
+                return (from: x.from - t, to: x.to - t);
+            }).ToList();
+
+            var corner = WobbleList.ToLookup(x => x.from, x => x.to);
+
+            //var cornerrev = WobbleList.ToDictionary( x => x.to,x => x.from);
+            foreach (var (f, t) in WobbleList)
+            {
+                var tdir = (t - f).VHNormalize();
+                var tv = tdir.Rotate90Clockwise();
+                //draw.line draws at left side of line, draw.point draws at right-bottom
+                //hacky offset fixer
+                var tf = new Vector2((tdir.X + tdir.Y) switch
+                {
+                    1 => -1,
+                    _ => 0,
+                },
+                (tv.X + tv.Y) switch
+                {
+                    -1 => -1,
+                    _ => 0
+                }
+                );
+
+                //var tmp = t - tv;
+                if (corner[t] is { } beg && beg.Count() > 0)
+                {
+                    foreach (var v2 in beg)
+                    {
+                        if ((v2 - t).VHNormalize() == tv)
+                        {
+                            CornerListAdd(t - tdir + tv + tf);
+                        }
+                        //    }
+                        //}
+                        //else if (corner[tmp] is { } se && se.Count() > 0)
+                        //{ 
+                        //    foreach (var v2 in se)
+                        //    {
+                        if ((v2 - t).VHNormalize() == -tv)
+                        {
+                            CornerListAdd(t + tdir + tf);
+                        }
+                    }
+                }
+            }
+            void CornerListAdd(Vector2 vec)
+            {
+                if (CollidePoint(vec))
+                {
+                    CornerList.Add(vec);
+                }
+            }
+            CornerList = CornerList.Distinct().ToList();
+            Setup();
 
         }
         //public Vector2 offset;
@@ -211,7 +307,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             //vanilla uses 10
             //for footstep ripple priority
             SurfaceSoundPriority = 11;
-            depthTracker = null!;
+            //depthTracker = null!;
             particles = null!;
             this.solid = solid;
             solidConnect = solidconnect;
@@ -249,10 +345,12 @@ namespace Celeste.Mod.ReverseHelper.Entities
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => DreamBlockConfigurer.dreamblock_enabled(this);
         }
+
+        prevent_depth_fight_i_g? preventer;
         public override void Removed(Scene scene)
         {
             base.Removed(scene);
-            depthTracker.Untrack(this);
+            preventer?.RemoveSelf();
         }
         public override void Update()
         {
@@ -261,6 +359,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 RemoveSelf();
                 return;
             }
+
             Collidable = solid.Collidable;
             Visible = solid.Visible;
             this.Entity_Update();
@@ -282,6 +381,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 //SurfaceSoundIndex = 11;
             }
             //MoveTo(solid.Position - offset);
+            SurfaceSoundIndex = solid.SurfaceSoundIndex;
         }
         public new void WobbleLine(Vector2 from, Vector2 to, float offset)
         {
@@ -306,6 +406,18 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 num2 = num4;
             }
         }
+        public override void DebugRender(Camera camera)
+        {
+            base.DebugRender(camera);
+            foreach (var (f, t) in WobbleList.Zip(Enumerable.Repeat((Color[])[Color.Aqua, Color.Blue, Color.Brown, Color.Green], 100000).SelectMany(x => x)))
+            {
+                Draw.Line(f.from, f.to, t * 0.5f);
+            }
+            foreach (var p in CornerList)
+            {
+                Draw.Point(p, Color.MistyRose);
+            }
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public virtual bool Inside(Vector2 pos)
         {
@@ -317,6 +429,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
 
         public override void Render()
+        {
+            this.Entity_Render();
+        }
+
+        public void RRender()
         {
             Camera camera = SceneAs<Level>().Camera;
             Rectangle camerarect = new Rectangle((int)camera.X, (int)camera.Y, 320, 180);
@@ -370,11 +487,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
             float off = 0;
             foreach (var (f, t) in WobbleList)
             {
-                WobbleLine(f + Position, t + Position, off += 0.75f);
+                WobbleLine(f, t, off += 0.75f);
             }
             foreach (var r in CornerList)
             {
-                Draw.Rect(shake + r + Position, 1, 1, playerHasDreamDash ? lineColor : linecolorDeact);
+                Draw.Rect(shake + r, 1, 1, playerHasDreamDash ? lineColor : linecolorDeact);
             }
         }
     }
@@ -418,6 +535,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
             if (solidConnect < Groupmode.collider)
             {
                 tilechar = collidemap;
+                x = 0;
+                y = 0;
             }
             for (int i = 0; i < tilesX; i++)
             {
@@ -436,7 +555,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     {
                         if (froml is not null)
                         {
-                            yield return(new(i * 8, j * 8), froml.Value);
+                            yield return (new(i * 8, j * 8), froml.Value);
                             froml = null;
                         }
                     }
@@ -451,18 +570,18 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     {
                         if (fromr is not null)
                         {
-                            yield return(fromr.Value + new Vector2(8, 0), new(8 + i * 8, j * 8));
+                            yield return (fromr.Value + new Vector2(8, 0), new(8 + i * 8, j * 8));
                             fromr = null;
                         }
                     }
                 }
                 if (froml is not null)
                 {
-                    yield return(new(i * 8, tilesY * 8), froml.Value);
+                    yield return (new(i * 8, tilesY * 8), froml.Value);
                 }
                 if (fromr is not null)
                 {
-                    yield return(fromr.Value + new Vector2(8, 0), new(8 + i * 8, tilesY * 8));
+                    yield return (fromr.Value + new Vector2(8, 0), new(8 + i * 8, tilesY * 8));
                 }
 
             }
@@ -505,7 +624,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 }
                 if (fromu is not null)
                 {
-                    yield return(fromu.Value, new(tilesX * 8, j * 8));
+                    yield return (fromu.Value, new(tilesX * 8, j * 8));
                 }
                 if (fromd is not null)
                 {
@@ -659,19 +778,19 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
             if (srect.Top == rect.Top)
             {
-                yield return(Collider.TopLeft, Collider.TopRight);
+                yield return (Collider.TopLeft, Collider.TopRight);
             }
             if (srect.Bottom == rect.Bottom)
             {
-                yield return(Collider.BottomRight, Collider.BottomLeft);
+                yield return (Collider.BottomRight, Collider.BottomLeft);
             }
             if (srect.Left == rect.Left)
             {
-                yield return(Collider.BottomLeft, Collider.TopLeft);
+                yield return (Collider.BottomLeft, Collider.TopLeft);
             }
             if (srect.Right == rect.Right)
             {
-                yield return(Collider.TopRight, Collider.BottomRight);
+                yield return (Collider.TopRight, Collider.BottomRight);
             }
 
             AltCollider.Add(rect);
