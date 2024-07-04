@@ -17,7 +17,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
     //[SourceGen.Loader.Dependency(typeof(DepthTracker))]
     [CustomEntity($"ReverseHelper/Dreamifier")]
     public class Dreamifier(Vector2 position, int width, int height, Color color1, Color color2,
-        Color color3, Color color4, Groupmode connect, Groupmode blend, TypeMatch typeMatch, bool fg)
+        Color color3, Color color4, Groupmode connect, Groupmode blend, TypeMatch typeMatch, bool fg,
+        EntityData e)
         : Entity(position)
     {
         public static ConditionalWeakTable<Solid, List<DreamifierRenderer_Base>> table = new();
@@ -26,7 +27,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         e.HexaColor("lineColor"), e.HexaColor("fillColor"),
         e.HexaColor("lineColorDeactivated"), e.HexaColor("fillColorDeactivated"),
         e.Enum("ConnectMode", Groupmode.none), e.Enum("BlendInMode", Groupmode.collider),
-        e.Attr("ignoreType"), e.Bool("fgTile", true))
+        e.Attr("ignoreType"), e.Bool("fgTile", true), e)
         {
         }
         public override void Added(Scene scene)
@@ -57,9 +58,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     switch (collider)
                     {
                         case Grid grid:
-                            return [new DreamifierRenderer_Grid(Position, width, height, color1, color2, color3, color4, solid, grid, blend, connect)];
+                            return [new DreamifierRenderer_Grid(Position, width, height, color1, color2, color3, color4, solid, grid, blend, connect, e)];
                         case Hitbox hitbox:
-                            return [new DreamifierRenderer_Hitbox(Position, width, height, color1, color2, color3, color4, solid, hitbox, blend, connect)];
+                            return [new DreamifierRenderer_Hitbox(Position, width, height, color1, color2, color3, color4, solid, hitbox, blend, connect, e)];
                         case ColliderList cl:
                         //return cl.colliders.SelectMany(x => GetDreamifier2(x, solid, cl) ?? []).ToArray();
                         //not supported
@@ -101,13 +102,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
             public override void Awake(Scene scene)
             {
                 base.Awake(scene);
-                Depth = db.solid.Depth;
+                Depth = db.deptho ?? db.solid.Depth;
             }
 
             public override void Update()
             {
                 base.Update();
-                Depth = db.solid.Depth;
+                Depth = db.deptho ?? db.solid.Depth;
             }
 
             public override void Render()
@@ -218,7 +219,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 t.Normalize();
                 //t.Rotate((float)(double.Pi / 2.0));
                 (t.X, t.Y) = (t.Y, -t.X);
-                return (from: x.from - t, to: x.to - t);
+                return (from: x.from - t - Position, to: x.to - t - Position);
             }).ToList();
 
             var corner = WobbleList.ToLookup(x => x.from, x => x.to);
@@ -266,7 +267,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             void CornerListAdd(Vector2 vec)
             {
-                if (CollidePoint(vec))
+                if (CollidePoint(vec+Position))
                 {
                     CornerList.Add(vec);
                 }
@@ -293,8 +294,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
         private new float wobbleEase;
         public new float animTimer;
 
+        int? deptho;
+
         public DreamifierRenderer_Base(Vector2 position, int width, int height, Color line, Color block,
-                Color linede, Color fillde, Solid solid, Collider collider, Groupmode solidconnect, Groupmode dreamconnect) : base(position, width, height, null, false, false, false)
+                Color linede, Color fillde, Solid solid, Collider collider, Groupmode solidconnect, Groupmode dreamconnect,
+                EntityData e) : base(position, width, height, null, false, false, false)
         {
             lineColor = line;
             fillColor = block;
@@ -303,7 +307,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             this.solid = solid;
             _solidcollider = collider;
 
-            DreamBlockConfig.Get(this).HighPriority();
+            DreamBlockConfig.GetOrAdd(this).HighPriority();
             //vanilla uses 10
             //for footstep ripple priority
             SurfaceSoundPriority = 11;
@@ -312,6 +316,10 @@ namespace Celeste.Mod.ReverseHelper.Entities
             this.solid = solid;
             solidConnect = solidconnect;
             dreamConnect = dreamconnect;
+            if (!string.IsNullOrEmpty(e.Attr("depth")))
+            {
+                deptho = e.Int("depth");
+            }
         }
 
         public new void Setup()
@@ -411,11 +419,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
             base.DebugRender(camera);
             foreach (var (f, t) in WobbleList.Zip(Enumerable.Repeat((Color[])[Color.Aqua, Color.Blue, Color.Brown, Color.Green], 100000).SelectMany(x => x)))
             {
-                Draw.Line(f.from, f.to, t * 0.5f);
+                Draw.Line(f.from + Position, f.to + Position, t * 0.5f);
             }
             foreach (var p in CornerList)
             {
-                Draw.Point(p, Color.MistyRose);
+                Draw.Point(p + Position, Color.MistyRose);
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -487,17 +495,17 @@ namespace Celeste.Mod.ReverseHelper.Entities
             float off = 0;
             foreach (var (f, t) in WobbleList)
             {
-                WobbleLine(f, t, off += 0.75f);
+                WobbleLine(f + Position, t + Position, off += 0.75f);
             }
             foreach (var r in CornerList)
             {
-                Draw.Rect(shake + r, 1, 1, playerHasDreamDash ? lineColor : linecolorDeact);
+                Draw.Rect(shake + r + Position, 1, 1, playerHasDreamDash ? lineColor : linecolorDeact);
             }
         }
     }
     public class DreamifierRenderer_Grid(Vector2 position, int width, int height, Color line, Color block,
-        Color linede, Color fillde, Solid solid, Grid collider, Groupmode solidconnect, Groupmode dreamconnect)
-        : DreamifierRenderer_Base(position, width, height, line, block, linede, fillde, solid, collider, solidconnect, dreamconnect)
+        Color linede, Color fillde, Solid solid, Grid collider, Groupmode solidconnect, Groupmode dreamconnect, EntityData e)
+        : DreamifierRenderer_Base(position, width, height, line, block, linede, fillde, solid, collider, solidconnect, dreamconnect, e)
     {
         Grid solidtarget => (Grid)_solidcollider;
 
@@ -701,10 +709,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
             Rectangle tileBounds = solidtarget.Bounds;
             var tiledata = solidtarget.Data;
             // by just divide result by 4, (8 is a cell)
-            int xm2 = (int)(pos.X / 8f * 2) - 2 * tileBounds.Left / 8;
-            int ym2 = (int)(pos.Y / 8f * 2) - 2 * tileBounds.Top / 8;
+            int xm2 = (int)(pos.X - solid.Left) * 2 / 8;
+            int ym2 = (int)(pos.Y - solid.Top) * 2 / 8;
 
-            bool b = true;
             // and check lsb to determine which sub-cell it is in.
             for (int i = xm2 & 1; i < 2; i++)
             {
@@ -712,12 +719,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 {
                     if (tiledata[xm2 / 2 - 1 + i, ym2 / 2 - 1 + j] == tiledata.EmptyValue)
                     {
-                        b = false;
-                        break;
+                        return false;
                     }
                 }
             }
-            return b;
+            return true;
         }
         [SourceGen.Loader.Load]
         internal static void Load()
@@ -759,8 +765,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
     }
     public class DreamifierRenderer_Hitbox(Vector2 position, int width, int height, Color line, Color block,
-        Color linede, Color fillde, Solid solid, Hitbox collider, Groupmode solidconnect, Groupmode dreamconnect)
-        : DreamifierRenderer_Base(position, width, height, line, block, linede, fillde, solid, collider, solidconnect, dreamconnect)
+        Color linede, Color fillde, Solid solid, Hitbox collider, Groupmode solidconnect, Groupmode dreamconnect, EntityData e)
+        : DreamifierRenderer_Base(position, width, height, line, block, linede, fillde, solid, collider, solidconnect, dreamconnect, e)
     {
         Hitbox solidtarget => (Hitbox)_solidcollider;
 

@@ -49,7 +49,7 @@ local function getCheckBox(name, value, options, selfx)
     --local _ = LuaPanda and LuaPanda.BP()
     local rv = value
     if value == "" then
-        rv = false
+        rv = options.defaultValue or false
     end
     
     local checkbox = uiElements.checkbox(options.displayName or name, rv, fieldChanged(selfx))

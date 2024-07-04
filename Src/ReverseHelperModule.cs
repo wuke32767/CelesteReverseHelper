@@ -1,11 +1,14 @@
 using Celeste.Mod.ReverseHelper.Entities;
+using Celeste.Mod.ReverseHelper.Libraries;
 using Celeste.Mod.ReverseHelper.SourceGen.Loader;
 using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.ModInterop;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text.RegularExpressions;
 using static Celeste.Mod.ReverseHelper.ReverseHelperExtern;
@@ -14,18 +17,42 @@ namespace Celeste.Mod.ReverseHelper
 {
     internal partial class ReverseHelperModule : EverestModule
     {
-        public static ref bool playerHasDreamDashBetter(Level level)
+        static bool qwertyuiop;
+        static ConditionalWeakTable<Scene, Box<bool>> tested = [];
+        public static ref bool playerHasDreamDashBetter(Entity entity)
         {
-            if(level is null)
+            if (entity?.Scene is Level level)
             {
-                return ref (Engine.Scene as Level)!.Session.Inventory.DreamDash;
+                return ref level.Session.Inventory.DreamDash;
             }
-            return ref level.Session.Inventory.DreamDash;
+            var session = Engine.Scene switch
+            {
+                Level level2 => level2.Session,
+                LevelLoader { Level: Level level3 } => level3.Session,
+                AssetReloadHelper { OrigScene: Level level4 } => level4.Session,
+                LevelExit { session: Session session2 } => session2,
+                _ => null,
+            };
+            if (session is not null)
+            {
+                return ref session.Inventory.DreamDash;
+            }
+
+            var tar = tested.GetOrCreateValue(Engine.Scene);
+            if (!tar.val)
+            {
+                StackTrace trace = new StackTrace();
+                Logger.Log(LogLevel.Warn, nameof(ReverseHelper), "Failed when getting DreamDash. Current scene type: " + Engine.Scene.GetType().FullName + "\n" + trace.ToString());
+            }
+            tar.val = true;
+            return ref qwertyuiop;
         }
 
         public static bool playerHasDreamDash
         {
-            get => (Engine.Scene as Level)?.Session.Inventory.DreamDash ?? (Engine.Scene as LevelLoader)?.Level.Session.Inventory.DreamDash ?? false;
+            get => (Engine.Scene as Level)?.Session.Inventory.DreamDash
+                ?? (Engine.Scene as LevelLoader)?.Level.Session.Inventory.DreamDash
+                ?? false;
             set => (Engine.Scene as Level)!.Session.Inventory.DreamDash = value;
         }
 
@@ -114,61 +141,11 @@ namespace Celeste.Mod.ReverseHelper
         [LazyLoadDirectory]
         static Dictionary<string, (Action load, Action unload)> lazylist = new();
         [Unload]
-        public static void UnloadLazyLoad() 
+        public static void UnloadLazyLoad()
         {
             On.Celeste.LevelLoader.ctor -= onLevelLoad;
             On.Celeste.OverworldLoader.ctor -= onOverworldLoad;
             Clear();
-        }
-    }
-    namespace SourceGen.Loader
-    {
-        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
-        public class LoadAttribute : Attribute
-        {
-        }
-        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
-        public class LazyLoadAttribute : Attribute
-        {
-        }
-        [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
-        public class LazyLoadDirectoryAttribute : Attribute
-        {
-        }
-
-        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
-        public class UnloadAttribute : Attribute
-        {
-        }
-
-        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
-        public class LoadContentAttribute : Attribute
-        {
-        }
-
-        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
-        public class LoaderAttribute : Attribute
-        {
-        }
-
-        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
-        public class UnloaderAttribute : Attribute
-        {
-        }
-        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
-        public class LoadContenterAttribute : Attribute
-        {
-        }
-        [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-        public class DependencyAttribute(Type type) : Attribute()
-        {
-        }
-    }
-    namespace SourceGen
-    {
-        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
-        public class GeneratedAttribute : Attribute
-        {
         }
     }
 }

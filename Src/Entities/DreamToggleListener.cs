@@ -68,7 +68,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
         [SourceGen.Loader.Load]
         public static void Load()
-        {
+        { 
             On.Celeste.Level.Update += Level_Update;
             sr = ReverseHelperExtern.SpeedRunTool_Interop.RegisterStaticTypes?.Invoke(typeof(DreamToggleListener), [nameof(isactivated)]);
         }

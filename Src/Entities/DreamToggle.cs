@@ -9,20 +9,22 @@ namespace Celeste.Mod.ReverseHelper.Entities
     [CustomEntity("ReverseHelper/DreamToggle")]
     public class DreamToggle : Entity
     {
-        public DreamToggle(Vector2 position, bool onlyFire, bool onlyIce,bool persistent) : base(position)
+        public DreamToggle(Vector2 position, bool onlyFire, bool onlyIce, bool persistent, int depth) : base(position)
         {
             this.onlyDisable = onlyFire;
             this.onlyEnable = onlyIce;
             this.persistent = persistent = true;
             base.Collider = new Hitbox(16f, 24f, -8f, -12f);
-            base.Add(new DreamToggleListener((OnChangeMode)));
+            base.Add(new DreamToggleListener(OnChangeMode));
             base.Add(new PlayerCollider((OnPlayer), null, null));
             base.Add(sprite = GFX.SpriteBank.Create("ReverseHelper_DreamToggle"));
-            base.Depth = 2000;
+            base.Depth = depth;
         }
 
         // Token: 0x0600164F RID: 5711 RVA: 0x0005C3BA File Offset: 0x0005A5BA
-        public DreamToggle(EntityData data, Vector2 offset) : this(data.Position + offset, data.Bool("onlyEnable", false), data.Bool("onlyDisable", false), data.Bool("persistent_always_true", true))
+        public DreamToggle(EntityData data, Vector2 offset)
+            : this(data.Position + offset, data.Bool("onlyEnable", false), data.Bool("onlyDisable", false), data.Bool("persistent_always_true", true),
+                  data.Int("depth", 2000))
         {
         }
 
@@ -31,15 +33,15 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public override void Added(Scene scene)
         {
             base.Added(scene);
-            enableMode = (ReverseHelperModule.playerHasDreamDash );
+            enableMode = ReverseHelperModule.playerHasDreamDashBetter(this);
             SetSprite(false);
         }
 
         // Token: 0x06001651 RID: 5713 RVA: 0x0005C416 File Offset: 0x0005A616
         private void OnChangeMode(bool enabled)
         {
-            bool changed = enableMode != (ReverseHelperModule.playerHasDreamDash);
-            enableMode = (ReverseHelperModule.playerHasDreamDash);
+            bool changed = enableMode != ReverseHelperModule.playerHasDreamDashBetter(this);
+            enableMode = ReverseHelperModule.playerHasDreamDashBetter(this);
             SetSprite(changed);
         }
 
@@ -98,8 +100,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 //{
                 //    level.Session.CoreMode = level.CoreMode;
                 //}
-
-                ReverseHelperModule.playerHasDreamDash = !ReverseHelperModule.playerHasDreamDash;
+                ref var has = ref
+                ReverseHelperModule.playerHasDreamDashBetter(this);
+                has = !has;
 
                 Input.Rumble(RumbleStrength.Medium, RumbleLength.Medium);
                 level.Flash(Color.White * 0.15f, true);

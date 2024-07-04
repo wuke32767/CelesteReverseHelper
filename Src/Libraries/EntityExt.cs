@@ -299,23 +299,21 @@ namespace Celeste.Mod.ReverseHelper.Libraries
         static Action<Entity>? _update;
 
         [MonoMod.MonoModLinkTo("Monocle.Entity", "System.Void Update()")]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Entity_Update(this Entity _)
+        public static void Entity_Update(this Entity e)
         {
             //if not relinked
             _update ??= typeof(Entity).GetMethod(nameof(Entity.Update))!.CreateDelegate<Action<Entity>>();
-            _update(_);
+            _update(e);
         }
 
         static Action<Entity>? _render;
 
         [MonoMod.MonoModLinkTo("Monocle.Entity", "System.Void Update()")]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Entity_Render(this Entity _)
+        public static void Entity_Render(this Entity e)
         {
             //if not relinked
             _render ??= typeof(Entity).GetMethod(nameof(Entity.Render))!.CreateDelegate<Action<Entity>>();
-            _render(_);
+            _render(e);
         }
 
         public static IEnumerable<T> CollidableAll<T>(this Entity entity) where T : Entity

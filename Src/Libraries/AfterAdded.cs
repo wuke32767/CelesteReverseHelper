@@ -29,7 +29,7 @@ namespace Celeste.Mod.ReverseHelper.Libraries
         public override void Added(Scene scene)
         {
             base.Added(scene);
-            if (scene.Entities.ToAdd[^1] == this || donotcollision == 0)
+            if (scene.Entities.ToAdd[^1] == this || donotcollision <= 0)
             {
                 action();
                 Inst = null;

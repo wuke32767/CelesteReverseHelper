@@ -11,28 +11,51 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
         {
             string s = "";
             ISymbol tp2 = type.ContainingSymbol;
-            while (tp2 is not null && tp2.Name != "")
-            {
+            return tp2.FullName();
+        }
+        static SymbolDisplayFormat callingformatter = new(
+            globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Included,
+            typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+            genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+            memberOptions:
+                    SymbolDisplayMemberOptions.IncludeContainingType,
+            miscellaneousOptions:
+                SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
+                SymbolDisplayMiscellaneousOptions.UseSpecialTypes);
+        static SymbolDisplayFormat declarationformatter = new(
+            genericsOptions: 
+            SymbolDisplayGenericsOptions.IncludeTypeParameters|
+            SymbolDisplayGenericsOptions.IncludeTypeConstraints|
+            SymbolDisplayGenericsOptions.IncludeVariance
+            ,
+            memberOptions:
+                SymbolDisplayMemberOptions.IncludeModifiers |
+                SymbolDisplayMemberOptions.IncludeType|
+                SymbolDisplayMemberOptions.IncludeAccessibility|
+                SymbolDisplayMemberOptions.IncludeParameters |
+                SymbolDisplayMemberOptions.IncludeRef
+            ,
+            
+            kindOptions:
+            SymbolDisplayKindOptions.IncludeNamespaceKeyword|
+            SymbolDisplayKindOptions.IncludeTypeKeyword|
+            SymbolDisplayKindOptions.IncludeMemberKeyword,
+            miscellaneousOptions:
+                SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
+                SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier |
+                SymbolDisplayMiscellaneousOptions.UseSpecialTypes);
 
-                s = tp2.Name + "." + s;
-                tp2 = tp2.ContainingSymbol;
-                //type ??= type.ContainingType;
-            }
-            return s.Substring(0, s.Length - 1);
+        internal static string Declared(this ISymbol tp2)
+        {
+            return tp2.ToDisplayString(declarationformatter);
         }
         internal static string FullName(this ISymbol tp2)
         {
-            string s = "";
-            while (tp2 is not null && tp2.Name != "")
-            {
-                s = tp2.Name + "." + s;
-                tp2 = tp2.ContainingSymbol;
-            }
-            return s.Substring(0, s.Length - 1);
+            return tp2.ToDisplayString(callingformatter);
         }
         internal static string Voidize(this string isvoid)
         {
-            if (isvoid == "System.Void")
+            if (isvoid == "global::System.Void" || isvoid == "System.Void")
             {
                 return "void";
             }
@@ -43,7 +66,7 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
     public class SourceGenerator : ISourceGenerator
     {
         private const bool format_indent = false;
-        private const string attr_namespace_base = "Celeste.Mod.ReverseHelper.SourceGen";
+        private const string attr_namespace_base = "global::Celeste.Mod.ReverseHelper.SourceGen";
         private const string attr_namespace = attr_namespace_base + ".Loader";
 
         public void Execute(GeneratorExecutionContext context)
@@ -56,7 +79,7 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
             StringBuilder load = new();
             StringBuilder unload = new();
             StringBuilder loadcontent = new();
-            Dictionary<ITypeSymbol, ITypeSymbol> types = new();
+            Dictionary<ITypeSymbol, ITypeSymbol> typedeps = new();
             Dictionary<string, ITypeSymbol> names = new();
             Dictionary<ITypeSymbol, IMethodSymbol> loads = new();
             Dictionary<ITypeSymbol, IMethodSymbol> unloads = new();
@@ -66,22 +89,22 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
             {
                 foreach (var attr in type.GetAttributes())
                 {
-                    if (attr.AttributeClass.FullNamespace() == "MonoMod.ModInterop")
+                    if (attr.AttributeClass.FullNamespace() == "global::MonoMod.ModInterop")
                     {
                         if (attr.AttributeClass.Name == "ModExportNameAttribute"
                             || attr.AttributeClass.Name == "ModImportNameAttribute")
                         {
-                            load.Append($"global::MonoMod.ModInterop.ModInteropManager.ModInterop(typeof(global::{type.FullName()}));");
+                            load.Append($"global::MonoMod.ModInterop.ModInteropManager.ModInterop(typeof({type.FullName()}));");
                         }
                     }
                     else if (attr.AttributeClass.FullNamespace() == attr_namespace)
                     {
                         if (attr.AttributeClass.Name == "DependencyAttribute")
                         {
-                            types.Add(type, attr.AttributeClass.TypeArguments.FirstOrDefault());
+                            typedeps.Add(type, attr.AttributeClass.TypeArguments.FirstOrDefault());
                         }
                     }
-                    else if (attr.AttributeClass.FullNamespace() == "Celeste.Mod.Entities")
+                    else if (attr.AttributeClass.FullNamespace() == "global::Celeste.Mod.Entities")
                     {
                         if (attr.AttributeClass.Name == "CustomEntityAttribute")
                         {
@@ -93,7 +116,7 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
                                 {
                                     foreach (var name in b.Values.Select(x => x.Value).OfType<string>())
                                     {
-                                        names.Add(name,type);
+                                        names.Add(name, type);
                                     }
                                 }
                             }
@@ -116,7 +139,6 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
                             _ => null,
                         } is StringBuilder sb)
                         {
-                            sb.Append("global::");
                             sb.Append(method.FullName());
                             sb.Append("();");
                             break;
@@ -200,7 +222,7 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
             {
                 _ = tp2 switch
                 {
-                    IMethodSymbol method => str.Insert(0, $"[global::{attr_namespace_base}.GeneratedAttribute]{mod} {method.ReturnType.FullName().Voidize()} {method.Name}(){{").Append($"}}"),
+                    IMethodSymbol method => str.Insert(0, $"[{attr_namespace_base}.GeneratedAttribute]{mod} {method.ReturnType.FullName().Voidize()} {method.Name}(){{").Append($"}}"),
                     INamespaceSymbol ns => str.Insert(0, $"namespace {ns.Name}{{").Append($"}}"),
                     ITypeSymbol type => str.Insert(0, $"partial class {type.Name}{{").Append($"}}"),
                 };

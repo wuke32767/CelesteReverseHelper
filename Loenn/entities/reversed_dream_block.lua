@@ -2,7 +2,7 @@ local drawable = require("structs.drawable_rectangle")
 local drawables = require("structs.drawable_sprite")
 local RefillWall={}
 local RefillWallWrapper={}
-
+RefillWallWrapper.depth = -100000
 RefillWallWrapper.name="ReverseHelper/ReversedDreamBlockContainer"
 
 RefillWallWrapper.canResize={true,true}

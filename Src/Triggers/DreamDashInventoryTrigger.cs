@@ -45,13 +45,13 @@ namespace Celeste.Mod.ReverseHelper.Triggers
         public override void Added(Scene scene)
         {
             base.Added(scene);
-            enableMode = (ReverseHelperModule.playerHasDreamDash);
+            enableMode = ReverseHelperModule.playerHasDreamDashBetter(this);
         }
 
         // Token: 0x06001651 RID: 5713 RVA: 0x0005C416 File Offset: 0x0005A616
         private void OnChangeMode(bool enabled)
         {
-            enableMode = (ReverseHelperModule.playerHasDreamDash);
+            enableMode = ReverseHelperModule.playerHasDreamDashBetter(this);
         }
 
         // Token: 0x06001652 RID: 5714 RVA: 0x0005C42C File Offset: 0x0005A62C
@@ -78,8 +78,8 @@ namespace Celeste.Mod.ReverseHelper.Triggers
                 //{
                 //    level.Session.CoreMode = level.CoreMode;
                 //}
-
-                ReverseHelperModule.playerHasDreamDash = !ReverseHelperModule.playerHasDreamDash;
+                ref bool has = ref ReverseHelperModule.playerHasDreamDashBetter(this);
+                has = !has;
 
                 DreamToggleListener.ImmediateUpdate();
             }

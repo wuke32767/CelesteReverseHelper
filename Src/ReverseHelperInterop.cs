@@ -42,7 +42,7 @@ namespace Celeste.Mod.ReverseHelper
         {
             if (v.HasValue)
             {
-                DreamBlockConfig.Get(e).Reverse(v);
+                DreamBlockConfig.GetOrAdd(e).Reverse(v);
                 return v;
             }
             else
@@ -60,7 +60,7 @@ namespace Celeste.Mod.ReverseHelper
         {
             if (v.HasValue)
             {
-                DreamBlockConfig.Get(e).Enable(v);
+                DreamBlockConfig.GetOrAdd(e).Enable(v);
                 return v;
             }
             else
@@ -78,7 +78,7 @@ namespace Celeste.Mod.ReverseHelper
         {
             if (v.HasValue)
             {
-                DreamBlockConfig.Get(e).Disable(v);
+                DreamBlockConfig.GetOrAdd(e).Disable(v);
                 return v;
             }
             else
@@ -97,7 +97,7 @@ namespace Celeste.Mod.ReverseHelper
         {
             if (v.HasValue)
             {
-                DreamBlockConfig.Get(e).HighPriority(v);
+                DreamBlockConfig.GetOrAdd(e).HighPriority(v);
                 return v;
             }
             else
