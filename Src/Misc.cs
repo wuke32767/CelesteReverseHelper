@@ -1,8 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿global using Mono.Cecil.Cil;
+global using Monocle;
+global using MonoMod.Cil;
+global using MonoMod.RuntimeDetour;
+global using MonoMod.Utils;
+global using System;
+global using System.Collections.Generic;
+global using System.Linq;
+global using System.Text;
+global using System.Threading.Tasks;
+global using static Celeste.Mod.ReverseHelper.Libraries.ReflectionExt;
 
 namespace Celeste.Mod.ReverseHelper
 {

@@ -100,7 +100,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             sine.Randomize();
             UpdateY();
             Depth = -100;
-
+            
             //
             Add(Hold = new Holdable(0.1f));
             Hold.PickupCollider = new Hitbox(24f, 24f, -12f, -12f);

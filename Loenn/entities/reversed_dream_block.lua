@@ -20,6 +20,12 @@ RefillWallWrapper.fieldInformation = {
     reverse = {
         fieldType = "ReverseHelper.OptionalBool",
     },
+    touchMode = {
+        fieldType = "ReverseHelper.OptionalBool",
+    },
+    useEntryAngle = {
+        fieldType = "ReverseHelper.OptionalBool",
+    },
 }
 
 
@@ -31,8 +37,14 @@ RefillWallWrapper.placements={
             alwaysDisable="",
             highPriority="",
             reverse=true,
+            touchMode="",
+            useEntryAngle = "",
         }
-    }
+}
+
+if require("mods").requireFromPlugin("libraries.private", "ReverseHelperPrivate") then
+    RefillWallWrapper.placements.data.touchMode=""
+end
 function RefillWallWrapper.sprite(room,entity)
 
 

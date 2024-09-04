@@ -8,21 +8,20 @@ namespace Celeste.Mod.ReverseHelper.Libraries
     public class SingleGlobalEntity<For>() : Entity()
     {
         public static Action<Scene> OnSceneEnd = null!;
-        public static int Register(Action<Scene>action)
+        public static void Register(Action<Scene> action)
         {
             OnSceneEnd = action;
-            return 0;
         }
-        public static int Construct(Scene scene)
+        public static void Construct(Scene scene)
         {
             if (self is not null || scene is null)
             {
-                return 0;
+                return;
             }
-            var e = new SingleGlobalEntity<For>();
-            e.AddTag(Tags.Global);
-            scene.Add(e);
-            return 0;
+            self = new SingleGlobalEntity<For>();
+            self.AddTag(Tags.Global);
+            scene.Add(self);
+            return;
         }
         public override void SceneEnd(Scene scene)
         {

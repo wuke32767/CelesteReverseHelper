@@ -12,15 +12,15 @@ using System.Threading.Tasks;
 
 namespace Celeste.Mod.ReverseHelper.Libraries
 {
-    internal static class Ext
+    internal static class XHiddenName_Ext
     {
         public static Vector2 VHNormalize(this Vector2 self, Vector2 zero = default)
         {
             return self switch
             {
                 { X: 0, Y: 0 } => zero,
-                { X: 0 ,Y:var t} => new(0, Math.Sign(t)),
-                { Y: 0,X:var t } => new(Math.Sign(t), 0),
+                { X: 0, Y: var t } => new(0, Math.Sign(t)),
+                { Y: 0, X: var t } => new(Math.Sign(t), 0),
                 _ => throw new NotImplementedException("not a v/h line"),
             };
         }
@@ -289,7 +289,7 @@ namespace Celeste.Mod.ReverseHelper.Libraries
         }
     }
 
-    internal static class EntityExt
+    internal static class XHiddenName_EntityExt
     {
         public static Point ToPoint(this Vector2 vec)
         {
@@ -334,6 +334,28 @@ namespace Celeste.Mod.ReverseHelper.Libraries
                     }
                 }
             }
+        }
+    }
+    internal static class XHiddenName_Extension
+    {
+        public static VirtualMap<T> FastClone<T>(this VirtualMap<T> vm)
+        {
+            VirtualMap<T> virtualMap = new VirtualMap<T>(vm.Columns, vm.Rows, vm.EmptyValue);
+            virtualMap.segments = (T[,][,])vm.segments.Clone();
+
+            for (int i = 0; i < vm.SegmentColumns; i++)
+            {
+                for (int j = 0; j < vm.SegmentRows; j++)
+                {
+                    var cur = virtualMap.segments[i, j];
+                    if(cur is not null)
+                    {
+                        virtualMap.segments[i, j] = (T[,])cur.Clone();
+                    }
+                }
+            }
+
+            return virtualMap;
         }
     }
 }

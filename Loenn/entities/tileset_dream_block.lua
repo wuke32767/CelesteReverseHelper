@@ -54,14 +54,15 @@ cbarea.placements = {
     
 }
 
-local fakeTilesSpriteFunction = fakeTilesHelper.getEntitySpriteFunction("tiles", false)
+local fakeTilesSpriteFunctionFg = fakeTilesHelper.getEntitySpriteFunction("tiles", false, "tilesFg")
+local fakeTilesSpriteFunctionBg = fakeTilesHelper.getEntitySpriteFunction("tiles", false, "tilesBg")
 
 function cbarea.sprite(room, entity)
     local x, y = entity.x or 0, entity.y or 0
     local width, height = entity.width or 8, entity.height or 8
     local lineColor, blockColor = entity.lineColor or "FFFFFFFF", entity.fillColor or "00000000"
 
-    local sprites = fakeTilesSpriteFunction(room, entity)
+    local sprites = entity.bgAppearance and fakeTilesSpriteFunctionBg(room, entity) or fakeTilesSpriteFunctionFg(room, entity)
     --local rect2=drawable.fromRectangle("fill",x,y,width,height,fillColor)
     local rect=drawable.fromRectangle("line",x,y,width,height,lineColor)
 

@@ -15,8 +15,61 @@ using static Celeste.Mod.ReverseHelper.ReverseHelperExtern;
 
 namespace Celeste.Mod.ReverseHelper
 {
+    interface SingleSession<T>
+    {
+        public void Write(T target);
+        public void Copy(T from);
+    }
+    class ReverseHelperSession : EverestModuleSession
+    {
+        public Triggers.EnableTrigger.Session EnableTrigger { get; set; } = new();
+    }
+    class ReverseHelperSessionHelper
+    {
+        public static ReverseHelperSession Fake => ReverseHelperModule.Session;
+        public static ReverseHelperSession Real => ReverseHelperModule.RealSession;
+        public static void Write()
+        {
+            foreach (var (k, v) in Fake.EnableTrigger.Triggered)
+            {
+                Real.EnableTrigger.Triggered[k] = v;
+            }
+            Fake.EnableTrigger.Triggered.Clear();
+        }
+        public static void Revert()
+        {
+            Fake.EnableTrigger.Triggered.Clear();
+        }
+        [Load]
+        public static void Load()
+        {
+            Everest.Events.Level.OnTransitionTo += Level_OnTransitionTo;
+            Everest.Events.Level.OnLoadLevel += Level_OnLoadLevel;
+        }
+
+        private static void Level_OnLoadLevel(Level level, Player.IntroTypes playerIntro, bool isFromLoader)
+        {
+            Revert();
+        }
+
+        private static void Level_OnTransitionTo(Level level, LevelData next, Vector2 direction)
+        {
+            Write();
+        }
+
+        [Unload]
+        public static void Unload()
+        {
+            Everest.Events.Level.OnTransitionTo -= Level_OnTransitionTo;
+            Everest.Events.Level.OnTransitionTo -= Level_OnTransitionTo;
+        }
+    }
     internal partial class ReverseHelperModule : EverestModule
     {
+        static ReverseHelperSession FakeSession = new();
+        public override Type SessionType => typeof(ReverseHelperSession);
+        public static ReverseHelperSession Session => FakeSession;
+        public static ReverseHelperSession RealSession => (ReverseHelperSession)Instance._Session;
         static bool qwertyuiop;
         static ConditionalWeakTable<Scene, Box<bool>> tested = [];
         public static ref bool playerHasDreamDashBetter(Entity entity)
@@ -42,18 +95,17 @@ namespace Celeste.Mod.ReverseHelper
             if (!tar.val)
             {
                 StackTrace trace = new StackTrace();
-                Logger.Log(LogLevel.Warn, nameof(ReverseHelper), "Failed when getting DreamDash. Current scene type: " + Engine.Scene.GetType().FullName + "\n" + trace.ToString());
+                Logger.Log(LogLevel.Error, nameof(ReverseHelper), "Failed when getting DreamDash. Current scene type: " + Engine.Scene.GetType().FullName + " " + Engine.Scene.GetType().Module.ScopeName + "\n" + trace.ToString());
             }
             tar.val = true;
+            qwertyuiop = false;
             return ref qwertyuiop;
         }
 
         public static bool playerHasDreamDash
         {
-            get => (Engine.Scene as Level)?.Session.Inventory.DreamDash
-                ?? (Engine.Scene as LevelLoader)?.Level.Session.Inventory.DreamDash
-                ?? false;
-            set => (Engine.Scene as Level)!.Session.Inventory.DreamDash = value;
+            get => playerHasDreamDashBetter(null!);
+            set => playerHasDreamDashBetter(null!) = value;
         }
 
 #pragma warning disable CS8618
@@ -148,6 +200,8 @@ namespace Celeste.Mod.ReverseHelper
             Clear();
         }
     }
+    class NotTestedAttribute : Attribute { }
+    class WIPAttribute : Attribute { }
 }
 
 public class ReverseHelperILHookException : Exception

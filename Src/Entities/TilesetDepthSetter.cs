@@ -8,11 +8,12 @@ namespace Celeste.Mod.ReverseHelper.Entities
 {
     [CustomEntity("ReverseHelper/TilesetDepthSetter")]
     [Tracked]
-    public class TilesetDepthSetter(Vector2 position, int width, int height, int id, int depths, bool fg, bool bg) : Entity()
+    public class TilesetDepthSetter(Vector2 position, int width, int height, int id, int depths, bool fg, bool bg,int code_side) : Entity()
     {
         StaticMover staticMover = new StaticMover();
         TileGrid mt;
         int ID => id;
+        int CodeID => code_side;
         public override void Added(Scene scene)
         {
             if (fg && bg)
@@ -25,14 +26,14 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             base.Added(scene);
             if (scene.Tracker.GetEntities<TilesetDepthSetter>()
-                .OfType<TilesetDepthSetter>().Any(x => x != this && x.ID == ID))
+                .OfType<TilesetDepthSetter>().Any(x => x != this && x.ID == ID && x.CodeID == CodeID))
             {
                 RemoveSelf();
                 return;
             }
             Tag |= Tags.Global;
             if (scene.Tracker.GetEntities<TilesetDepthSetter>()
-                .OfType<TilesetDepthSetter>().First(x => x != this && x.Depth == depths) is { } dep)
+                .OfType<TilesetDepthSetter>().FirstOrDefault(x => x != this && x.Depth == depths) is { } dep)
             {
                 dep.ExtendRange(position, width, height, fg, bg);
                 return;
@@ -68,6 +69,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     for (int j = 0; j < height; j++)
                     {
                         mt.Tiles[x + i, y + j] ??= grids.Tiles[x + i, y + j];
+                        grids.Tiles[x + i, y + j] = null;
                     }
                 }
             };
@@ -95,7 +97,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
         public TilesetDepthSetter(EntityData e, Vector2 offset)
             : this(e.Position + offset, e.Width, e.Height, e.ID,
-                  e.Int("depth"), e.Bool("fg"), e.Bool("bg"))
+                  e.Int("depth"), e.Bool("fg"), e.Bool("bg"), 0)
         {
         }
     }

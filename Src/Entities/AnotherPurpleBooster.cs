@@ -820,10 +820,10 @@ namespace Celeste.Mod.ReverseHelper._From_Vortex_Helper
         /// <returns>The index of the new state</returns>
         public static int AddState(this StateMachine machine, Func<int> onUpdate, Func<IEnumerator> coroutine = null, Action begin = null, Action end = null)
         {
-            Action[] begins = (Action[])StateMachine_begins.GetValue(machine);
-            Func<int>[] updates = (Func<int>[])StateMachine_updates.GetValue(machine);
-            Action[] ends = (Action[])StateMachine_ends.GetValue(machine);
-            Func<IEnumerator>[] coroutines = (Func<IEnumerator>[])StateMachine_coroutines.GetValue(machine);
+            Action[] begins = machine.begins;
+            Func<int>[] updates = machine.updates;
+            Action[] ends = machine.ends;
+            Func<IEnumerator>[] coroutines = machine.coroutines;
             int nextIndex = begins.Length;
             // Now let's expand the arrays
             Array.Resize(ref begins, begins.Length + 1);
@@ -831,10 +831,10 @@ namespace Celeste.Mod.ReverseHelper._From_Vortex_Helper
             Array.Resize(ref ends, begins.Length + 1);
             Array.Resize(ref coroutines, coroutines.Length + 1);
             // Store the resized arrays back into the machine
-            StateMachine_begins.SetValue(machine, begins);
-            StateMachine_updates.SetValue(machine, updates);
-            StateMachine_ends.SetValue(machine, ends);
-            StateMachine_coroutines.SetValue(machine, coroutines);
+            machine.begins = begins;
+            machine.updates = updates;
+            machine.ends = ends;
+            machine.coroutines = coroutines;
             // And now we add the new functions
             machine.SetCallbacks(nextIndex, onUpdate, coroutine, begin, end);
             return nextIndex;

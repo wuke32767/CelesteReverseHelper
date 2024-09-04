@@ -41,7 +41,7 @@ namespace Celeste.Mod.ReverseHelper.Libraries
                 var i = entities.BinarySearch(Entity, some_cmp.Instance);
                 if (i >= 0 && entities[i] == Entity)
                 {
-                    if (entities.Count > i + 2 && target[^1]!=entities[i + 1])
+                    if (entities.Count >= i + 2 && target[0]!=entities[i + 1])
                     {
                         int d = Entity.Depth;
                         var cur = Entity.actualDepth;
@@ -94,6 +94,7 @@ namespace Celeste.Mod.ReverseHelper.Libraries
                 }
             }
 
+#pragma warning disable CS0618 // depth is expected.
             static void set_Depth(Entity self, int value)
             {
                 if (self.depth != value)
@@ -121,6 +122,7 @@ namespace Celeste.Mod.ReverseHelper.Libraries
                 entity.actualDepth = entity.depth - value;
                 scene.Entities.MarkUnsorted();
             }
+#pragma warning restore CS0618
         }
 
         //[SourceGen.Loader.Unload]

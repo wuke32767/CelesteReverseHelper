@@ -6,11 +6,13 @@ using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
     [CustomEntity("ReverseHelper/DirectionalBooster")]
+    [WIP]
     public class DirectionalBooster : Booster
     {
         [Flags]

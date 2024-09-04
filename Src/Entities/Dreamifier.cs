@@ -16,6 +16,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
     }
     //[SourceGen.Loader.Dependency(typeof(DepthTracker))]
     [CustomEntity($"ReverseHelper/Dreamifier")]
+    [WIP]
     public class Dreamifier(Vector2 position, int width, int height, Color color1, Color color2,
         Color color3, Color color4, Groupmode connect, Groupmode blend, TypeMatch typeMatch, bool fg,
         EntityData e)
@@ -306,8 +307,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
             fillColorDeact = fillde;
             this.solid = solid;
             _solidcollider = collider;
-
-            DreamBlockConfig.GetOrAdd(this).HighPriority();
+            
+            DreamBlockConfig.GetOrAdd(this).setter(DreamBlockConfigFlags.highPriority, true);
             //vanilla uses 10
             //for footstep ripple priority
             SurfaceSoundPriority = 11;

@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Monocle;
 using System.Collections.Generic;
 using System.Linq;
+using YamlDotNet.Serialization;
 
 namespace Celeste.Mod.ReverseHelper.Triggers
 {
@@ -22,15 +23,22 @@ namespace Celeste.Mod.ReverseHelper.Triggers
             RemoveSelf();
         }
     }
+    public record struct EnableTriggerSessionData(bool triggered);
     [CustomEntity("ReverseHelper/EnableTrigger")]
+    //[Tracked]
     public class EnableTrigger(EntityData e, Vector2 offset) : Trigger(e, offset)
     {
+        public class Session()
+        {
+            public Dictionary<int, EnableTriggerSessionData> Triggered { get; set; } = [];
+        }
         enum Mode
         {
             MoveAway, Disable, Shrink, Collidable,
         }
         Vector2[] Nodes = e.Nodes?.Select(x => x + offset).ToArray() ?? [];
         bool reversed = e.Bool("reversed");
+        bool persistent = e.Bool("persistent");
         Mode mode = e.Enum("mode", Mode.Collidable);
         bool revert = e.Bool("revertOnExit");
         bool oneuse = e.Bool("oneUse");
@@ -106,6 +114,17 @@ namespace Celeste.Mod.ReverseHelper.Triggers
             {
                 SavDat = target.Select(x => x.Collider.Size).ToArray();
             }
+
+            if (persistent)
+            {
+                if (ReverseHelperModule.Session.EnableTrigger.Triggered.TryGetValue(e.ID, out var val)
+                    && val.triggered)
+                {
+                    OnEnd();
+                }
+            }
+
+
             run(false);
         }
         Trigger[] target = default!;
@@ -114,11 +133,28 @@ namespace Celeste.Mod.ReverseHelper.Triggers
         public override void OnEnter(Player player)
         {
             base.OnEnter(player);
+            OnStart();
+            if (persistent)
+            {
+                var dic = ReverseHelperModule.Session.EnableTrigger.Triggered;
+                var re = dic.GetValueOrDefault(e.ID);
+                dic[e.ID] = new(!re.triggered);
+            }
+        }
+
+        private void OnStart()
+        {
             run(true);
         }
+
         public override void OnLeave(Player player)
         {
             base.OnLeave(player);
+            OnEnd();
+        }
+
+        private void OnEnd()
+        {
             if (revert)
             {
                 run(false);

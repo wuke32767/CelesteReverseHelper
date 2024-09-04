@@ -10,20 +10,22 @@ namespace Celeste.Mod.ReverseHelper.Libraries
     /// </summary>
     class AfterAdded : Entity
     {
-        Action action = default!;
+        Action? action;
+        Action? awake;
         static AfterAdded? Inst;
         int donotcollision;
         AfterAdded(int donotcollision = 3) : base()
         {
             this.donotcollision = donotcollision;
         }
-        public static void Reg(Scene scene, Action act)
+        public static void Reg(Scene scene, Action? act, Action? awaking = null)
         {
             if (Inst is null)
             {
                 Inst = new();
             }
             Inst.action += act;
+            Inst.awake += awaking;
             scene.Add(Inst);
         }
         public override void Added(Scene scene)
@@ -31,13 +33,18 @@ namespace Celeste.Mod.ReverseHelper.Libraries
             base.Added(scene);
             if (scene.Entities.ToAdd[^1] == this || donotcollision <= 0)
             {
-                action();
+                action?.Invoke();
                 Inst = null;
             }
             else//move to the end of toadd list
             {
-                scene.Add(Inst = new(donotcollision - 1) { action = action });
+                scene.Add(Inst = new(donotcollision - 1) { action = action, awake = awake });
             }
+        }
+        public override void Awake(Scene scene)
+        {
+            base.Awake(scene);
+            awake?.Invoke();
             RemoveSelf();
         }
     }
