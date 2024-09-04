@@ -1,5 +1,7 @@
 Hmmm... a readme is necessary.
 
+嗯...[中文的README](README_CN.md)也挺有必要的。
+
 # Celeste Reverse Helper
 ###### a helper, not for reverse.
 Contains something I have made for myself and something I have not yet completed and something I have given up.
