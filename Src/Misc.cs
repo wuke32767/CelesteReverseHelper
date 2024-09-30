@@ -50,12 +50,14 @@ namespace Celeste.Mod.ReverseHelper
         public class LoadContenterAttribute : Attribute
         {
         }
-#pragma warning disable CS9113
+        //[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+        //public class DependencyAttribute(Type type) : Attribute()
+        //{
+        //}
         [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-        public class DependencyAttribute(Type type) : Attribute()
+        public class DependencyAttribute<T>() : Attribute()
         {
         }
-#pragma warning restore CS9113
     }
     namespace SourceGen
     {

@@ -333,22 +333,18 @@ namespace Celeste.Mod.ReverseHelper.Libraries
         {
             orig(self);
             var collider = self.Collider;
-            try
+            
+            self.Collider = self.hurtbox;
+            foreach (EfficientPlayerCollider c in self.Scene.Tracker.GetComponents<EfficientPlayerCollider>())
             {
-                self.Collider = self.hurtbox;
-                foreach (EfficientPlayerCollider c in self.Scene.Tracker.GetComponents<EfficientPlayerCollider>())
+                c.Check(self);
+                if (self.Dead)
                 {
-                    c.Check(self);
-                    if (self.Dead)
-                    {
-                        return;
-                    }
+                    break;
                 }
             }
-            finally
-            {
-                self.Collider = collider;
-            }
+            
+            self.Collider = collider;
         }
         public override void DebugRender(Camera camera)
         {

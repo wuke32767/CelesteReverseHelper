@@ -25,6 +25,8 @@ HoldableRefill.placements = {
         refillOnHolding=true,
         stillRefillOnNoDash=false,
         dashable=false,
+        refillOnThrow=true,
+        refillOnThrow2=false,
     },
 }
 HoldableRefill.fieldOrder = { "x", "y", "twoDash","oneUse","floaty","slowFall","refilltime","refillOnHolding","stillRefillOnNoDash","dashable",}

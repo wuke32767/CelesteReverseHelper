@@ -37,14 +37,16 @@ RefillWallWrapper.placements={
             alwaysDisable="",
             highPriority="",
             reverse=true,
-            touchMode="",
             useEntryAngle = "",
         }
 }
 
 if require("mods").requireFromPlugin("libraries.private", "ReverseHelperPrivate") then
-    RefillWallWrapper.placements.data.touchMode=""
+    RefillWallWrapper.placements.data.touchMode = ""
+    RefillWallWrapper.placements.data.ghostMode = ""
+    RefillWallWrapper.placements.data.ghostDisableCollidable = ""
 end
+
 function RefillWallWrapper.sprite(room,entity)
 
 

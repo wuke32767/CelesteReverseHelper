@@ -1,18 +1,33 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.CodeDom.Compiler;
-using System.Diagnostics;
 using System.Text;
 namespace Celeste.Mod.ReverseHelper.SourceGen
 {
+
     internal static class _FullName
     {
+        public static void Deconstruct<TK, TV>(this KeyValuePair<TK, TV> self, out TK k, out TV v)
+        {
+            k = self.Key;
+            v = self.Value;
+        }
+        public static bool TryAdd<TK, TV>(this Dictionary<TK, TV> self, TK k, TV v)
+        {
+            if (!self.ContainsKey(k))
+            {
+                self[k] = v;
+                return true;
+            }
+            return false;
+        }
         internal static string FullNamespace(this ITypeSymbol type)
         {
             string s = "";
             ISymbol tp2 = type.ContainingSymbol;
             return tp2.FullName();
         }
+        //global::Celeste.Mod.ReverseHelperModule
+        //global::Celeste.Mod.ReverseHelperModule.Load
         static SymbolDisplayFormat callingformatter = new(
             globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Included,
             typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
@@ -23,22 +38,22 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
                 SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
                 SymbolDisplayMiscellaneousOptions.UseSpecialTypes);
         static SymbolDisplayFormat declarationformatter = new(
-            genericsOptions: 
-            SymbolDisplayGenericsOptions.IncludeTypeParameters|
-            SymbolDisplayGenericsOptions.IncludeTypeConstraints|
+            genericsOptions:
+            SymbolDisplayGenericsOptions.IncludeTypeParameters |
+            SymbolDisplayGenericsOptions.IncludeTypeConstraints |
             SymbolDisplayGenericsOptions.IncludeVariance
             ,
             memberOptions:
                 SymbolDisplayMemberOptions.IncludeModifiers |
-                SymbolDisplayMemberOptions.IncludeType|
-                SymbolDisplayMemberOptions.IncludeAccessibility|
+                SymbolDisplayMemberOptions.IncludeType |
+                SymbolDisplayMemberOptions.IncludeAccessibility |
                 SymbolDisplayMemberOptions.IncludeParameters |
                 SymbolDisplayMemberOptions.IncludeRef
             ,
-            
+
             kindOptions:
-            SymbolDisplayKindOptions.IncludeNamespaceKeyword|
-            SymbolDisplayKindOptions.IncludeTypeKeyword|
+            SymbolDisplayKindOptions.IncludeNamespaceKeyword |
+            SymbolDisplayKindOptions.IncludeTypeKeyword |
             SymbolDisplayKindOptions.IncludeMemberKeyword,
             miscellaneousOptions:
                 SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
@@ -79,7 +94,7 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
             StringBuilder load = new();
             StringBuilder unload = new();
             StringBuilder loadcontent = new();
-            Dictionary<ITypeSymbol, ITypeSymbol> typedeps = new();
+            Dictionary<ITypeSymbol, List<ITypeSymbol>> typedeps = new();
             Dictionary<string, ITypeSymbol> names = new();
             Dictionary<ITypeSymbol, IMethodSymbol> loads = new();
             Dictionary<ITypeSymbol, IMethodSymbol> unloads = new();
@@ -101,7 +116,12 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
                     {
                         if (attr.AttributeClass.Name == "DependencyAttribute")
                         {
-                            typedeps.Add(type, attr.AttributeClass.TypeArguments.FirstOrDefault());
+                            if (!typedeps.TryGetValue(type, out var val))
+                            {
+                                typedeps.Add(type, val = new List<ITypeSymbol>());
+                            }
+                            //val.Add(attr.AttributeClass.TypeArguments.FirstOrDefault());
+                            val.AddRange(attr.ConstructorArguments[0].Values.Select(x => x.Value as ITypeSymbol));
                         }
                     }
                     else if (attr.AttributeClass.FullNamespace() == "global::Celeste.Mod.Entities")
@@ -124,6 +144,37 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
                     }
                 }
             }
+
+            //how many types it relys
+            Dictionary<ITypeSymbol, int> rev_refcnt = [];
+            foreach (var (types, res) in typedeps)
+            {
+                rev_refcnt.TryAdd(types, 0);
+                foreach (var i in res)
+                {
+                    rev_refcnt.TryAdd(i, 0);
+                }
+                rev_refcnt[types]++;
+            }
+
+            Dictionary<ITypeSymbol, List<ITypeSymbol>> typedeplist = new();
+            //while (rev_refcnt.Count > 0)
+            {
+
+            }
+            //foreach (var (types, res) in typedeps)
+            //{
+            //    if (!typedeplist.TryGetValue(res, out var type))
+            //    {
+            //        typedeplist.Add(res, []);
+            //    }
+            //    type.Add(res);
+            //    if (typedeplist.TryGetValue(res, out var ss))
+            //    {
+            //        type.AddRange(ss);
+            //    }
+            //}
+
             foreach (var method in context.Compilation.GetSymbolsWithName(_ => true).OfType<IMethodSymbol>())
             {
                 foreach (var attr in method.GetAttributes())

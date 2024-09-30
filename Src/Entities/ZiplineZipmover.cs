@@ -1,15 +1,8 @@
 ﻿using Celeste.Mod.Entities;
 using Celeste.Mod.ReverseHelper._From_Vortex_Helper;
 using Microsoft.Xna.Framework;
-using Monocle;
-using MonoMod.Utils;
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
-using YamlDotNet.Core.Tokens;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
@@ -40,10 +33,10 @@ namespace Celeste.Mod.ReverseHelper.Entities
         private Vector2 speed { get => speed_mul_time_is_distance / Engine.DeltaTime; }
         private Vector2 last_speed { get => last_speed_mul_time_is_distance / Engine.DeltaTime; }
         private bool grabbed;
-        internal Vector2 target;
+        internal Vector2 currenttarget;
         internal Vector2 start;
-        internal static Color ropeColor = Calc.HexToColor("663931");
-        internal static Color ropeLightColor = Calc.HexToColor("9b6157");
+        internal Color ropeColor = Calc.HexToColor("663931");
+        internal Color ropeLightColor = Calc.HexToColor("9b6157");
 
 
         float SinePosition = 0;
@@ -71,7 +64,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
         static object? speedrun;
         Vector2 deltaNormalized;
         float deltaLength;
-
+        Vector2[] NodeList;
+        int pindex = 0;
         readonly Vector2 MaxSpeed;//=>
                                   //{
                                   //    var distance = deltaLength;
@@ -90,9 +84,10 @@ namespace Celeste.Mod.ReverseHelper.Entities
             //    RightEdge = Math.Max(node.X + offset.X, RightEdge);
             //}
             //from = _data.Position + offset;
-            target = e.Nodes[0] + offset;
+            currenttarget = e.Nodes[0] + offset;
+            NodeList = e.Nodes.Prepend(e.Position).Select(x => x + offset).ToArray();
             start = Position;
-            deltaNormalized = target - start;
+            deltaNormalized = currenttarget - start;
             deltaLength = deltaNormalized.Length();
             deltaNormalized = deltaNormalized.SafeNormalize();
             strict = e.Bool("strict");
@@ -149,6 +144,47 @@ namespace Celeste.Mod.ReverseHelper.Entities
             sfx = new SoundSource();
             sfx.Position = new Vector2(Width, Height) / 2f;
             Add(sfx);
+
+            #region omni
+            //this.delays=e.List("delays", EntityDataExt.floatParse);
+            //this.permanent=e.Bool("permanent");
+            //this.waiting=e.Bool("waiting");
+            //this.ticking=e.Bool("ticking");
+            //this.synced=e.Bool("synced");
+            //this.ropeColor=e.HexaColor("ropeColor");
+            //this.ropeLightColor=e.HexaColor("ropeLightColor");
+            //this.easing=e.("easing");
+            //this.nodeSpeeds=e.("nodeSpeeds");
+            //this.ticks=e.("ticks");
+            //this.tickDelay=e.("tickDelay");
+            //this.startDelay=e.("startDelay");
+            //this.customSound=e.("customSound");
+            //this.startSound=e.("startSound");
+            //this.impactSound=e.("impactSound");
+            //this.tickSound=e.("tickSound");
+            //this.returnSound=e.("returnSound");
+            //this.finishSound=e.("finishSound");
+            //this.nodeSound=e.("nodeSound");
+            //this.startShaking=e.("startShaking");
+            //this.nodeShaking=e.("nodeShaking");
+            //this.returnShaking=e.("returnShaking");
+            //this.tickingShaking=e.("tickingShaking");
+            //this.permanentArrivalShaking=e.("permanentArrivalShaking");
+            //this.tweakShakes=e.("tweakShakes");
+            //this.syncTag=e.("syncTag");
+            //this.hideRope=e.("hideRope");
+            //this.hideCog=e.("hideCog");
+            //this.dashable=e.("dashable");
+            //this.onlyDashActivate=e.("onlyDashActivate");
+            //this.dashableOnce=e.("dashableOnce");
+            //this.dashableRefill=e.("dashableRefill");
+            //this.tweakReturnParams=e.("tweakReturnParams");
+            //this.returnSpeeds=e.("returnSpeeds");
+            //this.returnDelays=e.("returnDelays");
+            //this.returnedIrrespondingTime=e.("returnedIrrespondingTime");
+            //this.returnEasing=e.("returnEasing");
+            //this.timeUnits =e.("timeUnits ");
+            #endregion
         }
 
         public static int ZiplineState { get; private set; }
@@ -185,7 +221,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 clamp = deltaLength;
                 conservedSpeed += (conservedSpeed + SineSpeed) / 2 * -3;
             }
-            Position = Calc.Approach(start, target, clamp);
+            Position = Calc.Approach(start, currenttarget, clamp);
 
             speed_mul_time_is_distance = Position - oPos;
 
@@ -278,6 +314,28 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
         bool returning = false;
         float SineSpeed;
+        bool NextSeq()
+        {
+            pindex++;
+            if (pindex + 1 >= NodeList.Length)
+            {
+                return false;
+            }
+            currenttarget = NodeList[pindex + 1];
+            start = NodeList[pindex];
+            return true;
+        }
+        bool PrevSeq()
+        {
+            pindex--;
+            if (pindex <= 0)
+            {
+                return false;
+            }
+            currenttarget = NodeList[pindex];
+            start = NodeList[pindex - 1];
+            return true;
+        }
         private IEnumerator Sequence()
         {
 
@@ -286,7 +344,16 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 SineSpeed = 0;
                 returning = false;
                 acceptExtraSpeed = true;
-                if (grabbed)
+                if (!grabbed)
+                {
+                    conservedSpeed = 0;
+                    ConservedPosition = 0;
+                    yield return null;
+                    continue;
+                }
+
+                float at = 0f;
+                do
                 {
                     sfx.Play("event:/game/01_forsaken_city/zip_mover", null, 0f);
                     Input.Rumble(RumbleStrength.Medium, RumbleLength.Short);
@@ -300,7 +367,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     }
 
                     //Tween tween = Tween.Create(Tween.TweenMode.Oneshot, Ease.SineIn, 0.5f, true);
-                    float at = 0f;
                     while (ConservedPosition + SinePosition < deltaLength)
                     {
                         yield return null;
@@ -321,7 +387,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
                         SineSpeed = (position - SinePosition) / Engine.DeltaTime;
                         SinePosition = position;
                     }
-
                     //this.StartShaking(0.2f);
                     Input.Rumble(RumbleStrength.Strong, RumbleLength.Medium);
                     SceneAs<Level>().Shake(0.3f);
@@ -334,8 +399,10 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     yield return 0.25f;
                     conservedSpeed = 0;
                     acceptExtraSpeed = conserveReturning;
+                } while (NextSeq());
+                do
+                {
                     yield return 0.10f;
-
                     if (conservedSpeed > 0)
                     {
                         conservedSpeed = 0;
@@ -365,17 +432,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     conservedSpeed = 0;
                     acceptExtraSpeed = false;
                     fixframe = fixEndSpeed;
-                    yield return 0.5f;
-                    SinePosition = ConservedPosition = 0;
-                    conservedSpeed = 0;
-                    returning = false;
-                }
-                else
-                {
-                    conservedSpeed = 0;
-                    ConservedPosition = 0;
-                    yield return null;
-                }
+                    yield return 0.4f;
+                } while (PrevSeq());
+                yield return 0.1f;
+                SinePosition = ConservedPosition = 0;
+                conservedSpeed = 0;
+                returning = false;
+
             }
         }
 
@@ -579,6 +642,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
         private SoundSource sfx;
         internal float percent;
         static bool s1mpleend = false;
+        private List<float> delays;
+
         private static int ZiplineUpdate()
         {
             Player self = Engine.Scene.Tracker.GetEntity<Player>();
@@ -677,7 +742,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             Depth = 5000;
             ZipZip = zipMover;
             from = ZipZip.start + new Vector2(ZipZip.Width / 2f, ZipZip.Height / 2f);
-            to = ZipZip.target + new Vector2(ZipZip.Width / 2f, ZipZip.Height / 2f);
+            to = ZipZip.currenttarget + new Vector2(ZipZip.Width / 2f, ZipZip.Height / 2f);
             sparkAdd = (from - to).SafeNormalize(5f).Perpendicular();
             float num = (from - to).Angle();
             sparkDirFromA = num + 0.3926991f;
@@ -722,14 +787,14 @@ namespace Celeste.Mod.ReverseHelper.Entities
             Vector2 value = vector.Perpendicular() * 3f;
             Vector2 value2 = -vector.Perpendicular() * 4f;
             float rotation = ZipZip.percent * 3.14159274f * 2f;
-            Draw.Line(from + value + offset, to + value + offset, (colorOverride != null) ? colorOverride.Value : ZiplineZipmover.ropeColor);
-            Draw.Line(from + value2 + offset, to + value2 + offset, (colorOverride != null) ? colorOverride.Value : ZiplineZipmover.ropeColor);
+            Draw.Line(from + value + offset, to + value + offset, (colorOverride != null) ? colorOverride.Value : ZipZip.ropeColor);
+            Draw.Line(from + value2 + offset, to + value2 + offset, (colorOverride != null) ? colorOverride.Value : ZipZip.ropeColor);
             for (float num = 4f - ZipZip.percent * 3.14159274f * 8f % 4f; num < (to - from).Length(); num += 4f)
             {
                 Vector2 value3 = from + value + vector.Perpendicular() + vector * num;
                 Vector2 value4 = to + value2 - vector * num;
-                Draw.Line(value3 + offset, value3 + vector * 2f + offset, (colorOverride != null) ? colorOverride.Value : ZiplineZipmover.ropeLightColor);
-                Draw.Line(value4 + offset, value4 - vector * 2f + offset, (colorOverride != null) ? colorOverride.Value : ZiplineZipmover.ropeLightColor);
+                Draw.Line(value3 + offset, value3 + vector * 2f + offset, (colorOverride != null) ? colorOverride.Value : ZipZip.ropeLightColor);
+                Draw.Line(value4 + offset, value4 - vector * 2f + offset, (colorOverride != null) ? colorOverride.Value : ZipZip.ropeLightColor);
             }
             cog.DrawCentered(from + offset, (colorOverride != null) ? colorOverride.Value : Color.White, 1f, rotation);
             cog.DrawCentered(to + offset, (colorOverride != null) ? colorOverride.Value : Color.White, 1f, rotation);

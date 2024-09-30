@@ -59,14 +59,15 @@ entities.GravityHelper/ReverseHelper/DashConductionJumpThruUpsideDown.placements
 entities.ReverseHelper/DashConductionJumpThruSideways.placements.name.Dash Conduction JumpThru Sideways left=Dash Forward JumpThru Sideways left
 entities.ReverseHelper/DashConductionJumpThruSideways.placements.name.Dash Conduction JumpThru Sideways right=Dash Forward JumpThru Sideways right
 
-entities.ReverseHelper/ZiplineZipmover.attributes.description.time=The time it takes to reach the end. (number)(unit: seconds)\nOVERRIDES MaxSpeed.\nIf not filled or invalid, the time will be calculated based on MaxSpeed.\nIf MaxSpeed is also unfilled or invalid, it will be considered as 0.5.
-entities.ReverseHelper/ZiplineZipmover.attributes.description.maxSpeed=Speed when it gets to end. (number)\nIt is a theoretical value, so it is slightly different from the actual value.\nINVALID IF Time IS FILLED AND VALID.
+entities.ReverseHelper/ZiplineZipmover.attributes.description.time=The time it takes to reach the end. (number)(unit: seconds)0.5 by default. will be converted to maxspeed eventually.
+entities.ReverseHelper/ZiplineZipmover.attributes.description.maxSpeed=Speed when it gets to end. (number)\nINVALID IF Time IS FILLED AND VALID.
 entities.ReverseHelper/ZiplineZipmover.attributes.description.strict=Madeline should move to the bottom center to grab the handle. If madeline can't move to the bottom center (for example, there's a wall):\nIf checked, madeline will not grab it.\nIf unchecked, madeline will grab it in a wrong place. (still try to move to the bottom center.)
-entities.ReverseHelper/ZiplineZipmover.attributes.description.sprite=Leave it blank to use IsaGrabBag ZipLine sprite.\nSame format with IsaGrabBag ZipLine.
-entities.ReverseHelper/ZiplineZipmover.attributes.description.fixEndSpeed=madeline will lose speed when the attribute group meets certain conditions. (default attribute group is not affected.) check this to fix it.\nit also fixed theoretical MaxSpeed, you could move as fast as you fill.\nhowever it breaks some back compatbility, so it's an attribute so you can close it for old project.
+entities.ReverseHelper/ZiplineZipmover.attributes.description.sprite=Leave it blank to use IsaGrabBag ZipLine sprite.\nSame format as IsaGrabBag ZipLine.
+entities.ReverseHelper/ZiplineZipmover.attributes.description.fixEndSpeed=for old project. please keep it ckecked.
+entities.ReverseHelper/ZiplineZipmover.attributes.description.name=Legacy Mode
 entities.ReverseHelper/ZiplineZipmover.attributes.description.conserveSpeedMode=None: not conserve speed.\nSameDirection: discard vertical component of speed.\nAll: conserves absolute value.\nAllWithDirection: conserves all speed, with their positive and negative signs. (rotate it to the nearest move direction.)
 entities.ReverseHelper/ZiplineZipmover.attributes.description.ignoreNegative=if direction of conserved speed is different from moving direction, discard it.
-entities.ReverseHelper/ZiplineZipmover.placements.description.Zipline Zipmover=Zipmover.
+entities.ReverseHelper/ZiplineZipmover.placements.description.Zipline Zipmover=Zipmover, but has a handle instead.
 
 entities.ReverseHelper/SaferFireIceBarrier.attributes.description.cold=if checked, Appears when core mode is Cold. 
 entities.ReverseHelper/SaferFireIceBarrier.attributes.description.hot=if checked, Appears when core mode is Hot. 

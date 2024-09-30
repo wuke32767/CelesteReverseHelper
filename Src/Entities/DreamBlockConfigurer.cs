@@ -18,7 +18,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         alwaysEnable = 1 << 1,
         alwaysDisable = 1 << 2,
         highPriority = 1 << 3,
-        [WIP]
+        [WIP("should be used with other variants. will be wip before they are completed.")]
         touchMode = 1 << 4,
         useEntryAngle = 1 << 5,
         [WIP]
@@ -28,18 +28,20 @@ namespace Celeste.Mod.ReverseHelper.Entities
         //tunnelMode = 1 << 8,
         //disableThroughable = 1 << 9,
     }
-
     public static class DreamBlockTrackers
     {
         public static readonly List<Entity> Reverse = [];
         public static readonly List<Entity> Enable = [];
         public static readonly List<Entity> Disable = [];
         public static readonly List<Entity> HighPriority = [];
-        public static readonly List<Entity> touchMode = [];
+        public static readonly List<Entity> TouchMode = [];
         public static readonly List<Entity> UseEntryAngle = [];
+        public static readonly List<Entity> GhostMode = [];
+        public static readonly List<Entity> GhostDisableCollidable = [];
         public static readonly ImmutableArray<List<Entity>> ByIndex = ImmutableArray.Create
-            (Reverse, Enable, Disable, HighPriority, touchMode, UseEntryAngle);
-
+            (Reverse, Enable, Disable, HighPriority, TouchMode,
+            UseEntryAngle, GhostMode, GhostDisableCollidable);
+    
         //according to https://learn.microsoft.com/en-us/dotnet/api/system.enum.getvalues?view=net-8.0 #Remarks,
         //it's sorted
         public static readonly ImmutableArray<DreamBlockConfigFlags> valuelist = Enum.GetValues<DreamBlockConfigFlags>()/*.Order()*/.ToImmutableArray();
@@ -84,7 +86,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
         public static void Track(this DreamBlockConfig e, DreamBlockConfigFlags flag)
         {
-            if (e.Entity?.Scene is not null && !e.tracked)
+            if (e.Entity?.Scene is not null)
             {
                 ByIndex[valuelist.BinarySearch(flag)].Add(e.Entity);
                 e.tracked = true;
@@ -96,7 +98,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
             if (e.Entity?.Scene is not null && e.tracked)
             {
                 ByIndex[valuelist.BinarySearch(flag)].Remove(e.Entity);
-                e.tracked = false;
             }
         }
         //[SourceGen.Loader.Load]
@@ -465,7 +466,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
             internal static bool HasDarkMatter(bool b)
             {
-                return b || DreamBlockTrackers.touchMode.Count > 0;
+                return b || DreamBlockTrackers.TouchMode.Count > 0;
             }
         }
         private static void Player_DreamDashCheck(ILContext il)
@@ -483,6 +484,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 }
             }
             ILCursor ic = new(il);
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             static void ThisMethodIsGreatlyModifiedByMe_InformMeBeforeYouILHookIt_ToPreventHookCollision() { }
             ic.EmitDelegate(ThisMethodIsGreatlyModifiedByMe_InformMeBeforeYouILHookIt_ToPreventHookCollision);
 

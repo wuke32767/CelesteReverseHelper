@@ -32,7 +32,7 @@ namespace Celeste.Mod.ReverseHelper
         /// </summary>
         /// <returns><code>v ?? current</code> If reverse mode is not set, current is null. </returns>
         /// public static bool? ConfigureReverse(Entity e, bool? v)
-        [Obsolete]
+        [Obsolete("Use From Enum Instead.")]
         public static Func<Entity, bool?, bool?>? ConfigureReverse;
         /// <summary>
         /// If v is not null, set enable mode to v.
@@ -40,7 +40,7 @@ namespace Celeste.Mod.ReverseHelper
         /// </summary>
         /// <returns><code>v ?? current</code> If enable mode is not set, current is null. </returns>
         /// public static bool? ConfigureEnable(Entity e, bool? v)
-        [Obsolete]
+        [Obsolete("Use From Enum Instead.")]
         public static Func<Entity, bool?, bool?>? ConfigureEnable;
         /// <summary>
         /// If v is not null, set disable mode to v.
@@ -48,7 +48,7 @@ namespace Celeste.Mod.ReverseHelper
         /// </summary>
         /// <returns><code>v ?? current</code> If disable mode is not set, current is null. </returns>
         /// public static bool? ConfigureDisable(Entity e, bool? v)
-        [Obsolete]
+        [Obsolete("Use From Enum Instead.")]
         public static Func<Entity, bool?, bool?>? ConfigureDisable;
         /// <summary>
         /// If v is not null, set high priority mode to v.
@@ -57,7 +57,7 @@ namespace Celeste.Mod.ReverseHelper
         /// </summary>
         /// <returns><code>v ?? current</code> If high priority mode is not set, current is null. </returns>
         /// public static bool? ConfigureHighPriority(Entity e, bool? v)
-        [Obsolete]
+        [Obsolete("Use From Enum Instead.")]
         public static Func<Entity, bool?, bool?>? ConfigureHighPriority;
         /// <summary>
         /// generic version of these option.
@@ -73,7 +73,7 @@ namespace Celeste.Mod.ReverseHelper
         public static Action<Entity, long, bool?>? ConfigureSetFromEnum;
         /// <summary>
         /// get option from string.
-        /// those option name and value will not be changed, so you can just hardcode them.
+        /// those option name and value will not be changed (wip excluded), so you can just hardcode them.
         /// https://github.com/wuke32767/CelesteReverseHelper/blob/main/Src/Entities/DreamBlockConfigurer.cs#L21
         /// </summary>
         /// <returns> one of Enum.GetValues<DreamBlockConfigFlags>() </returns>

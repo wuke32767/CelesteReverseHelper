@@ -45,6 +45,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
         private void GroupAwake(IEnumerable<EfficientSpinner> target)
         {
+            CrystalStaticSpinner dummy;
             groupLeader = true;
             var radius = 6;
             var spinner = target.Select(x => x.Position - Position).ToArray();

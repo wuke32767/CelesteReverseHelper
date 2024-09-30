@@ -46,7 +46,7 @@
     </Reference>-->
     <Reference Include="YamlDotNet" HintPath="$(CELESTEGAMEPATH)\YamlDotNet.dll" />
   </ItemGroup>
-  <!--<Choose>
+	<!--<Choose>
     <When Condition="'$(OS)' != 'Windows_NT' Or Exists('$(CELESTEGAMEPATH)\FNA.dll')" />
 
     <Otherwise>

@@ -201,7 +201,7 @@ namespace Celeste.Mod.ReverseHelper
         }
     }
     class NotTestedAttribute : Attribute { }
-    class WIPAttribute : Attribute { }
+    class WIPAttribute(string msg="") : Attribute { }
 }
 
 public class ReverseHelperILHookException : Exception
