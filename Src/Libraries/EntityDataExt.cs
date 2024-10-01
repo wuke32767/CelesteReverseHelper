@@ -1,11 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
-using Monocle;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Celeste.Mod.ReverseHelper.Libraries
 {
@@ -30,8 +24,7 @@ namespace Celeste.Mod.ReverseHelper.Libraries
 
             return def;
         }
-        public static float floatParse(string s)=>float.Parse(s, CultureInfo.InvariantCulture);
-        public static List<T> List<T>(this EntityData data, string key,Func<string,T>parser, T def = default!)
+        public static List<T> List<T>(this EntityData data, string key, Func<string, T> parser, T def = default!)
         {
             var de = data.Attr(key);
             if (!string.IsNullOrWhiteSpace(de))
@@ -45,6 +38,30 @@ namespace Celeste.Mod.ReverseHelper.Libraries
                 }
             }
             return [def];
+        }
+        public delegate bool TryParser<T>(string s, out T val);
+        // not necessary imo
+        public static readonly TryParser<float> floatParse = (string s, out float v) => float.TryParse(s, CultureInfo.InvariantCulture, out v);
+        public static List<T> List<T>(this EntityData data, string key, TryParser<T> parser, T def = default!)
+        {
+            List<T> ret = [];
+            var de = data.Attr(key);
+            if (!string.IsNullOrWhiteSpace(de))
+            {
+                foreach (var i in de.Split(','))
+                {
+                    if (!parser(i, out var v))
+                    {
+                        return [def];
+                    }
+                    ret.Add(v);
+                }
+            }
+            if (ret.Count == 0)
+            {
+                ret.Add(def);
+            }
+            return ret;
         }
         public static Color HexaColor(this EntityData data, string key, Color def = default)
         {
