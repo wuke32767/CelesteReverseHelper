@@ -24,8 +24,24 @@ zipline.fieldInformation={
     conserveSpeedMode = {
         options = conserveoption
     },
+
+    waitings= {
+        fieldType = "list",
+    },
+    startings= {
+        fieldType = "list",
+    },
+    returnWaitings= {
+        fieldType = "list",
+    },
+    returnStartings= {
+        fieldType = "list",
+    },
+    _padding = {
+        fieldType = "ReverseHelper.Padding",
+    },
 }
-zipline.fieldOrder={"x","y","sprite","maxSpeed","time","fixEndSpeed","strict","useStamina",
+zipline.fieldOrder={"x","y","sprite","maxSpeed","time","fixEndSpeed","strict","useStamina","_padding","_padding",
 "conserveSpeedMode","conserveRate","conserveLimit","conserveMoving","conserveReturning","ignoreNegative",}
 zipline.placements = {
     name = "Zipline Zipmover",
@@ -38,10 +54,20 @@ zipline.placements = {
         conserveSpeedMode="None",
         conserveRate=1,
         --conserveLimit=-1,
-        fixEndSpeed=true,
+        fixEndSpeed = true,
+        fixbugsv1=true,
         conserveMoving=false,
         conserveReturning=false,
-        ignoreNegative=false,
+        ignoreNegative = false,
+        
+        stoppings = "0.4",
+        startings="0.1",
+        returnStoppings = "0.4",
+        returnStartings = "0.1",
+        permanent=false,
+        waiting=false,
+        ticking = false,
+        _padding=false,
     }
 }
 

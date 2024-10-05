@@ -48,6 +48,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
             None, SameDirection, All, AllWithDirection
         }
         bool IgnoreNegative;
+        private readonly List<float>? Times;
+        private readonly List<float>? Speeds;
+
+        //public List<float> Times;
+
         float conservedSpeed = 0;
         Extension conserveSpeedMode;
         //bool anotherConserveWaiting;
@@ -68,12 +73,12 @@ namespace Celeste.Mod.ReverseHelper.Entities
         float deltaLength;
         internal Vector2[] NodeList;
         int pindex = 0;
-        readonly Vector2 MaxSpeed;//=>
-                                  //{
-                                  //    var distance = deltaLength;
-                                  //    var orig_endspeed = distance * (Math.PI / 2);
-                                  //    MaxSpeed = deltaNormalized* speedRate * (float) orig_endspeed;
-                                  //}//cached
+        Vector2 MaxSpeed;//=>
+                         //{
+                         //    var distance = deltaLength;
+                         //    var orig_endspeed = distance * (Math.PI / 2);
+                         //    MaxSpeed = deltaNormalized* speedRate * (float) orig_endspeed;
+                         //}//cached
 
         public ZiplineZipmover(EntityData e, Vector2 offset)
                 : base(e.Position + offset)
@@ -100,27 +105,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
             conserveMoving = e.Bool("conserveMoving", false);
             conserveReturning = e.Bool("conserveReturning", false);
             IgnoreNegative = e.Bool("ignoreNegative", false);
-            float p = e.Float("time", -2);
-            if (p <= 0)
-            {
-                p = e.Float("maxSpeed", -2);
-                if (p > 0)
-                {
-                    //  distance / endspeed == 1 / (pi/2)
-                    var distance = deltaLength;
-                    var orig_endspeed = distance * (Math.PI / 2);
-                    speedRate = (float)(p / orig_endspeed);
-                }
-            }
-            else
-            {
-                speedRate = 1 / p;
-            }
-            {
-                var distance = deltaLength;
-                var orig_endspeed = distance * (Math.PI / 2);
-                MaxSpeed = deltaNormalized * speedRate * (float)orig_endspeed;
-            }
+            Times = e.List("time", floatParse);
+            Speeds = e.List("maxSpeed", floatParse);
+            UpdateSpeed(0);
             usesStamina = e.Bool("usesStamina", true);
             //height = (_data.Position + offset).Y;
             Collider = new Hitbox(20, 16, -10, 1);
@@ -141,25 +128,35 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 sprite.JustifyOrigin(new Vector2(0.5f, 0.25f));
                 Add(sprite);
             }
-
             Add(new Coroutine(Sequence()));
             sfx = new SoundSource();
             sfx.Position = new Vector2(Width, Height) / 2f;
             Add(sfx);
 
+            fix2 = e.Bool("fixbugsv1");
             #region omni
-            this.delays=e.List("delays", EntityDataExt.floatParse);
-            this.returnDelays=e.List("returnDelays", EntityDataExt.floatParse);
-            //this.permanent=e.Bool("permanent");
-            //this.waiting=e.Bool("waiting");
-            //this.ticking=e.Bool("ticking");
+            this.WaitingTimer = e.List("stoppings", EntityDataExt.floatParse, 0.4f);
+            this.BootingTimer = e.List("startings", EntityDataExt.floatParse, 0.1f);
+            this.WaitingTimerRet = e.List("returnStoppings", EntityDataExt.floatParse, 0.4f);
+            this.BootingTimerRet = e.List("returnStartings", EntityDataExt.floatParse, 0.1f);
+
+            fill(WaitingTimer);
+            fill(BootingTimer);
+            fill(WaitingTimerRet);
+            fill(BootingTimerRet);
+            WaitingTimerRet.Reverse();
+            BootingTimerRet.Reverse();
+
+            this.permanent = e.Bool("permanent");
+            this.waiting = e.Bool("waiting");
+            this.ticking = e.Bool("ticking");
+            this.ticks = e.Int("ticks");
+            this.tickDelay = e.Float("tickDelay");
             //this.synced=e.Bool("synced");
             //this.ropeColor=e.HexaColor("ropeColor");
             //this.ropeLightColor=e.HexaColor("ropeLightColor");
             //this.easing=e.("easing");
             //this.nodeSpeeds=e.("nodeSpeeds");
-            //this.ticks=e.("ticks");
-            //this.tickDelay=e.("tickDelay");
             //this.startDelay=e.("startDelay");
             //this.customSound=e.("customSound");
             //this.startSound=e.("startSound");
@@ -186,6 +183,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
             //this.returnedIrrespondingTime=e.("returnedIrrespondingTime");
             //this.returnEasing=e.("returnEasing");
             //this.timeUnits =e.("timeUnits ");
+            void fill<Y>(List<Y> l)
+            {
+                var last = l[^1];
+                l.AddRange(Enumerable.Repeat(last, NodeList.Length - l.Count));
+            }
             #endregion
         }
 
@@ -214,14 +216,25 @@ namespace Celeste.Mod.ReverseHelper.Entities
             {
                 ConservedPosition = -SinePosition;
                 clamp = 0;
-
-                conservedSpeed += (conservedSpeed + SineSpeed) / 2 * -3;
+                if (fix2 && fixframe)
+                {
+                }
+                else
+                {
+                    conservedSpeed += (conservedSpeed + SineSpeed) / 2 * -3;
+                }
             }
             else if (clamp > deltaLength)
             {
                 ConservedPosition = deltaLength - SinePosition;
                 clamp = deltaLength;
-                conservedSpeed += (conservedSpeed + SineSpeed) / 2 * -3;
+                if (fix2 && fixframe)
+                {
+                }
+                else
+                {
+                    conservedSpeed += (conservedSpeed + SineSpeed) / 2 * -3;
+                }
             }
             Position = Calc.Approach(currentstart, currenttarget, clamp);
 
@@ -229,7 +242,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
             if (fixframe)
             {
-                speed_mul_time_is_distance = (MaxSpeed * (returning ? -1 : 1) + conservedSpeed * deltaNormalized) * Engine.DeltaTime;
+                speed_mul_time_is_distance = (MaxSpeed * (returning ? (fix2 ? -0.25f : -1) : 1) + conservedSpeed * deltaNormalized) * Engine.DeltaTime;
             }
             fixframe = false;
             Player player = Engine.Scene.Tracker.GetEntity<Player>();
@@ -317,6 +330,14 @@ namespace Celeste.Mod.ReverseHelper.Entities
         bool returning = false;
         float SineSpeed;
 
+        void BackNextSeq()
+        {
+            currenttarget = NodeList[pindex];
+            currentstart = NodeList[pindex - 1];
+            deltaNormalized = currenttarget - currentstart;
+            deltaLength = deltaNormalized.Length();
+            deltaNormalized = deltaNormalized.SafeNormalize();
+        }
         bool NextSeq()
         {
             pindex++;
@@ -339,13 +360,52 @@ namespace Celeste.Mod.ReverseHelper.Entities
             {
                 return false;
             }
-            currenttarget = NodeList[pindex];
-            currentstart = NodeList[pindex - 1];
-            deltaNormalized = currenttarget - currentstart;
-            deltaLength = deltaNormalized.Length();
-            deltaNormalized = deltaNormalized.SafeNormalize();
+            BackNextSeq();
 
             return true;
+        }
+        void UpdateSpeed(int i)
+        {
+            static float reader(List<float>? from, int index)
+            {
+                if (from?.Count > index)
+                {
+                    return from[index];
+                }
+                return -2;
+            }
+            {
+                float p = reader(Times, i);
+            timer_:
+                if (p > 0)
+                {
+                    speedRate = 1 / p;
+                    var distance = deltaLength;
+                    var orig_endspeed = distance * (Math.PI / 2);
+                    MaxSpeed = deltaNormalized * speedRate * (float)orig_endspeed;
+                }
+                else
+                {
+                    p = reader(Speeds, i);
+                    if (p > 0)
+                    {
+                        //  distance / endspeed == 1 / (pi/2)
+
+                        var distance = deltaLength;
+                        var orig_endspeed = distance * (Math.PI / 2);
+                        speedRate = (float)(p / orig_endspeed);
+                        MaxSpeed = p * deltaNormalized;
+                    }
+                    else
+                    {
+                        p = 0.5f;
+                        goto timer_;
+                    }
+                }
+
+                speedRates.Add(speedRate);
+                MaxSpeeds.Add(MaxSpeed);
+            }
         }
         private IEnumerator Sequence()
         {
@@ -367,11 +427,12 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 do
                 {
                     at = 0;
-                    sfx.Play("event:/game/01_forsaken_city/zip_mover", null, 0f);
+                    sfx.Play("event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/touch", null, 0f);
+
                     Input.Rumble(RumbleStrength.Medium, RumbleLength.Short);
                     SinePosition = ConservedPosition = 0;
                     //this.StartShaking(0.1f);
-                    yield return 0.1f;
+                    yield return BootingTimer[pindex];
                     acceptExtraSpeed = conserveMoving;
                     if (conservedSpeed < 0)
                     {
@@ -399,25 +460,64 @@ namespace Celeste.Mod.ReverseHelper.Entities
                         SineSpeed = (position - SinePosition) / Engine.DeltaTime;
                         SinePosition = position;
                     }
+                    sfx.Play("event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/impact", null, 0f);
                     //this.StartShaking(0.2f);
                     Input.Rumble(RumbleStrength.Strong, RumbleLength.Medium);
                     SceneAs<Level>().Shake(0.3f);
                     fixframe = fixEndSpeed;
                     //this.StopPlayerRunIntoAnimation = true;
-                    yield return 0.15f;
-                    SinePosition = deltaLength;
-                    ConservedPosition = 0;
-                    yield return 0.25f;
+                    yield return WaitingTimer[pindex];
+                    //SinePosition = deltaLength;
+                    //ConservedPosition = 0;
                     conservedSpeed = 0;
                     acceptExtraSpeed = true;
-                } while (NextSeq());
+                    if (!NextSeq())
+                    {
+                        break;
+                    }
+                    SinePosition = ConservedPosition = 0;
+                    if (waiting)
+                    {
+                        while (!grabbed)
+                        {
+                            conservedSpeed = 0;
+                            yield return null;
+                        }
+                    }
+                    else if (ticking)
+                    {
+                        int tick = 0;
+                        float waitings = 0;
+                        while (!grabbed && ticks > tick)
+                        {
+                            waitings += Engine.DeltaTime;
+                            if (waitings >= tickDelay)
+                            {
+                                waitings = 0;
+                                tick++;
+                            }
+                            conservedSpeed = 0;
+                            yield return null;
+                        }
+                        if (!grabbed)
+                        {
+                            BackNextSeq();
+                            break;
+                        }
+                    }
+                } while (true);
+                if (permanent)
+                {
+                    yield break;
+                }
                 returning = true;
-                acceptExtraSpeed = conserveReturning;
                 do
                 {
+                    acceptExtraSpeed = conserveReturning;
+                    sfx.Play("event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/return", null, 0f);
                     ConservedPosition = 0;
                     SinePosition = deltaLength;
-                    yield return 0.10f;
+                    yield return BootingTimerRet[pindex];
                     if (conservedSpeed > 0)
                     {
                         conservedSpeed = 0;
@@ -441,13 +541,14 @@ namespace Celeste.Mod.ReverseHelper.Entities
                         SinePosition = position;
 
                     }
+                    sfx.Play("event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/reset", null, 0f);
                     //this.StopPlayerRunIntoAnimation = true;
                     //this.StartShaking(0.2f);
                     //this.streetlight.SetAnimationFrame(1);
                     conservedSpeed = 0;
                     acceptExtraSpeed = false;
                     fixframe = fixEndSpeed;
-                    yield return 0.4f;
+                    yield return WaitingTimerRet[pindex];
                 } while (PrevSeq());
                 returning = false;
                 yield return 0.1f;
@@ -657,8 +758,18 @@ namespace Celeste.Mod.ReverseHelper.Entities
         private SoundSource sfx;
         internal float percent;
         static bool s1mpleend = false;
-        private List<float> delays;
-        private List<float> returnDelays;
+        private bool fix2;
+        private List<float> WaitingTimer;
+        private List<float> BootingTimer;
+        private List<float> WaitingTimerRet;
+        private List<float> BootingTimerRet;
+        private bool permanent;
+        private bool waiting;
+        private bool ticking;
+        private int ticks;
+        private float tickDelay;
+        private List<float> speedRates = [];
+        private List<Vector2> MaxSpeeds = [];
 
         private static int ZiplineUpdate()
         {

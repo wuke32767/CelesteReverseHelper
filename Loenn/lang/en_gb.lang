@@ -59,12 +59,14 @@ entities.GravityHelper/ReverseHelper/DashConductionJumpThruUpsideDown.placements
 entities.ReverseHelper/DashConductionJumpThruSideways.placements.name.Dash Conduction JumpThru Sideways left=Dash Forward JumpThru Sideways left
 entities.ReverseHelper/DashConductionJumpThruSideways.placements.name.Dash Conduction JumpThru Sideways right=Dash Forward JumpThru Sideways right
 
-entities.ReverseHelper/ZiplineZipmover.attributes.description.time=The time it takes to reach the end. (number)(unit: seconds)0.5 by default. will be converted to maxspeed eventually.
+entities.ReverseHelper/ZiplineZipmover.attributes.description.time=The time it takes to reach the end. (number)(unit: seconds)0.5 by default. \nwill be converted to maxspeed eventually. that is, you could calc maxspeed yourself.
 entities.ReverseHelper/ZiplineZipmover.attributes.description.maxSpeed=Speed when it gets to end. (number)\nINVALID IF Time IS FILLED AND VALID.
 entities.ReverseHelper/ZiplineZipmover.attributes.description.strict=Madeline should move to the bottom center to grab the handle. If madeline can't move to the bottom center (for example, there's a wall):\nIf checked, madeline will not grab it.\nIf unchecked, madeline will grab it in a wrong place. (still try to move to the bottom center.)
 entities.ReverseHelper/ZiplineZipmover.attributes.description.sprite=Leave it blank to use IsaGrabBag ZipLine sprite.\nSame format as IsaGrabBag ZipLine.
 entities.ReverseHelper/ZiplineZipmover.attributes.description.fixEndSpeed=for old project. please keep it ckecked.
-entities.ReverseHelper/ZiplineZipmover.attributes.description.name=Legacy Mode
+entities.ReverseHelper/ZiplineZipmover.attributes.name.fixEndSpeed=Legacy Mode v1
+entities.ReverseHelper/ZiplineZipmover.attributes.description.fixbugsv1=for old project. please keep it ckecked.
+entities.ReverseHelper/ZiplineZipmover.attributes.name.fixbugsv1=Legacy Mode v2
 entities.ReverseHelper/ZiplineZipmover.attributes.description.conserveSpeedMode=None: not conserve speed.\nSameDirection: discard vertical component of speed.\nAll: conserves absolute value.\nAllWithDirection: conserves all speed, with their positive and negative signs. (rotate it to the nearest move direction.)
 entities.ReverseHelper/ZiplineZipmover.attributes.description.ignoreNegative=if direction of conserved speed is different from moving direction, discard it.
 entities.ReverseHelper/ZiplineZipmover.placements.description.Zipline Zipmover=Zipmover, but has a handle instead.

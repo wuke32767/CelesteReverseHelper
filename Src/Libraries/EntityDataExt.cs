@@ -24,25 +24,31 @@ namespace Celeste.Mod.ReverseHelper.Libraries
 
             return def;
         }
-        public static List<T> List<T>(this EntityData data, string key, Func<string, T> parser, T def = default!)
-        {
-            var de = data.Attr(key);
-            if (!string.IsNullOrWhiteSpace(de))
-            {
-                try
-                {
-                    return de.Split(',').Select(x => parser(x.Trim())).ToList();
-                }
-                catch
-                {
-                }
-            }
-            return [def];
-        }
         public delegate bool TryParser<T>(string s, out T val);
         // not necessary imo
         public static readonly TryParser<float> floatParse = (string s, out float v) => float.TryParse(s, CultureInfo.InvariantCulture, out v);
-        public static List<T> List<T>(this EntityData data, string key, TryParser<T> parser, T def = default!)
+        public static List<T>? List<T>(this EntityData data, string key, TryParser<T> parser,List<T>? def=default)
+        {
+            List<T> ret = [];
+            var de = data.Attr(key);
+            if (!string.IsNullOrWhiteSpace(de))
+            {
+                foreach (var i in de.Split(','))
+                {
+                    if (!parser(i, out var v))
+                    {
+                        return def;
+                    }
+                    ret.Add(v);
+                }
+            }
+            if(ret.Count == 0)
+            {
+                return def;
+            }
+            return ret;
+        }
+        public static List<T> List<T>(this EntityData data, string key, TryParser<T> parser, T def )
         {
             List<T> ret = [];
             var de = data.Attr(key);
