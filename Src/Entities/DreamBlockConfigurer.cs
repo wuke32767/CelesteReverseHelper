@@ -163,25 +163,25 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 }
             }
         }
-        public bool? reverse { get => getter(DreamBlockConfigFlags.reverse); private set => setter(DreamBlockConfigFlags.reverse, value); }
-        public bool? enable { get => getter(DreamBlockConfigFlags.alwaysEnable); private set => setter(DreamBlockConfigFlags.alwaysEnable, value); }
-        public bool? disable { get => getter(DreamBlockConfigFlags.alwaysDisable); private set => setter(DreamBlockConfigFlags.alwaysDisable, value); }
-        public bool? highpriority { get => getter(DreamBlockConfigFlags.highPriority); private set => setter(DreamBlockConfigFlags.highPriority, value); }
-        public bool? touchMode { get => getter(DreamBlockConfigFlags.touchMode); private set => setter(DreamBlockConfigFlags.touchMode, value); }
-        public bool? useEntryAngle { get => getter(DreamBlockConfigFlags.useEntryAngle); private set => setter(DreamBlockConfigFlags.useEntryAngle, value); }
-        public bool? ghostMode { get => getter(DreamBlockConfigFlags.ghostMode); private set => setter(DreamBlockConfigFlags.ghostMode, value); }
-        public bool? ghostDisableCollidable { get => getter(DreamBlockConfigFlags.ghostDisableCollidable); private set => setter(DreamBlockConfigFlags.ghostDisableCollidable, value); }
+        public bool? reverse { get => getter(DreamBlockConfigFlags.reverse); set => setter(DreamBlockConfigFlags.reverse, value); }
+        public bool? enable { get => getter(DreamBlockConfigFlags.alwaysEnable); set => setter(DreamBlockConfigFlags.alwaysEnable, value); }
+        public bool? disable { get => getter(DreamBlockConfigFlags.alwaysDisable); set => setter(DreamBlockConfigFlags.alwaysDisable, value); }
+        public bool? highpriority { get => getter(DreamBlockConfigFlags.highPriority); set => setter(DreamBlockConfigFlags.highPriority, value); }
+        public bool? touchMode { get => getter(DreamBlockConfigFlags.touchMode); set => setter(DreamBlockConfigFlags.touchMode, value); }
+        public bool? useEntryAngle { get => getter(DreamBlockConfigFlags.useEntryAngle); set => setter(DreamBlockConfigFlags.useEntryAngle, value); }
+        public bool? ghostMode { get => getter(DreamBlockConfigFlags.ghostMode); set => setter(DreamBlockConfigFlags.ghostMode, value); }
+        public bool? ghostDisableCollidable { get => getter(DreamBlockConfigFlags.ghostDisableCollidable); set => setter(DreamBlockConfigFlags.ghostDisableCollidable, value); }
         [SourceGen.Loader.Load]
         public static void Load()
         {
-            SingleGlobalEntity<DreamBlockConfig>.Register(s => DreamBlockTrackers.Clear());
+            OnScene<DreamBlockConfig>.OnSceneEnd = s => DreamBlockTrackers.Clear();
         }
         public DreamBlockConfigFlags withas => (has & state) | (flagasactive & ~has);
         public override void Added(Entity entity)
         {
             this.TrackListed(withas);
             base.Added(entity);
-            SingleGlobalEntity<DreamBlockConfig>.Construct(Entity.Scene);
+            OnScene<DreamBlockConfig>.Construct(Entity.Scene);
         }
         public override void Removed(Entity entity)
         {
@@ -630,7 +630,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     }
                 }
             }
-            Scene.OnEndOfFrame += DreamToggleListener.ForceUpdate;
+            Scene.OnEndOfFrame += ()=>DreamToggleListener.ForceUpdate(null);
             //(scene as Level).Background.Backdrop
         }
 

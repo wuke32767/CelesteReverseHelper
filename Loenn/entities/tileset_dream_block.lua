@@ -9,28 +9,27 @@ cbarea.depth = 8500
 cbarea.associatedMods = { "ReverseHelper" }
 cbarea.nodeLimits = { 0, 1 }
 
-cbarea.fieldInformation = {
-
-    lineColorDeactivated = {
-        fieldType = "color",
-    },
-    fillColorDeactivated = {
-        fieldType = "color",
-    },
-    lineColor = {
-        fieldType = "color",
-    },
-    fillColor = {
-        fieldType = "color",
-    },
-    tiles =
-    {
-        options = fakeTilesHelper.getTilesOptions(),
-        editable = false
-
+function cbarea.fieldInformation(entity)
+    return  {
+        lineColorDeactivated = {
+            fieldType = "color",
+        },
+        fillColorDeactivated = {
+            fieldType = "color",
+        },
+        lineColor = {
+            fieldType = "color",
+        },
+        fillColor = {
+            fieldType = "color",
+        },
+        tiles =
+        {
+            options = fakeTilesHelper.getTilesOptions(entity.bgAppearance and "tilesBg" or "tilesFg"),
+            editable = false
+        }
     }
-
-}
+end
 
 cbarea.placements = {
 

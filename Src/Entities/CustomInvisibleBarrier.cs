@@ -1,32 +1,70 @@
 ﻿using Celeste.Mod.Entities;
-using Celeste.Mod.ReverseHelper.Libraries;
 using Microsoft.Xna.Framework;
-using Monocle;
-using MonoMod.Cil;
-using MonoMod.RuntimeDetour;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using static Celeste.Mod.ReverseHelper.ReverseHelperExtern.MaddieHelpingHandModule;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
-    //public class PositionLimitColliderComponent : Component
-    //{
-    //    float LimitL;
-    //    float LimitR;
-    //    float LimitU;
-    //    float LimitD;
-    //    Solid SolidL;
-    //    Solid SolidR;
-    //    Solid SolidU;
-    //    Solid SolidD;
-    //    public PositionLimitColliderComponent() : base(true, false)
-    //    {
+    [Tracked]
+    [SourceGen.Loader.Preload("ReverseHelper/BarrierInteropHelper")]
+    public partial class CustomInvisibleBarrierManager : Entity
+    {
+        bool actorsolid;
+        bool jump;
+        bool mod;
 
-    //    }
-    //}
+        public CustomInvisibleBarrierManager(bool actorsolid=true, bool jump=true, bool mod=true) : base()
+        {
+            this.actorsolid = actorsolid;
+            this.jump = jump;
+            this.mod = mod;
+        }
+        public override void Added(Scene scene)
+        {
+            base.Added(scene);
+            if(actorsolid)
+            {
+
+            }
+            if(jump)
+            {
+
+            }
+            if(mod)
+            {
+
+            }
+        }
+        public override void Removed(Scene scene)
+        {
+            base.Removed(scene);
+            if(actorsolid)
+            {
+
+            }
+            if(jump)
+            {
+
+            }
+            if(mod)
+            {
+
+            }
+        }
+
+        public CustomInvisibleBarrierManager(EntityData e, Vector2 offset)
+            : this(e.Bool("actorsolid", true), e.Bool("jumpthru", true), e.Bool("moddedjumpthru", true))
+        {
+
+        }
+        internal static void EnsureManager(Scene scene)
+        {
+            var has = scene.Tracker.GetEntity<CustomInvisibleBarrierManager>();
+            if (has is null)
+            {
+                scene.Add(has = new CustomInvisibleBarrierManager());
+            }
+        }
+    }
     [CustomEntity("ReverseHelper/CustomInvisibleBarrier")]
     [Tracked(false)]
     public class CustomInvisibleBarrier : Solid
@@ -210,9 +248,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
             if (r_resttype.Any())
             {
                 ed.Values["_resttype"] = r_resttype;
-                foreach (var v in r_resttype)
+                //foreach (var v in r_resttype)
                 {
-                    Logger.Log(LogLevel.Warn, "ReverseHelper", $"Failed when loading {v} for {nameof(CustomInvisibleBarrier)}, it is not exist in current room. (at least now.) Please add one from map editor so it could be found successfully.");
+                    Logger.Log(LogLevel.Warn, "ReverseHelper", $"Failed when loading {string.Join(",",r_resttype)} for {nameof(CustomInvisibleBarrier)}, they does not exists in current room. (at least now.) Please add one from map editor so it could be found successfully.");
                 }
             }
             foreach (var v in typer)

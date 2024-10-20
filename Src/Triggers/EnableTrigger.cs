@@ -43,6 +43,7 @@ namespace Celeste.Mod.ReverseHelper.Triggers
         bool revert = e.Bool("revertOnExit");
         bool oneuse = e.Bool("oneUse");
         bool toggleswitch = e.Bool("toggleSwitchMode");
+        bool lazy = e.Bool("lazy");
         void run(bool b)
         {
             if (mode == Mode.Disable)

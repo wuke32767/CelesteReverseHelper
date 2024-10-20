@@ -16,6 +16,8 @@ triggers.ReverseHelper/OnlyStrawberryCollectTrigger.placements.description.Speci
 entities.ReverseHelper/HoldableRefill.attributes.description.dashable=Whether you can dash when holding it.
 entities.ReverseHelper/HoldableRefill.attributes.description.stillRefillOnNoDash=Not sure what will happen when refillOnHolding is checked.\nIf checked, you can still collect the refill when you have no dash.
 entities.ReverseHelper/HoldableRefill.attributes.description.slowFall=Whether it acts like a jellyfish.
+entities.ReverseHelper/HoldableRefill.attributes.description.refillOnThrow=if RefillOnHolding is not checked, you can't also refill on throw.\n or RefillOnHolding can be a little meaningless.\n Can't refill until you not overlapping with the refill.
+entities.ReverseHelper/HoldableRefill.attributes.description.refillOnThrow2=Can't refill immediately. Reworks after several frames.
 
 entities.ReverseHelper/AnotherPurpleBooster.attributes.description.redirect=if unchecked, it will move in the direction it came.\nif checked, it will move in the opposite direction as the player activated it.
 entities.ReverseHelper/AnotherPurpleBooster.attributes.description.conserveSpeedV=if unchecked, your conserved speed will not be applied vertically.

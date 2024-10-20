@@ -11,11 +11,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
     [CustomEntity("ReverseHelper/ZiplineZipmover")]
     public class ZiplineZipmover : Entity
     {
-        public static Ease.Easer SineInEx = (float t) => t switch
-            {
-                < 1 => (float)(0.0 - (double)(float)Math.Cos(1.5707963705062866 * (double)t) + 1.0), //Ease.SineIn(t),
-                _ => (float)(1 + (t - 1) * Math.PI / 2)
-            };
+        private Shaker shaker;
+        public EaseGroup CurrentEaserUnWrapped;
+        public float CurrentEaser(float t) => t switch
+        {
+            < 1 => CurrentEaserUnWrapped.Easer(t),
+            _ => (float)(1 + (t - 1) * CurrentEaserUnWrapped.MaxSpeed)
+        };
 
         public const string NeverUsedZiplineFlag = "ReverseHelper_IsaGrabBag_NeverUsedZipline";
 
@@ -37,8 +39,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
         private bool grabbed;
         internal Vector2 currenttarget;
         internal Vector2 currentstart;
-        internal Color ropeColor = Calc.HexToColor("663931");
-        internal Color ropeLightColor = Calc.HexToColor("9b6157");
+        internal Color ropeColor;
+        internal Color ropeLightColor;
 
 
         float SinePosition = 0;
@@ -62,6 +64,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         float extendLimit;
 
         bool fixEndSpeed;
+        bool fixv3;
 
         bool acceptExtraSpeed = false;
 
@@ -83,6 +86,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public ZiplineZipmover(EntityData e, Vector2 offset)
                 : base(e.Position + offset)
         {
+            shaker = new Shaker();
+            CurrentEaserUnWrapped = e.EasePlus("easer");
             //LeftEdge = X;
             //RightEdge = X;
             //foreach (Vector2 node in _data.Nodes)
@@ -105,9 +110,52 @@ namespace Celeste.Mod.ReverseHelper.Entities
             conserveMoving = e.Bool("conserveMoving", false);
             conserveReturning = e.Bool("conserveReturning", false);
             IgnoreNegative = e.Bool("ignoreNegative", false);
-            Times = e.List("time", floatParse);
-            Speeds = e.List("maxSpeed", floatParse);
+            var Times = e.MergingList("time", floatParse, NodeList.Length);
+            var Speeds = e.MergingList("maxSpeed", floatParse, NodeList.Length);
+
+            float last_time = 0.5f;
+            float last_speed = -2;
+            foreach (var ((time, speed, start), end) in Times.Zip(Speeds, NodeList).Zip(NodeList.Skip(1)))
+            {
+                var deltaNormalized = end - start;
+                var deltaLength = deltaNormalized.Length();
+                deltaNormalized = deltaNormalized.SafeNormalize();
+                float t = time ?? -2;
+                float ss = speed ?? -2;
+            timer_:
+                if (t > 0)
+                {
+                    speedRate = 1 / t;
+                    var distance = deltaLength;
+                    var orig_endspeed = distance * (Math.PI / 2);
+                    MaxSpeed = deltaNormalized * speedRate * (float)orig_endspeed;
+                }
+                else
+                {
+                    if (ss > 0)
+                    {
+                        //  distance / endspeed == 1 / (pi/2)
+                        var distance = deltaLength;
+                        var orig_endspeed = distance * (Math.PI / 2);
+                        speedRate = (float)(ss / orig_endspeed);
+                        last_time = 1 / speedRate;
+                        MaxSpeed = ss * deltaNormalized;
+                    }
+                    else
+                    {
+                        t = last_time;
+                        ss = last_speed;
+                        goto timer_;
+                    }
+                }
+
+                speedRates.Add(speedRate);
+                MaxSpeeds.Add(MaxSpeed);
+                last_time = t;
+                last_speed = ss;
+            }
             UpdateSpeed(0);
+
             usesStamina = e.Bool("usesStamina", true);
             //height = (_data.Position + offset).Y;
             Collider = new Hitbox(20, 16, -10, 1);
@@ -133,29 +181,43 @@ namespace Celeste.Mod.ReverseHelper.Entities
             sfx.Position = new Vector2(Width, Height) / 2f;
             Add(sfx);
 
-            fix2 = e.Bool("fixbugsv1");
+            fix2 = e.Bool("fixbugsv1", false);
             #region omni
-            this.WaitingTimer = e.List("stoppings", EntityDataExt.floatParse, 0.4f);
-            this.BootingTimer = e.List("startings", EntityDataExt.floatParse, 0.1f);
-            this.WaitingTimerRet = e.List("returnStoppings", EntityDataExt.floatParse, 0.4f);
-            this.BootingTimerRet = e.List("returnStartings", EntityDataExt.floatParse, 0.1f);
+            WaitingTimer = e.List("stoppings", EntityDataExt.floatParse, NodeList.Length, 0.4f).ToList();
+            BootingTimer = e.List("startings", EntityDataExt.floatParse, NodeList.Length, 0.1f).ToList();
+            WaitingTimerRet = e.List("returnStoppings", EntityDataExt.floatParse, NodeList.Length, 0.4f).ToList();
+            BootingTimerRet = e.List("returnStartings", EntityDataExt.floatParse, NodeList.Length, 0.1f).ToList();
 
-            fill(WaitingTimer);
-            fill(BootingTimer);
-            fill(WaitingTimerRet);
-            fill(BootingTimerRet);
             WaitingTimerRet.Reverse();
             BootingTimerRet.Reverse();
 
-            this.permanent = e.Bool("permanent");
-            this.waiting = e.Bool("waiting");
-            this.ticking = e.Bool("ticking");
-            this.ticks = e.Int("ticks");
-            this.tickDelay = e.Float("tickDelay");
-            //this.synced=e.Bool("synced");
-            //this.ropeColor=e.HexaColor("ropeColor");
-            //this.ropeLightColor=e.HexaColor("ropeLightColor");
-            //this.easing=e.("easing");
+            permanent = e.Bool("permanent");
+            waiting = e.Bool("waiting");
+            ticking = e.Bool("ticking");
+            ticks = e.Int("ticks");
+            tickDelay = e.Float("tickDelay");
+            bool syncd = e.Bool("synced");
+            var ropecol = e.Attr("ropeColor");
+            if (string.IsNullOrWhiteSpace(s))
+            {
+                ropecol = "663931";
+            }
+
+            ropeColor = Calc.HexToColor(ropecol);
+            if (syncd)
+            {
+                var syncTag = e.Attr("syncTag");
+                if (string.IsNullOrWhiteSpace(syncTag))
+                {
+                    sync = "ZipMoverSync:" + ropecol;
+                }
+                else
+                {
+                    sync = "ZipMoverSync:" + syncTag;
+                }
+            }
+            fixv3 = e.Bool("fixbugsv2",false);
+            ropeLightColor = e.HexColor("ropeLightColor", Calc.HexToColor("9b6157"));
             //this.nodeSpeeds=e.("nodeSpeeds");
             //this.startDelay=e.("startDelay");
             //this.customSound=e.("customSound");
@@ -171,7 +233,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
             //this.tickingShaking=e.("tickingShaking");
             //this.permanentArrivalShaking=e.("permanentArrivalShaking");
             //this.tweakShakes=e.("tweakShakes");
-            //this.syncTag=e.("syncTag");
             //this.hideRope=e.("hideRope");
             //this.hideCog=e.("hideCog");
             //this.dashable=e.("dashable");
@@ -330,13 +391,15 @@ namespace Celeste.Mod.ReverseHelper.Entities
         bool returning = false;
         float SineSpeed;
 
-        void BackNextSeq()
+        void CancelNextSeq()
         {
             currenttarget = NodeList[pindex];
             currentstart = NodeList[pindex - 1];
             deltaNormalized = currenttarget - currentstart;
             deltaLength = deltaNormalized.Length();
             deltaNormalized = deltaNormalized.SafeNormalize();
+
+            UpdateSpeed(pindex - 1);
         }
         bool NextSeq()
         {
@@ -351,60 +414,81 @@ namespace Celeste.Mod.ReverseHelper.Entities
             deltaLength = deltaNormalized.Length();
             deltaNormalized = deltaNormalized.SafeNormalize();
 
+            UpdateSpeed(pindex);
             return true;
         }
+
         bool PrevSeq()
         {
+            void PrevSeqMethod()
+            {
+                CancelNextSeq();
+            }
             pindex--;
             if (pindex <= 0)
             {
                 return false;
             }
-            BackNextSeq();
+            PrevSeqMethod();
 
             return true;
         }
         void UpdateSpeed(int i)
         {
-            static float reader(List<float>? from, int index)
+            //if (speedRates.Count > i)
+            //{
+            //    static float reader(List<float>? from, int index)
+            //    {
+            //        if (from?.Count > index)
+            //        {
+            //            return from[index];
+            //        }
+            //        return -2;
+            //    }
+            //    float p = reader(Times, i);
+            //timer_:
+            //    if (p > 0)
+            //    {
+            //        speedRate = 1 / p;
+            //        var distance = deltaLength;
+            //        var orig_endspeed = distance * (Math.PI / 2);
+            //        MaxSpeed = deltaNormalized * speedRate * (float)orig_endspeed;
+            //    }
+            //    else
+            //    {
+            //        p = reader(Speeds, i);
+            //        if (p > 0)
+            //        {
+            //            //  distance / endspeed == 1 / (pi/2)
+
+            //            var distance = deltaLength;
+            //            var orig_endspeed = distance * (Math.PI / 2);
+            //            speedRate = (float)(p / orig_endspeed);
+            //            MaxSpeed = p * deltaNormalized;
+            //        }
+            //        else
+            //        {
+            //            p = 0.5f;
+            //            goto timer_;
+            //        }
+            //    }
+
+            //    speedRates.Add(speedRate);
+            //    MaxSpeeds.Add(MaxSpeed);
+            //}
+            //else
             {
-                if (from?.Count > index)
-                {
-                    return from[index];
-                }
-                return -2;
+                speedRate = speedRates[i];
+                MaxSpeed = MaxSpeeds[i];
             }
+        }
+        string? sync;
+        bool shouldTrigger => grabbed && (sync is null || SceneAs<Level>().Session.GetFlag(sync));
+        void MakeSync()
+        {
+            if (sync is not null)
             {
-                float p = reader(Times, i);
-            timer_:
-                if (p > 0)
-                {
-                    speedRate = 1 / p;
-                    var distance = deltaLength;
-                    var orig_endspeed = distance * (Math.PI / 2);
-                    MaxSpeed = deltaNormalized * speedRate * (float)orig_endspeed;
-                }
-                else
-                {
-                    p = reader(Speeds, i);
-                    if (p > 0)
-                    {
-                        //  distance / endspeed == 1 / (pi/2)
-
-                        var distance = deltaLength;
-                        var orig_endspeed = distance * (Math.PI / 2);
-                        speedRate = (float)(p / orig_endspeed);
-                        MaxSpeed = p * deltaNormalized;
-                    }
-                    else
-                    {
-                        p = 0.5f;
-                        goto timer_;
-                    }
-                }
-
-                speedRates.Add(speedRate);
-                MaxSpeeds.Add(MaxSpeed);
+                SceneAs<Level>().Session.GetFlag(sync);
             }
         }
         private IEnumerator Sequence()
@@ -415,7 +499,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 SineSpeed = 0;
                 returning = false;
                 acceptExtraSpeed = true;
-                if (!grabbed)
+                if (!shouldTrigger)
                 {
                     conservedSpeed = 0;
                     ConservedPosition = 0;
@@ -449,7 +533,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                             conservedSpeed += MaxSpeed.Length() * Engine.DeltaTime;
                         }
                         at += speedRate * Engine.DeltaTime;
-                        percent = SineInEx(at);
+                        percent = CurrentEaser(at);
 
                         float position = deltaLength * percent;
                         //this.ScrapeParticlesCheck(vector);
@@ -478,7 +562,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     SinePosition = ConservedPosition = 0;
                     if (waiting)
                     {
-                        while (!grabbed)
+                        while (!shouldTrigger)
                         {
                             conservedSpeed = 0;
                             yield return null;
@@ -488,7 +572,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     {
                         int tick = 0;
                         float waitings = 0;
-                        while (!grabbed && ticks > tick)
+                        while (!shouldTrigger && ticks > tick)
                         {
                             waitings += Engine.DeltaTime;
                             if (waitings >= tickDelay)
@@ -499,9 +583,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
                             conservedSpeed = 0;
                             yield return null;
                         }
-                        if (!grabbed)
+                        if (!shouldTrigger)
                         {
-                            BackNextSeq();
+                            CancelNextSeq();
                             break;
                         }
                     }
@@ -535,8 +619,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
                         }
 
                         at += speedRate * Engine.DeltaTime / 4;
-                        percent = 1f - SineInEx(at);
-                        float position = MathHelper.Lerp(deltaLength, 0, SineInEx(at));
+                        percent = 1f - CurrentEaser(at);
+                        float position = MathHelper.Lerp(deltaLength, 0, CurrentEaser(at));
                         SineSpeed = (position - SinePosition) / Engine.DeltaTime;
                         SinePosition = position;
 

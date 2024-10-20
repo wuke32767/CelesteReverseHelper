@@ -41,8 +41,18 @@ zipline.fieldInformation={
         fieldType = "ReverseHelper.Padding",
     },
 }
-zipline.fieldOrder={"x","y","sprite","maxSpeed","time","fixEndSpeed","strict","useStamina","_padding","_padding",
-"conserveSpeedMode","conserveRate","conserveLimit","conserveMoving","conserveReturning","ignoreNegative",}
+zipline.fieldOrder={
+    "x","y",
+    "fixEndSpeed","fixbugsv1", "sprite",
+    "maxSpeed", "time",
+    "strict", "useStamina", "_padding", "_padding",
+    "conserveSpeedMode","conserveRate",
+    "conserveMoving", "conserveReturning", "ignoreNegative",
+    "stoppings", "startings",
+    "returnStoppings", "returnStartings",
+    "permanent","waiting","ticking",
+    "tickDelay", "ticks",
+}
 zipline.placements = {
     name = "Zipline Zipmover",
     data = {
@@ -67,6 +77,8 @@ zipline.placements = {
         permanent=false,
         waiting=false,
         ticking = false,
+        tickDelay = 1,
+        ticks=5,
         _padding=false,
     }
 }

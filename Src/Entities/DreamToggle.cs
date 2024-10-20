@@ -108,7 +108,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 level.Flash(Color.White * 0.15f, true);
                 Celeste.Freeze(0.05f);
                 cooldownTimer = 1f;
-                DreamToggleListener.ImmediateUpdate();
+                DreamToggleListener.ImmediateUpdate(Scene);
             }
         }
 

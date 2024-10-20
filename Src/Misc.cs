@@ -9,11 +9,16 @@ global using System.Linq;
 global using System.Text;
 global using System.Threading.Tasks;
 global using static Celeste.Mod.ReverseHelper.Libraries.ReflectionExt;
+#pragma warning disable CS9113
 
 namespace Celeste.Mod.ReverseHelper
 {
     namespace SourceGen.Loader
     {
+        [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+        public class PreloadAttribute(params string[] id) : Attribute()
+        {
+        }
         [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
         public class LoadAttribute : Attribute
         {

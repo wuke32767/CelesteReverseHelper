@@ -1,31 +1,49 @@
-﻿using Celeste.Mod.Entities;
-using Microsoft.Xna.Framework;
-using Monocle;
-using System;
-using System.Reflection;
-
-namespace Celeste.Mod.ReverseHelper.Entities
+﻿namespace Celeste.Mod.ReverseHelper.Entities
 {
+    using Libraries;
     [Tracked(false)]
     public class DreamToggleListener : Component
     {
-
+        static DreamToggleListener()
+        {
+            OnScene<DreamToggleListener>.OnUpdate = ImmediateUpdate;
+        }
         public DreamToggleListener(Action<bool> cb) : base(true, false)
         {
             OnToggle = cb;
         }
-        public static bool isactivated;
-        public static void ImmediateUpdate()
+        public override void Added(Entity entity)
         {
-            if ((Engine.Scene is Level level) && level.Session.Inventory.DreamDash != isactivated)
+            base.Added(entity);
+            initialize();
+        }
+        void initialize()
+        {
+            if (Scene is Level level && OnScene<DreamToggleListener>.Construct(Scene))
             {
-                ForceUpdate();
+                isactivated = level.Session.Inventory.DreamDash;
+                OnScene<DreamToggleListener>.self!.Depth = 100_000_000;
+            }
+        }
+        public override void EntityAdded(Scene scene)
+        {
+            base.EntityAdded(scene);
+            initialize();
+        }
+        static bool isactivated;
+        public static void ImmediateUpdate(Scene scene)
+        {
+            scene ??= Engine.Scene;
+            if ((scene is Level level) && level.Session.Inventory.DreamDash != isactivated)
+            {
+                ForceUpdate(level);
             }
         }
 
-        public static void ForceUpdate()
+        public static void ForceUpdate(Level? level)
         {
-            if (Engine.Scene is Level level)
+            level ??= Engine.Scene as Level;
+            if (level is not null)
             {
                 isactivated = level.Session.Inventory.DreamDash;
                 foreach (var v in level.Tracker.GetComponents<DreamToggleListener>())
@@ -68,20 +86,20 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
         [SourceGen.Loader.Load]
         public static void Load()
-        { 
-            On.Celeste.Level.Update += Level_Update;
+        {
+            //On.Celeste.Level.Update += Level_Update;
             sr = ReverseHelperExtern.SpeedRunTool_Interop.RegisterStaticTypes?.Invoke(typeof(DreamToggleListener), [nameof(isactivated)]);
         }
         static object? sr;
         private static void Level_Update(On.Celeste.Level.orig_Update orig, Level self)
         {
             orig(self);
-            ImmediateUpdate();
+            ImmediateUpdate(self);
         }
         [SourceGen.Loader.Unload]
         public static void Unload()
         {
-            On.Celeste.Level.Update -= Level_Update;
+            //On.Celeste.Level.Update -= Level_Update;
             ReverseHelperExtern.SpeedRunTool_Interop.Unregister?.Invoke(sr!);
         }
 

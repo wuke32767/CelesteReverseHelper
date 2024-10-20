@@ -27,52 +27,74 @@ namespace Celeste.Mod.ReverseHelper.Libraries
         public delegate bool TryParser<T>(string s, out T val);
         // not necessary imo
         public static readonly TryParser<float> floatParse = (string s, out float v) => float.TryParse(s, CultureInfo.InvariantCulture, out v);
-        public static List<T>? List<T>(this EntityData data, string key, TryParser<T> parser,List<T>? def=default)
+        struct optional<T>
         {
-            List<T> ret = [];
-            var de = data.Attr(key);
-            if (!string.IsNullOrWhiteSpace(de))
+            public optional(T value)
             {
-                foreach (var i in de.Split(','))
-                {
-                    if (!parser(i, out var v))
-                    {
-                        return def;
-                    }
-                    ret.Add(v);
-                }
+                val = value;
+                Has = true;
             }
-            if(ret.Count == 0)
+            public optional()
             {
-                return def;
+                Has = false;
             }
-            return ret;
+            public bool Has = false;
+            public T val=default!;
+            public T Value { get => Has ? val! : throw new NullReferenceException(); }
         }
-        public static List<T> List<T>(this EntityData data, string key, TryParser<T> parser, T def )
+        static IEnumerable<optional<T>> ListImpl<T>(EntityData data, string key, TryParser<T> parser, int len)
         {
-            List<T> ret = [];
             var de = data.Attr(key);
-            if (!string.IsNullOrWhiteSpace(de))
+            foreach (var i in de.Split(','))
             {
-                foreach (var i in de.Split(','))
+                if(len==0)
                 {
-                    if (!parser(i, out var v))
-                    {
-                        return [def];
-                    }
-                    ret.Add(v);
+                    yield break;
                 }
+                if (!parser(i, out var v))
+                {
+                    yield return default;
+                }
+                else
+                {
+                    yield return new optional<T>(v);
+                }
+                len--;
             }
-            if (ret.Count == 0)
+            while(len!=0)
             {
-                ret.Add(def);
+                yield return default;
+                len--;
             }
-            return ret;
         }
-        public static Color HexaColor(this EntityData data, string key, Color def = default)
+        public static IEnumerable<T> List<T>(this EntityData data, string key, TryParser<T> parser, int len, T def)
         {
-            def = Calc.HexToColorWithAlpha(data.Attr(key));
-            return def;
+            foreach (var ixx in ListImpl(data, key, parser, len))
+            {
+                if (ixx.Has)
+                {
+                    def = ixx.val;
+                }
+                yield return def;
+            }
+        }
+        public static IEnumerable<T?> MergingList<T>(this EntityData data, string key, TryParser<T> parser, int len) where T : struct
+        {
+            return ListImpl(data, key, parser, len).Select(x => x.Has?x.val:default(T?));
+        }
+        public static IEnumerable<T?> MergingListC<T>(this EntityData data, string key, TryParser<T> parser, int len) where T : class
+        {
+            return ListImpl(data, key, parser, len).Select(x => x.Has?x.val:null);
+        }
+        public static Color HexaColor(this EntityData data, string key, Color? def = default)
+        {
+            var s = data.Attr(key, null);
+            if (string.IsNullOrWhiteSpace(s) && def is Color dd)
+            {
+                return dd;
+            }
+            var ret = Calc.HexToColorWithAlpha(s);
+            return ret;
         }
     }
 }

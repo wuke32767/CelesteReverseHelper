@@ -81,7 +81,7 @@ namespace Celeste.Mod.ReverseHelper.Triggers
                 ref bool has = ref ReverseHelperModule.playerHasDreamDashBetter(this);
                 has = !has;
 
-                DreamToggleListener.ImmediateUpdate();
+                DreamToggleListener.ImmediateUpdate(Scene);
             }
         }
 

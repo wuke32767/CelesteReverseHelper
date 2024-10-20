@@ -1,10 +1,6 @@
 ﻿using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
-using Monocle;
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
@@ -17,7 +13,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         private float refillTime = 2.5f;
         private Player? player;
         private bool playerCollide = false;
-        private bool better_held = false;
+        private bool hold_grace = false;
         [SourceGen.Loader.Load]
         public static void Load()
         {
@@ -35,22 +31,24 @@ namespace Celeste.Mod.ReverseHelper.Entities
             int result = orig(self);
             if (self.Holding?.Entity is HoldableRefill href)
             {
-                bool flag =   self.CanDash && href.dashable;
+                bool flag = self.CanDash && href.dashable;
                 if (flag)
                 {
                     //self.Drop();
                     return self.StartDash();
                 }
 
-                
+
             }
             return result;
         }
-
+        bool throwRefill;
+        bool throwRefill2;
+        bool grabbingRefill;
         private bool refillOnHolding;
 
         // Token: 0x06001A93 RID: 6803 RVA: 0x000AB8EC File Offset: 0x000A9AEC
-        public HoldableRefill(Vector2 position, bool twoDashes, bool oneUse, bool refillOnHolding, bool floating, bool slowFall, bool stillRefillOnNoDash, bool dashable,float refilltime) : base(position)
+        public HoldableRefill(Vector2 position, bool twoDashes, bool oneUse, bool refillOnHolding, bool floating, bool slowFall, bool stillRefillOnNoDash, bool dashable, float refilltime, bool throwRefill, bool throwRefill2, bool grabbingRefill) : base(position)
         {
             Collider = new Hitbox(16f, 16f, -8f, -8f);
             Add(new PlayerCollider((x) =>
@@ -100,7 +98,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             sine.Randomize();
             UpdateY();
             Depth = -100;
-            
+
             //
             Add(Hold = new Holdable(0.1f));
             Hold.PickupCollider = new Hitbox(24f, 24f, -12f, -12f);
@@ -125,7 +123,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     if (spring.Orientation == Spring.Orientations.WallLeft && Speed.X <= 0f)
                     {
                         MoveTowardsY(spring.CenterY + 5f, 4f, null);
-                        Speed.X = slowFall?160f: 220f;
+                        Speed.X = slowFall ? 160f : 220f;
                         Speed.Y = -80f;
                         noGravityTimer = 0.1f;
                         return true;
@@ -133,7 +131,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     if (spring.Orientation == Spring.Orientations.WallRight && Speed.X >= 0f)
                     {
                         MoveTowardsY(spring.CenterY + 5f, 4f, null);
-                        Speed.X = slowFall?-160f:-220f;
+                        Speed.X = slowFall ? -160f : -220f;
                         Speed.Y = -80f;
                         noGravityTimer = 0.1f;
                         return true;
@@ -199,7 +197,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
             this.refillTime = refilltime;
             //base.Add(new MirrorReflection());
             SquishCallback = OnSquish;
-
+            this.throwRefill = throwRefill;
+            this.throwRefill2 = throwRefill2;
+            this.grabbingRefill = grabbingRefill;
         }
 
         public override void OnSquish(CollisionData data)
@@ -213,10 +213,12 @@ namespace Celeste.Mod.ReverseHelper.Entities
         // Token: 0x06001A94 RID: 6804 RVA: 0x000ABB4C File Offset: 0x000A9D4C
         public HoldableRefill(EntityData data, Vector2 offset) : this(data.Position + offset, data.Bool("twoDash", false),
             data.Bool("oneUse", false), data.Bool("refillOnHolding", true), data.Bool("floaty", false), data.Bool("slowFall", false),
-            data.Bool("stillRefillOnNoDash", false), data.Bool("dashable", false),data.Float("refilltime", 2.5f))
+            data.Bool("stillRefillOnNoDash", false), data.Bool("dashable", false), data.Float("refilltime", 2.5f),
+            data.Bool("refillOnThrow", false), data.Bool("refillOnThrow2", false), data.Bool("refillWhenGrabbing", false))
         {
         }
-
+        const float MaxThrowTimer = 0.06f;
+        float ThrowTimer = MaxThrowTimer;
         // Token: 0x06001A96 RID: 6806 RVA: 0x000ABB90 File Offset: 0x000A9D90
         public override void Update()
         {
@@ -232,13 +234,38 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 return;
             }
             Depth = 100;
-            if(Hold.Holder != null)
+            if (Hold.Holder != null)
             {
-                better_held = true;
+                if (Hold.Holder.StateMachine != Player.StPickup || !grabbingRefill)
+                {
+                    hold_grace = true;
+                }
+                ThrowTimer = MaxThrowTimer;
             }
-            else if (!playerCollide)
+            else
             {
-                better_held = false;
+                if (throwRefill)
+                {
+                    hold_grace = false;
+                }
+                else if (throwRefill2)
+                {
+                    if (ThrowTimer <= 0 || !playerCollide)
+                    {
+                        hold_grace = false;
+                    }
+                    else
+                    {
+                        ThrowTimer -= Engine.DeltaTime;
+                    }
+                }
+                else
+                {
+                    if (!playerCollide)
+                    {
+                        hold_grace = false;
+                    }
+                }
             }
 
 
@@ -506,9 +533,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
         // Token: 0x06001A9A RID: 6810 RVA: 0x000ABDB0 File Offset: 0x000A9FB0
         private void OnPlayer_should_later_than_holdcheck(Player player)
         {
-            if (refilled && ((refillOnHolding || !/*Hold.IsHeld*/better_held) || (player.Dashes == 0 && player.MaxDashes != 0 && stillRefillOnNoDash)))
+            if (refilled && ((refillOnHolding || !/*Hold.IsHeld*/hold_grace) || (player.Dashes == 0 && player.MaxDashes != 0 && stillRefillOnNoDash)))
             {
-                if (!player.Dead&&player.UseRefill(twoDashes))
+                if (!player.Dead && player.UseRefill(twoDashes))
                 {
                     Audio.Play(twoDashes ? "event:/new_content/game/10_farewell/pinkdiamond_touch" : "event:/game/general/diamond_touch", Position);
                     Input.Rumble(RumbleStrength.Medium, RumbleLength.Medium);
@@ -550,7 +577,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             Collider.Position.X = -4f;
             Collider.Width = 8f;
 
-            better_held = true;
+            hold_grace = true;
             highFrictionTimer = 0.5f;
             floating = false;
             //Hold.IsHeld = true;
