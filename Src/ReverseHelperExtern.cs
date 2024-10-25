@@ -1,20 +1,7 @@
-﻿using Celeste.Mod.ReverseHelper.Entities;
-using Celeste.Mod.ReverseHelper.SourceGen.Loader;
-using FMOD;
+﻿using Celeste.Mod.ReverseHelper.SourceGen.Loader;
 using Microsoft.Xna.Framework;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
-using Monocle;
-using MonoMod.Cil;
 using MonoMod.ModInterop;
-using MonoMod.RuntimeDetour;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Xml;
-using static Celeste.Mod.ReverseHelper.ReverseHelperExtern.MaddieHelpingHandModule;
 
 namespace Celeste.Mod.ReverseHelper
 {
@@ -29,8 +16,7 @@ namespace Celeste.Mod.ReverseHelper
             public static void LoadContent()
             {
                 VortexHelperAssembly =
-                    AppDomain.CurrentDomain
-                    .GetAssemblies()
+                    Everest.Modules.Select(x => x.GetType().Assembly)
                     .Where(assembly => assembly.GetName().Name == "VortexHelper")
                     .FirstOrDefault();
                 purpleBoosterSpriteBank =
@@ -139,8 +125,7 @@ namespace Celeste.Mod.ReverseHelper
             public static void LoadContent()
             {
                 Assembly =
-                    AppDomain.CurrentDomain
-                    .GetAssemblies()
+                    Everest.Modules.Select(x => x.GetType().Assembly)
                     .Where(assembly => assembly.GetName().Name == "CommunalHelper")
                     .FirstOrDefault();
                 DreamTunnelEntry.LoadContent();
@@ -167,8 +152,7 @@ namespace Celeste.Mod.ReverseHelper
             public static void LoadContent()
             {
                 Assembly =
-                    AppDomain.CurrentDomain
-                    .GetAssemblies()
+                    Everest.Modules.Select(x => x.GetType().Assembly)
                     .Where(assembly => assembly.GetName().Name == "IsaMods")
                     .FirstOrDefault();
                 GrabBagModule.LoadContent();
@@ -223,7 +207,7 @@ namespace Celeste.Mod.ReverseHelper
             IsaGrabBag.LoadContent();
             CommunalHelper.LoadContent();
 
-            CustomInvisibleBarrier.LoadContent();
+            //CustomInvisibleBarrier.LoadContent();
 
         }
 

@@ -8,6 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Celeste.Mod.ReverseHelper.Entities
 {
     [CustomEntity("ReverseHelper/CornerBoostArea")]
+    [SourceGen.Loader.Dependency(typeof(CBAreaComponent))]
     public class CornerBoostArea : Entity
     {
         public PlayerCollider playerCollider;
@@ -95,7 +96,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             count_cooldown = Math.Max(count_cooldown, 0);
         }
     }
-
+    [SourceGen.Loader.LazyLoad]
     public class CBAreaComponent : Component
     {
         public override void Update()
@@ -134,7 +135,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
         {
         }
         [SourceGen.Loader.Load]
-        [SourceGen.Loader.LazyLoad]
         public static void Load()
         {
             On.Celeste.Player.Update += Player_Update;

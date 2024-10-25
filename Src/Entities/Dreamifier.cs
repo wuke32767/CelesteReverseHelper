@@ -690,7 +690,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             // 44555566 44555566
             // 77888899 77888899
             // 77888899 77888899
-            // notice that [1] is same as (left-up cell)[9], (left cell)[7], (up cell)[3],
+            // notice that [1] is same as (left-up cell)[9], (left cell)[3], (up cell)[7],
             //             [2] is same as (up cell)[8],
             //             [4] is same as (left cell)[6],
             // (they check same cell)
@@ -706,7 +706,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             // 66445555
             // 66445555
             // 66445555
-            // just split it to 4 pieces.
+            // just split it into 4 pieces.
             Rectangle tileBounds = solidtarget.Bounds;
             var tiledata = solidtarget.Data;
             // by just divide result by 4, (8 is a cell)

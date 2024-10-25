@@ -10,6 +10,7 @@ using System.Runtime.CompilerServices;
 namespace Celeste.Mod.ReverseHelper.Entities
 {
     [CustomEntity("ReverseHelper/DashTeleportationRefill")]
+    [SourceGen.Loader.LazyLoad]
     public class DashTeleportationRefill : Refill
     {
         Vector2?[] sequence;
@@ -81,7 +82,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
         static ConditionalWeakTable<Player, Stack<DashTeleportationRefill>> next = new();
 
         [SourceGen.Loader.Load]
-        [SourceGen.Loader.LazyLoad]
         public static void Load()
         {
             On.Celeste.Player.DashBegin += Player_DashBegin;

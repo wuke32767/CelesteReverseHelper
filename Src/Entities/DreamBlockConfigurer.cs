@@ -1,14 +1,14 @@
 ﻿using Celeste.Mod.Entities;
 using Celeste.Mod.ReverseHelper.Libraries;
 using Microsoft.Xna.Framework;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-
+class Notice
+{
+    public static void ThisMethodIsGreatlyModifiedByMe_InformMeBeforeYouILHookIt_ToPreventHookCollision() { }
+}
 namespace Celeste.Mod.ReverseHelper.Entities
 {
     [Flags]
@@ -41,7 +41,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public static readonly ImmutableArray<List<Entity>> ByIndex = ImmutableArray.Create
             (Reverse, Enable, Disable, HighPriority, TouchMode,
             UseEntryAngle, GhostMode, GhostDisableCollidable);
-    
+
         //according to https://learn.microsoft.com/en-us/dotnet/api/system.enum.getvalues?view=net-8.0 #Remarks,
         //it's sorted
         public static readonly ImmutableArray<DreamBlockConfigFlags> valuelist = Enum.GetValues<DreamBlockConfigFlags>()/*.Order()*/.ToImmutableArray();
@@ -171,8 +171,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public bool? useEntryAngle { get => getter(DreamBlockConfigFlags.useEntryAngle); set => setter(DreamBlockConfigFlags.useEntryAngle, value); }
         public bool? ghostMode { get => getter(DreamBlockConfigFlags.ghostMode); set => setter(DreamBlockConfigFlags.ghostMode, value); }
         public bool? ghostDisableCollidable { get => getter(DreamBlockConfigFlags.ghostDisableCollidable); set => setter(DreamBlockConfigFlags.ghostDisableCollidable, value); }
-        [SourceGen.Loader.Load]
-        public static void Load()
+        static DreamBlockConfig()
         {
             OnScene<DreamBlockConfig>.OnSceneEnd = s => DreamBlockTrackers.Clear();
         }
@@ -484,9 +483,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 }
             }
             ILCursor ic = new(il);
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static void ThisMethodIsGreatlyModifiedByMe_InformMeBeforeYouILHookIt_ToPreventHookCollision() { }
-            ic.EmitDelegate(ThisMethodIsGreatlyModifiedByMe_InformMeBeforeYouILHookIt_ToPreventHookCollision);
+            ic.EmitDelegate(Notice.ThisMethodIsGreatlyModifiedByMe_InformMeBeforeYouILHookIt_ToPreventHookCollision);
 
             if (!ic.TryGotoNext(MoveType.After, (i) => { i.MatchCallvirt(out var v); return v?.Name == "get_Inventory"; },
                 (i) => { i.MatchLdfld(out var v); return v?.Name == "DreamDash"; }))
@@ -630,7 +627,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     }
                 }
             }
-            Scene.OnEndOfFrame += ()=>DreamToggleListener.ForceUpdate(null);
+            Scene.OnEndOfFrame += () => DreamToggleListener.ForceUpdate(Scene);
             //(scene as Level).Background.Backdrop
         }
 

@@ -48,7 +48,9 @@ namespace Celeste.Mod.ReverseHelper.Libraries
                         foreach (var single in target.AsEnumerable().Reverse())
                         {
                             cur = single.actualDepth = double.BitDecrement(cur);
+#pragma warning disable CS0618 // intended
                             single.depth = d;
+#pragma warning restore CS0618 
                         }
 
                         for (int j = i + 1; j < entities.Count && entities[j].Depth == d; j++)

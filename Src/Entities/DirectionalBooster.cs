@@ -58,13 +58,12 @@ namespace Celeste.Mod.ReverseHelper.Entities
         //[SourceGen.Loader.Load]
         public static void Load()
         {
-            il = typeof(Player)
-                 .GetMethod("DashCoroutine", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-                 .GetStateMachineTarget()!
-                 .ILState((1, il =>
-                 {
+            il = methodof<Player>(x => x.DashCoroutine)
+                .GetStateMachineTarget()!
+                .ILState((1, il =>
+                {
 
-                 }
+                }
             ));
         }
         //[SourceGen.Loader.Unload]

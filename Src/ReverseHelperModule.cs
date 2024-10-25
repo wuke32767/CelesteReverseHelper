@@ -1,17 +1,9 @@
-using Celeste.Mod.ReverseHelper.Entities;
 using Celeste.Mod.ReverseHelper.Libraries;
 using Celeste.Mod.ReverseHelper.SourceGen.Loader;
 using Microsoft.Xna.Framework;
-using Monocle;
-using MonoMod.ModInterop;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
-using System.Text.RegularExpressions;
-using static Celeste.Mod.ReverseHelper.ReverseHelperExtern;
 
 namespace Celeste.Mod.ReverseHelper
 {
@@ -161,8 +153,8 @@ namespace Celeste.Mod.ReverseHelper
         [Load]
         public static void PrepareLazyLoad()
         {
-            On.Celeste.LevelLoader.ctor += onLevelLoad;
-            On.Celeste.OverworldLoader.ctor += onOverworldLoad;
+            //On.Celeste.LevelLoader.ctor += onLevelLoad;
+            //On.Celeste.OverworldLoader.ctor += onOverworldLoad;
         }
         private static void onOverworldLoad(On.Celeste.OverworldLoader.orig_ctor orig, OverworldLoader self, Overworld.StartMode startMode, HiresSnow snow)
         {
@@ -190,18 +182,17 @@ namespace Celeste.Mod.ReverseHelper
                 }
             }
         }
-        [LazyLoadDirectory]
         static Dictionary<string, (Action load, Action unload)> lazylist = new();
         [Unload]
         public static void UnloadLazyLoad()
         {
-            On.Celeste.LevelLoader.ctor -= onLevelLoad;
-            On.Celeste.OverworldLoader.ctor -= onOverworldLoad;
-            Clear();
+            //On.Celeste.LevelLoader.ctor -= onLevelLoad;
+            //On.Celeste.OverworldLoader.ctor -= onOverworldLoad;
+            //Clear();
         }
     }
     class NotTestedAttribute : Attribute { }
-    class WIPAttribute(string msg="") : Attribute { }
+    class WIPAttribute(string msg = "") : Attribute { }
 }
 
 public class ReverseHelperILHookException : Exception

@@ -6,8 +6,6 @@ global using MonoMod.Utils;
 global using System;
 global using System.Collections.Generic;
 global using System.Linq;
-global using System.Text;
-global using System.Threading.Tasks;
 global using static Celeste.Mod.ReverseHelper.Libraries.ReflectionExt;
 #pragma warning disable CS9113
 
@@ -23,12 +21,8 @@ namespace Celeste.Mod.ReverseHelper
         public class LoadAttribute : Attribute
         {
         }
-        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+        [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
         public class LazyLoadAttribute : Attribute
-        {
-        }
-        [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
-        public class LazyLoadDirectoryAttribute : Attribute
         {
         }
 
@@ -55,21 +49,23 @@ namespace Celeste.Mod.ReverseHelper
         public class LoadContenterAttribute : Attribute
         {
         }
-        //[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-        //public class DependencyAttribute(Type type) : Attribute()
-        //{
-        //}
         [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-        public class DependencyAttribute<T>() : Attribute()
+        public class DependencyAttribute(params Type[] type) : Attribute()
         {
         }
+        //[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+        //public class DependencyAttribute<T>() : Attribute()
+        //{
+        //}
     }
     namespace SourceGen
     {
-        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+        [AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = false)]
         public class GeneratedAttribute : Attribute
         {
         }
     }
 
 }
+
+

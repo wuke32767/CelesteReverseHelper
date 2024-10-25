@@ -40,6 +40,37 @@
             }
         }
 
+        public static void ForceUpdateSingle(Level? level, Entity entity)
+        {
+            level ??= Engine.Scene as Level;
+            if (level is not null)
+            {
+                if (entity is DreamBlock vv)
+                {
+                    if (DreamBlockConfigurer.dreamblock_enabled(vv))
+                    {
+                        vv.playerHasDreamDash = false;//for brokemia
+                        vv.ActivateNoRoutine();
+                    }
+                    else
+                    {
+                        vv.playerHasDreamDash = true;//for brokemia
+                        vv.DeactivateNoRoutine();
+                    }
+                }
+                else if (DreamBlockConfigurer.ExternalDreamBlockLike.TryGetValue(entity.GetType(), out var call))
+                {
+                    if (DreamBlockConfigurer.dreamblock_enabled(entity))
+                    {
+                        call.activate?.Invoke(entity);
+                    }
+                    else
+                    {
+                        call.deactivate?.Invoke(entity);
+                    }
+                }
+            }
+        }
         public static void ForceUpdate(Level? level)
         {
             level ??= Engine.Scene as Level;
