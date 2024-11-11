@@ -24,9 +24,19 @@ namespace Celeste.Mod.ReverseHelper.Entities
             this.jelly = jelly;
         }
         static ILHook? AttachedJumpThru;
+        public override void SceneBegin(Scene scene)
+        {
+            base.SceneBegin(scene);
+            Load();
+        }
         public override void Added(Scene scene)
         {
             base.Added(scene);
+            Load();
+        }
+
+        private void Load()
+        {
             if (Scene.Tracker.GetEntity<CustomInvisibleBarrierManager>() != this)
             {
                 RemoveSelf();
@@ -254,7 +264,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             type_resolved.Add(t);
             yield return (t.Name, t);
             yield return (t.FullName!, t);
-            foreach (var s in (Attribute.GetCustomAttribute(t, typeof(CustomEntityAttribute)) as CustomEntityAttribute)?.IDs ?? Enumerable.Empty<string>())
+            foreach (var s in t.GetCustomAttribute<CustomEntityAttribute>()?.IDs ?? [])
             {
                 yield return (s.Split('=')[0].Trim(), t);
             }
@@ -268,19 +278,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             foreach (var (k, v) in SceneAs<Level>().Entities.SelectMany(x => map(x.GetType())))
             {
-                try
-                {
-                    resolved_type.Add(k, v);
-                }
-                catch
-                {
-                }
+                resolved_type.TryAdd(k, v);
             }
             //.Concat(resolved_type.Select(x=>(x.Key,x.Value))).ToDictionary(x=>x.Item1,x=>x.Item2);
 
             try
             {
-                foreach (var r in Scene.Tracker.Entities[typeof(CustomInvisibleBarrier)])
+                foreach (var r in Scene.Tracker.GetEntities<CustomInvisibleBarrier>())
                 {
                     (r as CustomInvisibleBarrier)?.TryAwake();
                 }
@@ -453,18 +457,17 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             Hook h = new(update, (Action<Entity> orig, Entity self) =>
             {
-                var tar = Engine.Scene.Tracker.Entities[typeof(CustomInvisibleBarrier)].Cast<CustomInvisibleBarrier>().Where(x => x.typer!.Contains(type));
+                var tar = Engine.Scene.Tracker.Entities[typeof(CustomInvisibleBarrier)].Cast<CustomInvisibleBarrier>();
                 foreach (var r in tar)
                 {
-                    r.Collidable = !r.reversed;
+                    r.ApplyTo(type);
                 }
 
                 orig(self);
                 foreach (var r in tar)
                 {
-                    r.Collidable = r.reversed;
+                    r.Restore();
                 }
-
             });
             Hooks.Add(type, h);
 

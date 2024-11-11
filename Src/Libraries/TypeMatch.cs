@@ -26,7 +26,7 @@ namespace Celeste.Mod.ReverseHelper.Libraries
             var typesSet_cp = typesSet;
             bool flag=typesSet.Contains(type.FullName!)
                 || typesSet.Contains(type.Name)
-                || ((Attribute.GetCustomAttribute(type, typeof(CustomEntityAttribute)) as CustomEntityAttribute)?
+                || (type.GetCustomAttribute<CustomEntityAttribute>()?
                     .IDs?
                     .Select(x => x.Split('=')[0].Trim())
                     .Any(x => typesSet_cp.Contains(x!))

@@ -18,35 +18,47 @@ namespace Celeste.Mod.ReverseHelper.Entities
         alwaysEnable = 1 << 1,
         alwaysDisable = 1 << 2,
         highPriority = 1 << 3,
-        [WIP("should be used with other variants. will be wip before they are completed.")]
+        [WIP("should be used with other variants. will be wip before they are completed. pre-acllocated id.")]
         touchMode = 1 << 4,
         useEntryAngle = 1 << 5,
         [WIP]
         ghostMode = 1 << 6,
         [WIP]
         ghostDisableCollidable = 1 << 7,
-        //tunnelMode = 1 << 8,
-        //disableThroughable = 1 << 9,
+        [WIP]
+        disableIsSolid = 1 << 8,
+        [WIP]
+        disableIsSolidv2 = 1 << 9,
     }
-    public static class DreamBlockTrackers
+    public class DreamBlockTrackers
     {
-        public static readonly List<Entity> Reverse = [];
-        public static readonly List<Entity> Enable = [];
-        public static readonly List<Entity> Disable = [];
-        public static readonly List<Entity> HighPriority = [];
-        public static readonly List<Entity> TouchMode = [];
-        public static readonly List<Entity> UseEntryAngle = [];
-        public static readonly List<Entity> GhostMode = [];
-        public static readonly List<Entity> GhostDisableCollidable = [];
-        public static readonly ImmutableArray<List<Entity>> ByIndex = ImmutableArray.Create
+        public DreamBlockTrackers()
+        {
+            ByIndex = ImmutableArray.Create
             (Reverse, Enable, Disable, HighPriority, TouchMode,
-            UseEntryAngle, GhostMode, GhostDisableCollidable);
+            UseEntryAngle, GhostMode, GhostDisableCollidable,
+            DisableIsSolid, DisableIsSolidv2);
+        }
+        public static ConditionalWeakTable<Scene, DreamBlockTrackers> Trackers = [];
+
+        public static DreamBlockTrackers GetTracker(Scene scene) => scene is null ? null : Trackers.GetOrCreateValue(scene);
+        public readonly List<Entity> Reverse = [];
+        public readonly List<Entity> Enable = [];
+        public readonly List<Entity> Disable = [];
+        public readonly List<Entity> HighPriority = [];
+        public readonly List<Entity> TouchMode = [];
+        public readonly List<Entity> UseEntryAngle = [];
+        public readonly List<Entity> GhostMode = [];
+        public readonly List<Entity> GhostDisableCollidable = [];
+        public readonly List<Entity> DisableIsSolid = [];
+        public readonly List<Entity> DisableIsSolidv2 = [];
+        public readonly ImmutableArray<List<Entity>> ByIndex;
 
         //according to https://learn.microsoft.com/en-us/dotnet/api/system.enum.getvalues?view=net-8.0 #Remarks,
         //it's sorted
         public static readonly ImmutableArray<DreamBlockConfigFlags> valuelist = Enum.GetValues<DreamBlockConfigFlags>()/*.Order()*/.ToImmutableArray();
         public static readonly ImmutableArray<string> namelist = Enum.GetNames<DreamBlockConfigFlags>()/*.Order()*/.ToImmutableArray();
-        public static void TrackListed(this DreamBlockConfig e, DreamBlockConfigFlags flag)
+        public void TrackListed(DreamBlockConfig e, DreamBlockConfigFlags flag)
         {
             if (e.Entity?.Scene is not null && !e.tracked)
             {
@@ -62,7 +74,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
         }
 
-        public static void UntrackListed(this DreamBlockConfig e, DreamBlockConfigFlags flag)
+        public void UntrackListed(DreamBlockConfig e, DreamBlockConfigFlags flag)
         {
             if (e.Entity?.Scene is not null && e.tracked)
             {
@@ -77,14 +89,14 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 }
             }
         }
-        public static void Clear()
+        public void Clear()
         {
             foreach (var item in ByIndex)
             {
                 item.Clear();
             }
         }
-        public static void Track(this DreamBlockConfig e, DreamBlockConfigFlags flag)
+        public void Track(DreamBlockConfig e, DreamBlockConfigFlags flag)
         {
             if (e.Entity?.Scene is not null)
             {
@@ -93,7 +105,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
         }
 
-        public static void Untrack(this DreamBlockConfig e, DreamBlockConfigFlags flag)
+        public void Untrack(DreamBlockConfig e, DreamBlockConfigFlags flag)
         {
             if (e.Entity?.Scene is not null && e.tracked)
             {
@@ -123,6 +135,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
     }
     public class DreamBlockConfig() : Component(true, false)
     {
+        DreamBlockTrackers cache;
+        DreamBlockTrackers? Tracker => cache ?? (cache = DreamBlockTrackers.GetTracker(Scene));
         //static int hacky= SingleGlobalEntity<DreamBlockConfig>.Register(s=>DreamBlockTrackers.Clear());
         public bool tracked = false;
         DreamBlockConfigFlags state;
@@ -155,11 +169,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
             {
                 if (orig)
                 {
-                    this.Untrack(flags);
+                    Tracker?.Untrack(this, flags);
                 }
                 else
                 {
-                    this.Track(flags);
+                    Tracker?.Track(this, flags);
                 }
             }
         }
@@ -173,30 +187,29 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public bool? ghostDisableCollidable { get => getter(DreamBlockConfigFlags.ghostDisableCollidable); set => setter(DreamBlockConfigFlags.ghostDisableCollidable, value); }
         static DreamBlockConfig()
         {
-            OnScene<DreamBlockConfig>.OnSceneEnd = s => DreamBlockTrackers.Clear();
+            //OnScene<DreamBlockConfig>.OnSceneEnd = s => DreamBlockTrackers.Clear();
         }
         public DreamBlockConfigFlags withas => (has & state) | (flagasactive & ~has);
         public override void Added(Entity entity)
         {
-            this.TrackListed(withas);
             base.Added(entity);
-            OnScene<DreamBlockConfig>.Construct(Entity.Scene);
+            Tracker?.TrackListed(this, withas);
         }
         public override void Removed(Entity entity)
         {
-            this.UntrackListed(withas);
             base.Removed(entity);
+            Tracker?.UntrackListed(this, withas);
         }
         public override void EntityAdded(Scene scene)
         {
-            this.TrackListed(withas);
             base.EntityAdded(scene);
+            Tracker?.TrackListed(this, withas);
         }
 
         public override void EntityRemoved(Scene scene)
         {
-            this.UntrackListed(withas);
             base.EntityRemoved(scene);
+            Tracker?.UntrackListed(this, withas);
         }
         public override void Update()
         {
@@ -398,7 +411,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 }
                 else
                 {
-                    range = DreamBlockTrackers.Reverse.Concat(DreamBlockTrackers.Enable);
+                    range = DreamBlockTrackers.GetTracker(self.Scene).Reverse.Concat(DreamBlockTrackers.GetTracker(self.Scene).Enable);
                 }
                 foreach (Entity item in range)
                 {
@@ -431,7 +444,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 return false;
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static bool HasDreamDash(bool x) => DreamBlockTrackers.Enable.Count > 0 || x || DreamBlockTrackers.Reverse.Count > 0;
+            public static bool HasDreamDash(bool x, Player self) => DreamBlockTrackers.GetTracker(self.Scene).Enable.Count > 0 || x || DreamBlockTrackers.GetTracker(self.Scene).Reverse.Count > 0;
             public static bool CollideCheck(Player self, Vector2 at)
             {
                 Vector2 position = self.Position;
@@ -457,15 +470,15 @@ namespace Celeste.Mod.ReverseHelper.Entities
             {
                 return IsEntryAngleCorrect = l == r;
             }
-            internal static bool HasEntryAngle2(float l, float r)
+            internal static bool HasEntryAngle2(float l, float r, Player self)
             {
                 IsEntryAngleCorrect = l == r;
-                return IsEntryAngleCorrect || DreamBlockTrackers.UseEntryAngle.Count > 0;
+                return IsEntryAngleCorrect || DreamBlockTrackers.GetTracker(self.Scene).UseEntryAngle.Count > 0;
             }
 
-            internal static bool HasDarkMatter(bool b)
+            internal static bool HasDarkMatter(bool b, Player self)
             {
-                return b || DreamBlockTrackers.TouchMode.Count > 0;
+                return b || DreamBlockTrackers.GetTracker(self.Scene).TouchMode.Count > 0;
             }
         }
         private static void Player_DreamDashCheck(ILContext il)
@@ -492,6 +505,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 return;
             }
 
+            ic.EmitLdarg0();
             ic.EmitDelegate(Player_DreamDashCheck_Helper.HasDreamDash);
 
             if (!ic.TryGotoNext(MoveType.After, i => { i.MatchCallvirt(out var v); return v?.Name == "get_DashAttacking"; }))
@@ -499,6 +513,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 Exception();
                 return;
             }
+            ic.EmitLdarg0();
             ic.EmitDelegate(Player_DreamDashCheck_Helper.HasDarkMatter);
 
             if (!ic.TryGotoNext(MoveType.Before, i => i.MatchBeq(out _)))
@@ -513,6 +528,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 Exception();
                 return;
             }
+            ic.EmitLdarg0();
             ic.EmitDelegate(Player_DreamDashCheck_Helper.HasEntryAngle2);
             ic.EmitLdcI4(1);
 

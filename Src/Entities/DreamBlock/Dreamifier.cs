@@ -1,20 +1,16 @@
 ﻿using Celeste.Mod.Entities;
 using Celeste.Mod.ReverseHelper.Libraries;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Monocle;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
     public enum Groupmode
     {
-        none = 0, collider = 1, entity = 2, all = 3,
+        none, collider, entity, attached, sametype, andnested, all,
     }
     //[SourceGen.Loader.Dependency(typeof(DepthTracker))]
+    [SourceGen.Loader.LazyLoad]
     [CustomEntity($"ReverseHelper/Dreamifier")]
     [WIP]
     public class Dreamifier(Vector2 position, int width, int height, Color color1, Color color2,
@@ -47,80 +43,57 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     if (r is not null)
                     {
                         var list = table.GetOrCreateValue(s);
-                        list.AddRange(r.OfType<DreamifierRenderer_Base>());
+                        list.AddRange(r);
                         Scene.Add(r);
                     }
                 }
                 //RemoveSelf();
-                DreamifierRenderer_Base?[]? GetDreamifier(Solid solid) => GetDreamifier2(solid.Collider, solid, solid.Collider);
+                IEnumerable<DreamifierRenderer_Base?>? GetDreamifier(Solid solid) => GetDreamifier2(solid.Collider, solid, solid.Collider);
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                DreamifierRenderer_Base?[]? GetDreamifier2(Collider collider, Solid solid, Collider groupby)
+                IEnumerable<DreamifierRenderer_Base?>? GetDreamifier2(Collider collider, Solid solid, Collider groupby)
                 {
-                    switch (collider)
+                    return collider switch
                     {
-                        case Grid grid:
-                            return [new DreamifierRenderer_Grid(Position, width, height, color1, color2, color3, color4, solid, grid, blend, connect, e)];
-                        case Hitbox hitbox:
-                            return [new DreamifierRenderer_Hitbox(Position, width, height, color1, color2, color3, color4, solid, hitbox, blend, connect, e)];
-                        case ColliderList cl:
-                        //return cl.colliders.SelectMany(x => GetDreamifier2(x, solid, cl) ?? []).ToArray();
+                        Grid grid =>
+                            [new DreamifierRenderer_Grid(Position, width, height, color1, color2, color3, color4, solid, grid, blend, connect, e)],
+                        Hitbox hitbox =>
+                            [new DreamifierRenderer_Hitbox(Position, width, height, color1, color2, color3, color4, solid, hitbox, blend, connect, e)],
+                        ColliderList cl =>
+                        cl.colliders.SelectMany(x => GetDreamifier2(x, solid, cl) ?? []),
                         //not supported
-                        case Circle:
-                        default:
-                            break;
-                    }
-                    return null;
+                        Circle => null,
+                        _ => null,
+                    };
                 }
             });
         }
-        //[SourceGen.Loader.Load]
-        //[SourceGen.Loader.LazyLoad]
-        //public static void Load()
-        //{
-        //    On.Monocle.Scene.SetActualDepth += Scene_SetActualDepth;
-        //}
-        //
-        //private static void Scene_SetActualDepth(On.Monocle.Scene.orig_SetActualDepth orig, Scene self, Entity entity)
-        //{
-        //    if (entity is not DreamifierRenderer_Base)
-        //    {
-        //        orig(self, entity);
-        //    }
-        //}
-        //
-        //[SourceGen.Loader.Unload]
-        //public static void Unload()
-        //{
-        //    On.Monocle.Scene.SetActualDepth -= Scene_SetActualDepth;
-        //}
+        //Communal Helper
+        [SourceGen.Loader.Load]
+        public static void Load()
+        {
+            On.Celeste.Player.DreamDashBegin += Player_DreamDashBegin;
+        }
+        private static void Player_DreamDashBegin(On.Celeste.Player.orig_DreamDashBegin orig, Player player)
+        {
+            orig(player);
+            if (player.dreamBlock is DreamifierRenderer_Base)
+            {
+                // Ensures the player always properly enters a dream block even when it's moving fast
+                player.Position.X += Math.Sign(player.DashDir.X);
+                player.Position.Y += Math.Sign(player.DashDir.Y);
+            }
+        }
+
+        [SourceGen.Loader.Unload]
+        public static void Unload()
+        {
+            On.Celeste.Player.DreamDashBegin -= Player_DreamDashBegin;
+        }
     }
     [Tracked(true)]
     [TrackedAs(typeof(DreamBlock), true)]
     public abstract class DreamifierRenderer_Base : DreamBlock
     {
-        class prevent_depth_fight_i_g(DreamifierRenderer_Base db) : Entity()
-        {
-            public override void Awake(Scene scene)
-            {
-                base.Awake(scene);
-                Depth = db.deptho ?? db.solid.Depth;
-            }
-
-            public override void Update()
-            {
-                base.Update();
-                Depth = db.deptho ?? db.solid.Depth;
-            }
-
-            public override void Render()
-            {
-                base.Render();
-                if (db.Visible)
-                {
-                    db.RRender();
-                }
-            }
-        }
         protected List<(Vector2 from, Vector2 to)> WobbleList = [];
         protected List<Vector2> CornerList = [];
         public List<Rectangle> AltCollider = new();
@@ -147,9 +120,26 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 RemoveSelf();
             }
 
-            scene.Add(preventer = new prevent_depth_fight_i_g(this));
+            tracker = IDepthTracker.Track(solid, this, TrackMode.CHDT);
+            tracker.Renderer = RRender;
+
+            AddedBorder = prepareRenderer().Select(x =>
+            {
+                var t = x.to - x.from;
+                t.Normalize();
+                //t.Rotate((float)(double.Pi / 2.0));
+                (t.X, t.Y) = (t.Y, -t.X);
+                return (from: x.from + t + Position, to: x.to + t + Position);
+            }).ToList();
+            //scene.Add(preventer = new prevent_depth_fight_i_g(this));
+            Add(staticmover = new StaticMover());
+            solid.staticMovers.Add(staticmover);
+            staticmover.Platform = solid;
+            staticmover.OnAttach?.Invoke(solid);
         }
+        IDepthTracker tracker;
         protected abstract IEnumerable<(Vector2 from, Vector2 to)> prepareRenderer();
+        List<(Vector2 from, Vector2 to)> AddedBorder;
         public override void Awake(Scene scene)
         {
             AllowStaticMovers = false;
@@ -157,10 +147,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
             //depthTracker = DepthTracker.Track(solid, this);
             //offset = solid.Position - Position;
 
-            Add(staticmover = new StaticMover());
-            solid.staticMovers.Add(staticmover);
-            staticmover.Platform = solid;
-            staticmover.OnAttach?.Invoke(solid);
 
             var dashcollide = solid.OnDashCollide;
             if (dashcollide is not null)
@@ -180,14 +166,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
             bound.Width += 2;
             bound.Height += 2;
 
-            var a = prepareRenderer().Select(x =>
-            {
-                var t = x.to - x.from;
-                t.Normalize();
-                //t.Rotate((float)(double.Pi / 2.0));
-                (t.X, t.Y) = (t.Y, -t.X);
-                return (from: x.from + t + Position, to: x.to + t + Position);
-            }).ToList();
             var con = dreamConnect switch
             {
                 Groupmode.collider => Dreamifier.table.GetOrCreateValue(solid).Where(x => x._solidcollider == _solidcollider).ToList(),
@@ -197,8 +175,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
             };
             var blend = (solidConnect switch
             {
-                Groupmode.collider => [_solidcollider],
-                Groupmode.entity => expand(solid.Collider),
+                //Groupmode.collider => [_solidcollider], //preprocessed
+                Groupmode.entity when solid.Collider is ColliderList => expand(solid.Collider),
                 Groupmode.all => Scene.CollideAll<Solid>(bound).SelectMany(x => expand(x.Collider)),
                 _ => [],
             }).Concat(con.Select(x => x.Collider)).Distinct().ToList();
@@ -213,8 +191,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 };
             }
 
-            a = blend.Aggregate(a, (current, cur) => current.SelectMany(x => cur.CollideVHLine(x.from, x.to)).ToList());
-            WobbleList = a.Select(x =>
+            AddedBorder = blend.Aggregate(AddedBorder, (current, cur) => current.SelectMany(x => cur.CollideVHLine(x.from, x.to)).ToList());
+            WobbleList = AddedBorder.Select(x =>
             {
                 var t = x.to - x.from;
                 t.Normalize();
@@ -268,7 +246,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             void CornerListAdd(Vector2 vec)
             {
-                if (CollidePoint(vec+Position))
+                if (CollidePoint(vec + Position))
                 {
                     CornerList.Add(vec);
                 }
@@ -295,7 +273,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         private new float wobbleEase;
         public new float animTimer;
 
-        int? deptho;
+        //int? deptho;
 
         public DreamifierRenderer_Base(Vector2 position, int width, int height, Color line, Color block,
                 Color linede, Color fillde, Solid solid, Collider collider, Groupmode solidconnect, Groupmode dreamconnect,
@@ -307,7 +285,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             fillColorDeact = fillde;
             this.solid = solid;
             _solidcollider = collider;
-            
+
             DreamBlockConfig.GetOrAdd(this).setter(DreamBlockConfigFlags.highPriority, true);
             //vanilla uses 10
             //for footstep ripple priority
@@ -319,7 +297,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
             dreamConnect = dreamconnect;
             if (!string.IsNullOrEmpty(e.Attr("depth")))
             {
-                deptho = e.Int("depth");
+                Depth = e.Int("depth");
+            }
+            else
+            {
+
             }
         }
 
@@ -355,11 +337,12 @@ namespace Celeste.Mod.ReverseHelper.Entities
             get => DreamBlockConfigurer.dreamblock_enabled(this);
         }
 
-        prevent_depth_fight_i_g? preventer;
+        //prevent_depth_fight_i_g? preventer;
         public override void Removed(Scene scene)
         {
             base.Removed(scene);
-            preventer?.RemoveSelf();
+            //preventer?.RemoveSelf();
+            tracker.Untrack(this);
         }
         public override void Update()
         {
@@ -440,6 +423,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public override void Render()
         {
             this.Entity_Render();
+            tracker.Renderer();
         }
 
         public void RRender()

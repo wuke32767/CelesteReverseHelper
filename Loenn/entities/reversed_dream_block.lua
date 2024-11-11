@@ -26,6 +26,12 @@ RefillWallWrapper.fieldInformation = {
     useEntryAngle = {
         fieldType = "ReverseHelper.OptionalBool",
     },
+    ghostMode = {
+        fieldType = "ReverseHelper.OptionalBool",
+    },
+    ghostDisableCollidable = {
+        fieldType = "ReverseHelper.OptionalBool",
+    },
 }
 
 

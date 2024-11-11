@@ -1,3 +1,4 @@
+dotnet build --configuration="Release"
 remove-item ./ReverseHelper.zip
 #looks like pwsh treats -x*.psd as an file.
 winrar a -r "-X*.psd" -r "-X*.pdn" -afzip .\ReverseHelper.zip .\everest.yaml .\bin\Debug\net7.0 .\Graphics .\Loenn .\Ahorn .\Audio

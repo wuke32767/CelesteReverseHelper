@@ -24,7 +24,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
         private const float ZIP_SPEED = 120f;
         private const float ZIP_ACCEL = 190f;
         private const float ZIP_TURN = 250f;
-
         private static ZiplineZipmover? currentGrabbed, lastGrabbed;
         private static float ziplineBuffer;
 
@@ -198,7 +197,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             tickDelay = e.Float("tickDelay");
             bool syncd = e.Bool("synced");
             var ropecol = e.Attr("ropeColor");
-            if (string.IsNullOrWhiteSpace(s))
+            if (string.IsNullOrWhiteSpace(ropecol))
             {
                 ropecol = "663931";
             }
@@ -216,7 +215,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     sync = "ZipMoverSync:" + syncTag;
                 }
             }
-            fixv3 = e.Bool("fixbugsv2",false);
+            fixv3 = e.Bool("fixbugsv2", false);
             ropeLightColor = e.HexColor("ropeLightColor", Calc.HexToColor("9b6157"));
             //this.nodeSpeeds=e.("nodeSpeeds");
             //this.startDelay=e.("startDelay");
@@ -250,7 +249,20 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 l.AddRange(Enumerable.Repeat(last, NodeList.Length - l.Count));
             }
             #endregion
+            SfxReset = e.Attr("resetSfx", "event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/reset");
+            SfxRet = e.Attr("returnSfx", "event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/return");
+            SfxImpact = e.Attr("impactSfx", "event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/impact");
+            SfxTouch = e.Attr("touchSfx", "event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/touch");
+            SfxTicking = e.Attr("tickingSfx", "event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/touch");
+            SfxDie = e.Attr("touchSfx", "event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/touch");
         }
+        private string SfxReset;
+        private string SfxRet;
+        private string SfxImpact;
+        private string SfxTouch;
+        private string SfxTicking;
+        private string SfxDie;
+
 
         public static int ZiplineState { get; private set; }
         public static bool GrabbingCoroutine => currentGrabbed != null && !currentGrabbed.grabbed;
@@ -420,10 +432,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         bool PrevSeq()
         {
-            void PrevSeqMethod()
-            {
-                CancelNextSeq();
-            }
+            void PrevSeqMethod() => CancelNextSeq();
             pindex--;
             if (pindex <= 0)
             {
@@ -482,13 +491,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 MaxSpeed = MaxSpeeds[i];
             }
         }
-        string? sync;
-        bool shouldTrigger => grabbed && (sync is null || SceneAs<Level>().Session.GetFlag(sync));
-        void MakeSync()
+        string? sync = null;
+        bool shouldTrigger => grabbed || (sync is not null && SceneAs<Level>().Session.GetFlag(sync));
+        void MakeSync(bool flag)
         {
             if (sync is not null)
             {
-                SceneAs<Level>().Session.GetFlag(sync);
+                SceneAs<Level>()?.Session.SetFlag(sync, flag);
             }
         }
         private IEnumerator Sequence()
@@ -510,13 +519,15 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 float at = 0f;
                 do
                 {
+                    MakeSync(true);
                     at = 0;
-                    sfx.Play("event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/touch", null, 0f);
+                    sfx.Play(SfxTouch, null, 0f);
 
                     Input.Rumble(RumbleStrength.Medium, RumbleLength.Short);
                     SinePosition = ConservedPosition = 0;
                     //this.StartShaking(0.1f);
                     yield return BootingTimer[pindex];
+                    MakeSync(false);
                     acceptExtraSpeed = conserveMoving;
                     if (conservedSpeed < 0)
                     {
@@ -544,7 +555,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                         SineSpeed = (position - SinePosition) / Engine.DeltaTime;
                         SinePosition = position;
                     }
-                    sfx.Play("event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/impact", null, 0f);
+                    sfx.Play(SfxImpact, null, 0f);
                     //this.StartShaking(0.2f);
                     Input.Rumble(RumbleStrength.Strong, RumbleLength.Medium);
                     SceneAs<Level>().Shake(0.3f);
@@ -590,6 +601,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                         }
                     }
                 } while (true);
+
                 if (permanent)
                 {
                     yield break;
@@ -598,7 +610,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 do
                 {
                     acceptExtraSpeed = conserveReturning;
-                    sfx.Play("event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/return", null, 0f);
+                    sfx.Play(SfxRet, null, 0f);
                     ConservedPosition = 0;
                     SinePosition = deltaLength;
                     yield return BootingTimerRet[pindex];
@@ -625,7 +637,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                         SinePosition = position;
 
                     }
-                    sfx.Play("event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/reset", null, 0f);
+                    sfx.Play(SfxReset, null, 0f);
                     //this.StopPlayerRunIntoAnimation = true;
                     //this.StartShaking(0.2f);
                     //this.streetlight.SetAnimationFrame(1);

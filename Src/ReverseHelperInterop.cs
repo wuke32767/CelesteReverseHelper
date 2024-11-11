@@ -1,5 +1,6 @@
 ﻿using Celeste.Mod.ReverseHelper.Entities;
 using MonoMod.ModInterop;
+using System.Collections.Immutable;
 
 namespace Celeste.Mod.ReverseHelper
 {
@@ -33,53 +34,16 @@ namespace Celeste.Mod.ReverseHelper
             return DreamBlockInteropImportTemplate.PlayerHasDreamDash(e);
         }
         /// <summary>
-        /// If v is not null, set reverse mode to v.
-        /// If v is null, get reverse mode.
-        /// </summary>
-        /// <returns><code>v ?? current</code> If reverse mode is not set, current is null. </returns>
-        [Obsolete("Use From Enum Instead.")]
-        public static bool? ConfigureReverse(Entity e, bool? v)
-        {
-            return DreamBlockInteropImportTemplate.ConfigureReverse?.Invoke(e, v);
-        }
-        /// <summary>
-        /// If v is not null, set enable mode to v.
-        /// If v is null, get enable mode.
-        /// </summary>
-        /// <returns><code>v ?? current</code> If enable mode is not set, current is null. </returns>
-        [Obsolete("Use From Enum Instead.")]
-        public static bool? ConfigureEnable(Entity e, bool? v)
-        {
-            return DreamBlockInteropImportTemplate.ConfigureEnable?.Invoke(e, v);
-
-        }
-        /// <summary>
-        /// If v is not null, set disable mode to v.
-        /// If v is null, get disable mode.
-        /// </summary>
-        /// <returns><code>v ?? current</code> If disable mode is not set, current is null. </returns>
-        [Obsolete("Use From Enum Instead.")]
-        public static bool? ConfigureDisable(Entity e, bool? v)
-        {
-            return DreamBlockInteropImportTemplate.ConfigureDisable?.Invoke(e, v);
-
-        }
-        /// <summary>
-        /// If v is not null, set high priority mode to v.
-        /// If v is null, get high priority mode.
-        /// It is not Platform.SurfaceSoundPriority.
-        /// </summary>
-        /// <returns><code>v ?? current</code> If high priority mode is not set, current is null. </returns>
-        [Obsolete("Use From Enum Instead.")]
-        public static bool? ConfigureHighPriority(Entity e, bool? v)
-        {
-            return DreamBlockInteropImportTemplate.ConfigureHighPriority?.Invoke(e, v);
-
-        }
-        /// <summary>
-        /// generic version of these option.
+        /// generic version of these options.
+        /// https://github.com/wuke32767/CelesteReverseHelper/blob/main/Src/Entities/DreamBlockConfigurer.cs#L21
+        /// those option name and value will not be changed (wip excluded), so you can just hardcode them.
         /// getter.
         /// </summary>
+        /// <returns>
+        /// if this flag is set.
+        /// null: not set / not loaded.
+        /// not null: get flag.
+        /// </returns>
         public static bool? ConfigureGetFromEnum(Entity e, long i)
         {
             return DreamBlockInteropImportTemplate.ConfigureGetFromEnum?.Invoke(e, i);
@@ -95,14 +59,23 @@ namespace Celeste.Mod.ReverseHelper
         }
         /// <summary>
         /// get option from string.
-        /// those option name and value will not be changed (wip excluded), so you can just hardcode them.
-        /// https://github.com/wuke32767/CelesteReverseHelper/blob/main/Src/Entities/DreamBlockConfigurer.cs#L21
         /// </summary>
         /// <returns> one of Enum.GetValues<DreamBlockConfigFlags>() </returns>
         /// (param) one of Enum.GetNames<DreamBlockConfigFlags>()
         public static long ConfigureGetEnum(string s)
         {
             return DreamBlockInteropImportTemplate.ConfigureGetEnum?.Invoke(s) ?? 0;
+        }
+        /// <summary>
+        /// returns trackers for these flags.
+        /// </summary>
+        /// <returns>
+        /// index it with the enum and you would get all dreamblock that has the flag.
+        /// sometimes it contains Dream Tunnel [Communal Helper], which is not DreamBlock. 
+        /// </returns>
+        public static ImmutableArray<List<Entity>>? GetDreamBlockTrackers(Scene scene)
+        {
+            return DreamBlockInteropImportTemplate.GetDreamBlockTrackers?.Invoke(scene);
         }
     }
 
@@ -111,13 +84,10 @@ namespace Celeste.Mod.ReverseHelper
     {
         public static Action<Type, Action<Entity>, Action<Entity>>? RegisterDreamBlockLike;
         public static Func<Entity, bool>? PlayerHasDreamDash;
-        public static Func<Entity, bool?, bool?>? ConfigureReverse;
-        public static Func<Entity, bool?, bool?>? ConfigureEnable;
-        public static Func<Entity, bool?, bool?>? ConfigureDisable;
-        public static Func<Entity, bool?, bool?>? ConfigureHighPriority;
         public static Func<Entity, long, bool?>? ConfigureGetFromEnum;
         public static Action<Entity, long, bool?>? ConfigureSetFromEnum;
         public static Func<string, long>? ConfigureGetEnum;
+        public static Func<Scene, ImmutableArray<List<Entity>>>? GetDreamBlockTrackers;
     }
     [ModExportName("ReverseHelper.DreamBlock")]
     public static class DreamBlockInterop
@@ -174,6 +144,10 @@ namespace Celeste.Mod.ReverseHelper
         public static long ConfigureGetEnum(string s)
         {
             return (long)Enum.Parse<DreamBlockConfigFlags>(s);
+        }
+        public static ImmutableArray<List<Entity>> GetDreamBlockTrackers(Scene scene)
+        {
+            return DreamBlockTrackers.GetTracker(scene).ByIndex;
         }
     }
 

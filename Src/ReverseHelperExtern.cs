@@ -43,8 +43,7 @@ namespace Celeste.Mod.ReverseHelper
             public static void LoadContent()
             {
                 Assembly =
-                    AppDomain.CurrentDomain
-                    .GetAssemblies()
+                    Everest.Modules.Select(x => x.GetType().Assembly)
                     .Where(assembly => assembly.GetName().Name == "MaxHelpingHand")
                     .FirstOrDefault();
                 AttachedSidewaysJumpThru.LoadContent();

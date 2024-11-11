@@ -22,7 +22,7 @@ namespace Celeste.Mod.ReverseHelper
         {
         }
         [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-        public class LazyLoadAttribute : Attribute
+        public class LazyLoadAttribute(string cond = null) : Attribute
         {
         }
 

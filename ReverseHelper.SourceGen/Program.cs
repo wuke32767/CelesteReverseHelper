@@ -94,9 +94,9 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
             {
                 return;
             }
-            StringBuilder load = new();
-            StringBuilder unload = new();
-            StringBuilder loadcontent = new();
+            StringBuilder load = new("Context context = default;");
+            StringBuilder unload = new("Context context = default;");
+            StringBuilder loadcontent = new("Context context = default;");
             Dictionary<IMethodSymbol, string> loadendpoint = new();
             Dictionary<IMethodSymbol, string> unloadendpoint = new();
             Dictionary<IMethodSymbol, string> loadcontentendpoint = new();
@@ -183,7 +183,7 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
             {
                 foreach (var attr in method.GetAttributes())
                 {
-                    if (attr.AttributeClass.FullNamespace() == attr_namespace)
+                    if (attr.AttributeClass?.FullNamespace() == attr_namespace)
                     {
                         switch (attr.AttributeClass.Name)
                         {
@@ -217,13 +217,13 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
                         public static class Lazy{{type.Name}}
                         {
                             static bool loaded = false;
-                            public static void Load()
+                            public static void Load(Context context)
                             {
                                 if (loaded) return;
                                 loaded = true;
                                 {{loadendpoint[ll]}}
                             }
-                            public static void Unload()
+                            public static void Unload(Context context)
                             {
                                 if (!loaded) return;
                                 loaded = false;
@@ -232,9 +232,9 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
                         }
                     """
                     );
-                lazyloadep[ll] = $"SourceGenHelper.Lazy{type.Name}.Load();";
+                lazyloadep[ll] = $"SourceGenHelper.Lazy{type.Name}.Load(context);";
                 loadendpoint.Remove(ll);
-                lazyunloadep[uu] = unloadendpoint[uu] = $"SourceGenHelper.Lazy{type.Name}.Unload();";
+                lazyunloadep[uu] = unloadendpoint[uu] = $"SourceGenHelper.Lazy{type.Name}.Unload(context);";
             }
             StringBuilder pr = new();
 
@@ -253,20 +253,19 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
 
                             public static class Dep{{v.Name}}
                             {
-                                public static void Load()
+                                public static void Load(Context context)
                                 {
                                     {{(lazyloadep.TryGetValue(ll, out var ep) ? ep : "")}}
                                     {{string.Concat(l.Select(x => typedeps.ContainsKey(x) ?
-                    $""" 
-
-                                    SourceGenHelper.Dep{x.Name}.Load();
+                        $""" 
+                                    SourceGenHelper.Dep{x.Name}.Load(context);
                         """
                                 : (lazyloadep.TryGetValue(loads[x], out var ep) ? ep : "")))}}
                                 }
                             }
                         """
                 );
-                lazyloadep[ll] = $"SourceGenHelper.Dep{v.Name}.Load();";
+                lazyloadep[ll] = $"SourceGenHelper.Dep{v.Name}.Load(context);";
             }
 
             if (Preload.Count > 0 || lazyloadep.Count > 0)
@@ -299,6 +298,7 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
 
                                 if(ed.Name == "{{y}}")
                                 {
+                                    Context context = new() { Entity = ed, };
                                     {{x.Value}}
                                 }
                     """
@@ -308,8 +308,11 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
                     public static void OnOverworldLoad(On.Celeste.OverworldLoader.orig_ctor orig, global::Celeste.OverworldLoader self, global::Celeste.Overworld.StartMode startMode, global::Celeste.HiresSnow snow)
                     {
                         orig(self, startMode, snow);
-
-                        {{string.Join("\n        ", lazyunloadep.Values)}}
+                        Context context = default;
+                        {{string.Join("""
+                        
+                """,
+                        lazyunloadep.Values)}}
                     }
 
 
@@ -329,7 +332,8 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
             BuildPartialClass(rec.unloader, unload, rec.unloadermod);
             BuildPartialClass(rec.loadcontenter, loadcontent, rec.loadcontentermod);
             var src = load.ToString() + unload.ToString() + loadcontent.ToString()
-                + string.Concat(Preload.Select(x => AddAttr(x.Key, $"""[global::Celeste.Mod.Entities.CustomEntity("{string.Join(@""",""", x.Value)}")]""")));
+                + string.Concat(Preload.Select(x => AddAttr(x.Key, $"""[global::Celeste.Mod.Entities.CustomEntity("{string.Join(@""",""", x.Value)}")]""")))
+                ;
             if (format_indent)
             {
                 StringBuilder ret = new StringBuilder();
@@ -387,7 +391,12 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
                 }
                 src = ret.ToString();
             }
-            src += pr.ToString();
+            src += pr.ToString() + """
+                file record struct Context
+                {
+                    public global::Celeste.EntityData Entity { get; set; }
+                }
+                """;
             context.AddSource("AllLoader.g.cs", src);
         }
 

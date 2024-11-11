@@ -4,13 +4,13 @@ local zipline = {}
 --if not versionCheck.validModVersion("IsaGrabBag", "1.6.14")
 --  then return {}
 --end
-zipline.associatedMods = { "ReverseHelper","IsaGrabBag" }
+zipline.associatedMods = { "ReverseHelper", "IsaGrabBag" }
 
 zipline.name = "ReverseHelper/ZiplineZipmover"
 zipline.depth = 0
 zipline.texture = "isafriend/objects/zipline/handle"
 zipline.nodeTexture = "isafriend/objects/zipline/handle_end"
-zipline.nodeLimits = {1, -1}
+zipline.nodeLimits = { 1, -1 }
 zipline.nodeVisibility = "always"
 zipline.nodeLineRenderType = "line"
 local conserveoption = {
@@ -20,66 +20,75 @@ local conserveoption = {
     "AllWithDirection",
 }
 
-zipline.fieldInformation={
+zipline.fieldInformation = {
     conserveSpeedMode = {
         options = conserveoption
     },
 
-    waitings= {
+    waitings = {
         fieldType = "list",
     },
-    startings= {
+    startings = {
         fieldType = "list",
     },
-    returnWaitings= {
+    returnWaitings = {
         fieldType = "list",
     },
-    returnStartings= {
+    returnStartings = {
         fieldType = "list",
     },
     _padding = {
         fieldType = "ReverseHelper.Padding",
     },
+    ropeColor = {
+        fieldType = "color",
+    },
 }
-zipline.fieldOrder={
-    "x","y",
-    "fixEndSpeed","fixbugsv1", "sprite",
+zipline.fieldOrder = {
+    "x", "y",
+    "fixEndSpeed", "fixbugsv1", "sprite",
     "maxSpeed", "time",
     "strict", "useStamina", "_padding", "_padding",
-    "conserveSpeedMode","conserveRate",
+    "conserveSpeedMode", "conserveRate",
     "conserveMoving", "conserveReturning", "ignoreNegative",
     "stoppings", "startings",
     "returnStoppings", "returnStartings",
-    "permanent","waiting","ticking",
+    "permanent", "waiting", "ticking", --"synced",
     "tickDelay", "ticks",
+    --"ropeColor", "syncTag",
+
+
 }
 zipline.placements = {
     name = "Zipline Zipmover",
     data = {
         useStamina = true,
-        time="",
-        maxSpeed="",
-        strict=false,
-        sprite="",
-        conserveSpeedMode="None",
-        conserveRate=1,
+        time = "",
+        maxSpeed = "",
+        strict = false,
+        sprite = "",
+        conserveSpeedMode = "None",
+        conserveRate = 1,
         --conserveLimit=-1,
         fixEndSpeed = true,
-        fixbugsv1=true,
-        conserveMoving=false,
-        conserveReturning=false,
+        fixbugsv1 = true,
+        conserveMoving = false,
+        conserveReturning = false,
         ignoreNegative = false,
-        
+
         stoppings = "0.4",
-        startings="0.1",
+        startings = "0.1",
         returnStoppings = "0.4",
         returnStartings = "0.1",
-        permanent=false,
-        waiting=false,
+        permanent = false,
+        waiting = false,
         ticking = false,
         tickDelay = 1,
-        ticks=5,
-        _padding=false,
+        ticks = 5,
+        --synced = false,
+        --ropeColor = "663931",
+        --syncTag = "",
+        _padding = false,
     }
 }
 
