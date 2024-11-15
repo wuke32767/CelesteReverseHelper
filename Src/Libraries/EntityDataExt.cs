@@ -39,7 +39,7 @@ namespace Celeste.Mod.ReverseHelper.Libraries
                 Has = false;
             }
             public bool Has = false;
-            public T val=default!;
+            public T val = default!;
             public T Value { get => Has ? val! : throw new NullReferenceException(); }
         }
         static IEnumerable<optional<T>> ListImpl<T>(EntityData data, string key, TryParser<T> parser, int len)
@@ -47,7 +47,7 @@ namespace Celeste.Mod.ReverseHelper.Libraries
             var de = data.Attr(key);
             foreach (var i in de.Split(','))
             {
-                if(len==0)
+                if (len == 0)
                 {
                     yield break;
                 }
@@ -61,7 +61,7 @@ namespace Celeste.Mod.ReverseHelper.Libraries
                 }
                 len--;
             }
-            while(len!=0)
+            while (len != 0)
             {
                 yield return default;
                 len--;
@@ -80,11 +80,11 @@ namespace Celeste.Mod.ReverseHelper.Libraries
         }
         public static IEnumerable<T?> MergingList<T>(this EntityData data, string key, TryParser<T> parser, int len) where T : struct
         {
-            return ListImpl(data, key, parser, len).Select(x => x.Has?x.val:default(T?));
+            return ListImpl(data, key, parser, len).Select(x => x.Has ? x.val : default(T?));
         }
         public static IEnumerable<T?> MergingListC<T>(this EntityData data, string key, TryParser<T> parser, int len) where T : class
         {
-            return ListImpl(data, key, parser, len).Select(x => x.Has?x.val:null);
+            return ListImpl(data, key, parser, len).Select(x => x.Has ? x.val : null);
         }
         public static Color HexaColor(this EntityData data, string key, Color? def = default)
         {

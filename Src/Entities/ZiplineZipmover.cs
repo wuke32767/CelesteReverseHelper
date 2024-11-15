@@ -59,6 +59,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         //bool anotherConserveWaiting;
         bool conserveMoving;
         bool conserveReturning;
+        bool NoReturn;
         float extendRate;
         float extendLimit;
 
@@ -217,6 +218,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             fixv3 = e.Bool("fixbugsv2", false);
             ropeLightColor = e.HexColor("ropeLightColor", Calc.HexToColor("9b6157"));
+            NoReturn = e.Bool("noReturn", false);
             //this.nodeSpeeds=e.("nodeSpeeds");
             //this.startDelay=e.("startDelay");
             //this.customSound=e.("customSound");
@@ -254,7 +256,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             SfxImpact = e.Attr("impactSfx", "event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/impact");
             SfxTouch = e.Attr("touchSfx", "event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/touch");
             SfxTicking = e.Attr("tickingSfx", "event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/touch");
-            SfxDie = e.Attr("touchSfx", "event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/touch");
+            SfxDie = e.Attr("dieSfx", "event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/touch");
         }
         private string SfxReset;
         private string SfxRet;
@@ -442,6 +444,19 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
             return true;
         }
+        void ReverseSeq()
+        {
+            pindex = NodeList.Length - pindex;
+            NodeList.Reverse();
+
+            currenttarget = NodeList[pindex + 1];
+            currentstart = NodeList[pindex];
+            deltaNormalized = currenttarget - currentstart;
+            deltaLength = deltaNormalized.Length();
+            deltaNormalized = deltaNormalized.SafeNormalize();
+
+            UpdateSpeed(pindex);
+        }
         void UpdateSpeed(int i)
         {
             //if (speedRates.Count > i)
@@ -601,7 +616,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                         }
                     }
                 } while (true);
-
+                
                 if (permanent)
                 {
                     yield break;

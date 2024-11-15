@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
@@ -8,10 +7,8 @@
     <LangVersion>latest</LangVersion>
     <CelesteGamePath Condition="'$(CELESTEGAMEPATH)' == ''">..\..\..</CelesteGamePath>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <Platforms>AnyCPU;x64</Platforms>
     <Nullable>enable</Nullable>
-    <BaseOutputPath>..\bin\</BaseOutputPath>
+    <OutputPath>../bin</OutputPath>
   </PropertyGroup>
 
   <!--Disable "Copy Local" for all references-->
@@ -41,11 +38,14 @@
     <Reference Include="MonoMod.Utils">
       <HintPath>$(CELESTEGAMEPATH)\MonoMod.Utils.dll</HintPath>
     </Reference>
-    <!--<Reference Include="System.ValueTuple">
-      <HintPath>$(CELESTEGAMEPATH)\System.ValueTuple.dll</HintPath>
-    </Reference>-->
+
     <Reference Include="YamlDotNet" HintPath="$(CELESTEGAMEPATH)\YamlDotNet.dll" />
   </ItemGroup>
+	<!--<Target Name="CopyFiles" AfterTargets="Build" Inputs="$(OutputPath)\$(AssemblyName).dll;$(OutputPath)\$(AssemblyName).pdb" Outputs="..\bin\$(AssemblyName).dll;..\bin\$(AssemblyName).pdb">
+		<Copy SourceFiles="$(OutputPath)\$(AssemblyName).dll" DestinationFolder="..\bin" />
+		<Copy SourceFiles="$(OutputPath)\$(AssemblyName).pdb" DestinationFolder="..\bin" />
+	</Target>-->
+
 	<!--<Choose>
     <When Condition="'$(OS)' != 'Windows_NT' Or Exists('$(CELESTEGAMEPATH)\FNA.dll')" />
 

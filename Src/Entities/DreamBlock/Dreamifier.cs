@@ -429,7 +429,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public void RRender()
         {
             Camera camera = SceneAs<Level>().Camera;
-            Rectangle camerarect = new Rectangle((int)camera.X, (int)camera.Y, 320, 180);
+            Rectangle camerarect = new Rectangle((int)camera.X, (int)camera.Y, camera.Viewport.Width, camera.Viewport.Height);
 
             if (!camerarect.Intersects(new((int)X, (int)Y, (int)Width, (int)Height)))
             {

@@ -42,6 +42,10 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 RemoveSelf();
                 return;
             }
+            if (working == true)
+            {
+                return;
+            }
             working = true;
             if (actorsolid)
             {

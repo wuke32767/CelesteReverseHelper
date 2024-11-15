@@ -1,4 +1,5 @@
-﻿using Celeste.Mod.Entities;
+﻿#pragma warning disable CS8618
+using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
 using System;

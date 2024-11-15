@@ -1,8 +1,7 @@
 ﻿using Celeste.Mod.Entities;
 using Celeste.Mod.ReverseHelper.Libraries;
 using Microsoft.Xna.Framework;
-using Monocle;
-using System;
+using System.Runtime.CompilerServices;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
@@ -116,7 +115,12 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         public new bool playerHasDreamDash
         {
-            get => DreamBlockConfigurer.dreamblock_enabled(this);
+            get => ReverseHelperModule.PatchInstalled ? reimpl : DreamBlockConfigurer.dreamblock_enabled(this);
+        }
+        bool reimpl
+        {
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            get => Activated;
         }
         public override void Render()
         {
@@ -184,11 +188,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
             public int Layer;
 
-            public Color Color(Entity td)
+            public Color Color(DreamBlock td)
             {
-                return DreamBlockConfigurer.dreamblock_enabled(td) ? Colora : Colord;
+                bool v = ReverseHelperModule.PatchInstalled ? reimpl(td) : DreamBlockConfigurer.dreamblock_enabled(td);
+                return v ? Colora : Colord;
             }
-
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            bool reimpl(DreamBlock td) => td.Activated;
             public Color Colord;
             public Color Colora;
 

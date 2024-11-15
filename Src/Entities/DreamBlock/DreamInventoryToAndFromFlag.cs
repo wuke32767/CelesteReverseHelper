@@ -21,6 +21,10 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 RemoveSelf();
                 return;
             }
+            if(working)
+            {
+                return;
+            }
             if (version == 3)
             {
                 bool old;

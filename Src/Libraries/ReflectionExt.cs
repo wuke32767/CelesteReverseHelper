@@ -56,6 +56,18 @@ namespace Celeste.Mod.ReverseHelper.Libraries
         {
             return impl(expr);
         }
+        public static MethodInfo methodof<T, U>(Expression<Func<T, U>> expr)
+        {
+            return impl(expr);
+        }
+        public static T Any<T>()
+        {
+            throw new InvalidOperationException("unreachable");
+        }
+        public static MethodInfo methodof<U>(Expression<Func<U>> expr)
+        {
+            return impl(expr);
+        }
 
         static MethodInfo impl(Expression expr)
         {

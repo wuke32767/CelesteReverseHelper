@@ -166,7 +166,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         private bool InView()
         {
             Camera camera = (Scene as Level).Camera;
-            return X > camera.X - 16f && Y > camera.Y - 16f && X < camera.X + 320f + 16f && Y < camera.Y + 180f + 16f;
+            return X > camera.X - 16f && Y > camera.Y - 16f && X < camera.X + camera.Viewport.Width + 16f && Y < camera.Y + camera.Viewport.Height + 16f;
         }
 
         // Token: 0x06000E42 RID: 3650 RVA: 0x00033864 File Offset: 0x00031A64

@@ -32,6 +32,9 @@ RefillWallWrapper.fieldInformation = {
     ghostDisableCollidable = {
         fieldType = "ReverseHelper.OptionalBool",
     },
+    disableIsSolid = {
+        fieldType = "ReverseHelper.OptionalBool",
+    },
 }
 
 
@@ -44,6 +47,7 @@ RefillWallWrapper.placements={
             highPriority="",
             reverse=true,
             useEntryAngle = "",
+            --disableIsSolid = "",
         }
 }
 

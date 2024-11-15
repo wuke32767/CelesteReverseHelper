@@ -25,10 +25,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
         ghostMode = 1 << 6,
         [WIP]
         ghostDisableCollidable = 1 << 7,
-        [WIP]
-        disableIsSolid = 1 << 8,
-        [WIP]
-        disableIsSolidv2 = 1 << 9,
     }
     public class DreamBlockTrackers
     {
@@ -41,7 +37,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
         public static ConditionalWeakTable<Scene, DreamBlockTrackers> Trackers = [];
 
-        public static DreamBlockTrackers GetTracker(Scene scene) => scene is null ? null : Trackers.GetOrCreateValue(scene);
+        public static DreamBlockTrackers GetTracker(Scene scene) => scene is null ? null! : Trackers.GetOrCreateValue(scene);
         public readonly List<Entity> Reverse = [];
         public readonly List<Entity> Enable = [];
         public readonly List<Entity> Disable = [];
@@ -135,7 +131,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
     }
     public class DreamBlockConfig() : Component(true, false)
     {
-        DreamBlockTrackers cache;
+        DreamBlockTrackers? cache;
         DreamBlockTrackers? Tracker => cache ?? (cache = DreamBlockTrackers.GetTracker(Scene));
         //static int hacky= SingleGlobalEntity<DreamBlockConfig>.Register(s=>DreamBlockTrackers.Clear());
         public bool tracked = false;
@@ -292,12 +288,44 @@ namespace Celeste.Mod.ReverseHelper.Entities
         //}
         static ILHook? dashcoroutine;
         [SourceGen.Loader.Load]
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void Load()
         {
-            IL.Celeste.Player.DreamDashCheck += Player_DreamDashCheck;
             On.Celeste.Player.DreamDashCheck += Player_DreamDashCheck1;
-            //IL.Celeste.Player.DashCoroutine += Player_DashCoroutine;
-            dashcoroutine = new ILHook(methodof<Player>(p => p.DashCoroutine).GetStateMachineTarget()!, Player_DashCoroutine);
+            if (ReverseHelperModule.PatchInstalled)
+            {
+                LoadPatched();
+            }
+            else
+            {
+                //using var context = new DetourConfigContext(new DetourConfig("ReverseHelper", int.MinValue)).Use();
+                IL.Celeste.Player.DreamDashCheck += Player_DreamDashCheck;
+                //IL.Celeste.Player.DashCoroutine += Player_DashCoroutine;
+                dashcoroutine = new ILHook(methodof<Player>(p => p.DashCoroutine).GetStateMachineTarget()!, Player_DashCoroutine);
+            }
+        }
+        static Hook? patch_activate;
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void UnloadPatched()
+        {
+            patch_activate?.Dispose();
+            //IL.Celeste.Player.DreamDashCheck -= Player_DreamDashCheckV2;
+        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void LoadPatched()
+        {
+            patch_activate = new(propertyof((DreamBlock db) => db.Activated).GetGetMethod()!, DreamBlock_Activate);
+            //IL.Celeste.Player.DreamDashCheck += Player_DreamDashCheckV2;
+        }
+
+        private static void Player_DreamDashCheckV2(ILContext il)
+        {
+            
+        }
+
+        private static bool DreamBlock_Activate(Func<DreamBlock, bool> orig, DreamBlock self)
+        {
+            return dreamblock_enabledv2(self, orig(self));
         }
 
         private static bool Player_DreamDashCheck1(On.Celeste.Player.orig_DreamDashCheck orig, Player self, Vector2 dir)
@@ -382,6 +410,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             return false;
         }
+        [Obsolete]
         public static bool dreamblock_enabled(Entity db)
         {
             var com = db.Components.Get<DreamBlockConfig>();
@@ -395,6 +424,27 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             bool has = com?.reverse ?? false;
             return has != ReverseHelperModule.playerHasDreamDashBetter(db);
+        }
+        public static bool dreamblock_enabledv2(Entity db, bool orig)
+        {
+            var com = db.Components.Get<DreamBlockConfig>();
+            if (com is null)
+            {
+                return orig;
+            }
+            if (com.enable ?? false)
+            {
+                return true;
+            }
+            if (com.disable ?? false)
+            {
+                return false;
+            }
+            if (com.reverse ?? false)
+            {
+                return !orig;
+            }
+            return orig;
         }
         static class Player_DreamDashCheck_Helper
         {
@@ -593,17 +643,27 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
 
         [SourceGen.Loader.Unload]
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void Unload()
         {
-            IL.Celeste.Player.DreamDashCheck -= Player_DreamDashCheck;
             On.Celeste.Player.DreamDashCheck -= Player_DreamDashCheck1;
-            //IL.Celeste.Player.DashCoroutine -= Player_DashCoroutine;
-            dashcoroutine?.Dispose();
-            //grabbag_workaround?.Dispose();
-            //grabbag_workaround_img_il?.Dispose();
-            //grabbag_workaround_img_on?.Dispose();
-            //grabbag_workaround_img_gt?.Dispose();
-            //grabbag_workaround_img_rr?.Dispose();
+            if (ReverseHelperModule.PatchInstalled)
+            {
+                UnloadPatched();
+            }
+            else
+            {
+                IL.Celeste.Player.DreamDashCheck -= Player_DreamDashCheck;
+
+                //IL.Celeste.Player.DashCoroutine -= Player_DashCoroutine;
+                dashcoroutine?.Dispose();
+                //grabbag_workaround?.Dispose();
+                //grabbag_workaround_img_il?.Dispose();
+                //grabbag_workaround_img_on?.Dispose();
+                //grabbag_workaround_img_gt?.Dispose();
+                //grabbag_workaround_img_rr?.Dispose();
+            }
+
         }
         internal static Dictionary<Type, (Action<Entity> activate, Action<Entity> deactivate)> ExternalDreamBlockLike = [];
         public override void Awake(Scene scene)

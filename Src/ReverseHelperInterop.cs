@@ -7,10 +7,10 @@ namespace Celeste.Mod.ReverseHelper
     public static class DreamBlockInteropImportCallerTemplate
     {
         /// <summary>
-        /// if a entity acts like DreamBlock, use this. 
+        /// if a entity acts like DreamBlock but is not DreamBlock, use this. 
         /// it should access Inventory.DreamDash only when awaking, and save it to a field.
         /// then, it controls visuals with that field and [De]ActivateNoRoutine. 
-        /// and NO game logic relys on Inventory.DreamDash.
+        /// for example, Communal Helper Dream Tunnel.
         /// 
         /// anyway, better to ask me for it.
         /// </summary>
@@ -35,7 +35,7 @@ namespace Celeste.Mod.ReverseHelper
         }
         /// <summary>
         /// generic version of these options.
-        /// https://github.com/wuke32767/CelesteReverseHelper/blob/main/Src/Entities/DreamBlockConfigurer.cs#L21
+        /// https://github.com/wuke32767/CelesteReverseHelper/blob/a4919894497bc501be7f9f8f5c08923a1187af1c/Src/Entities/DreamBlock/DreamBlockConfigurer.cs#L15
         /// those option name and value will not be changed (wip excluded), so you can just hardcode them.
         /// getter.
         /// </summary>

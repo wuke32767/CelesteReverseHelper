@@ -58,7 +58,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         //[SourceGen.Loader.Load]
         public static void Load()
         {
-            il = methodof<Player>(x => x.DashCoroutine)
+            il = methodof((Player x) => x.DashCoroutine)
                 .GetStateMachineTarget()!
                 .ILState((1, il =>
                 {

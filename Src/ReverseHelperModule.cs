@@ -2,6 +2,7 @@ using Celeste.Mod.ReverseHelper.Libraries;
 using Celeste.Mod.ReverseHelper.SourceGen.Loader;
 using Microsoft.Xna.Framework;
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 
@@ -58,6 +59,8 @@ namespace Celeste.Mod.ReverseHelper
     }
     internal partial class ReverseHelperModule : EverestModule
     {
+        public static readonly bool PatchInstalled = typeof(DreamBlock).GetField("DreamBlockPatch", BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) is not null;
+
         static ReverseHelperSession FakeSession = new();
         public override Type SessionType => typeof(ReverseHelperSession);
         public static ReverseHelperSession Session => FakeSession;
@@ -108,7 +111,6 @@ namespace Celeste.Mod.ReverseHelper
 
         public ReverseHelperModule()
         {
-            ReverseHelperExtern.Load();
             Instance = this;
         }
         public override void LoadContent(bool firstLoad)
