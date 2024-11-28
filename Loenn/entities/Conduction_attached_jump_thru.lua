@@ -24,14 +24,18 @@ attachedJumpthru.fieldInformation = {
     },
     overrideCollisionResult = {
         options = overrider
-
-    }
+    },
+    zzdoc = {
+        fieldType = "ReverseHelper.DOCUMENT",
+        important = true,
+    },
 }
 
 attachedJumpthru.placements= {
     {
         name = "Dash Conduction JumpThru",
         data = {
+            zzdoc = "",
             width = 8,
             texture = "wood",
             surfaceIndex = -1,

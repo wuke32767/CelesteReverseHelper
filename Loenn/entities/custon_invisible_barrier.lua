@@ -7,12 +7,19 @@ local cbarea = {
 cbarea.name = "ReverseHelper/CustomInvisibleBarrier"
 cbarea.depth = 8500
 cbarea.associatedMods = { "ReverseHelper" }
-
+cbarea.fieldInformation =
+{
+    zzdoc = {
+        fieldType = "ReverseHelper.DOCUMENT",
+        important = true,
+    },
+}
 cbarea.placements = {
 
     name = "Custom Invisible Barrier",
 
     data = {
+        zzdoc = "",
         width = 8, height = 8,
         type="Player,TheoCrystal",
         reversed=false,

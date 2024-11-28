@@ -4,7 +4,7 @@ using MonoMod.ModInterop;
 using System.Reflection;
 
 namespace Celeste.Mod.ReverseHelper
-{
+{ 
     public static class ReverseHelperExtern
     {
         const BindingFlags bf = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;

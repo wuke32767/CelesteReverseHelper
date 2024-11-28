@@ -30,10 +30,13 @@ local upsideDownJumpThru = {
             options = enums.tileset_sound_ids,
             fieldType = "integer"
         },
-    overrideCollisionResult = {
-        options = overrider
-
-    }
+        overrideCollisionResult = {
+            options = overrider
+        },
+        zzdoc = {
+            fieldType = "ReverseHelper.DOCUMENT",
+            important = true,
+        },
 
     }
 }
@@ -42,7 +45,8 @@ upsideDownJumpThru.associatedMods = { "ReverseHelper","GravityHelper", }
 upsideDownJumpThru.placements = {
     {
         name = "Dash Conduction JumpThru UpsideDown",
-        data =  {
+        data = {
+            zzdoc = "",
             width = 8,
             texture = "wood",
             triggerStaticMovers = true,

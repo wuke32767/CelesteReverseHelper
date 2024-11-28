@@ -29,7 +29,11 @@ jumpthru.fieldInformation = {
     overrideCollisionResult = {
         options = overrider
 
-    }
+    },
+    zzdoc = {
+        fieldType = "ReverseHelper.DOCUMENT",
+        important = true,
+    },
 }
 jumpthru.associatedMods = { "ReverseHelper","MaxHelpingHand", }
 
@@ -39,6 +43,7 @@ jumpthru.placements = {
     {
         name = "Dash Conduction JumpThru Sideways left",
         data = {
+            zzdoc = "",
             height = 8,
             left = true,
             texture = "wood",
@@ -52,6 +57,7 @@ jumpthru.placements = {
     {
         name = "Dash Conduction JumpThru Sideways right",
         data = {
+            zzdoc = "",
             height = 8,
             left = false,
             texture = "wood",

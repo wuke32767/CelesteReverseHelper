@@ -46,15 +46,16 @@
         {
             if (ReverseHelperModule.PatchInstalled)
             {
-                Ins(level,entity);
-            }else
+                Ins(level, entity);
+            }
+            else
             {
-                 Not(level, entity);
+                Not(level, entity);
             }
             [MethodImpl(MethodImplOptions.NoInlining)]
             static void Ins(Level? level, Entity entity)
             {
-                if(entity is DreamBlock db)
+                if (entity is DreamBlock db)
                 {
                     db.UpdateNoRoutine();
                 }
@@ -97,16 +98,18 @@
                 }
             }
         }
-            [MethodImpl(MethodImplOptions.NoInlining)]
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ForceUpdate(Level? level)
         {
             if (ReverseHelperModule.PatchInstalled)
             {
                 Ins(level);
-            }else
-            {
-                 Not(level);
             }
+            else
+            {
+                Not(level);
+            }
+            [MethodImpl(MethodImplOptions.NoInlining)]
             static void Ins(Level? level)
             {
                 level ??= Engine.Scene as Level;

@@ -193,6 +193,10 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 bool v = ReverseHelperModule.PatchInstalled ? reimpl(td) : DreamBlockConfigurer.dreamblock_enabled(td);
                 return v ? Colora : Colord;
             }
+            public Color Color(bool has)
+            {
+                return has ? Colora : Colord;
+            }
             [MethodImpl(MethodImplOptions.NoInlining)]
             bool reimpl(DreamBlock td) => td.Activated;
             public Color Colord;
