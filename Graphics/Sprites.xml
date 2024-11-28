@@ -12,5 +12,16 @@
     <Anim id="disableOff" path="switch" frames="2-10,13-14" delay="0.08"/>
     <Loop id="disableOffLoop" path="switch" frames="14" delay="0.08"/>
   </ReverseHelper_DreamToggle>
+  <ReverseHelper_DreamToggleV2 path="objects/ReverseHelper/DreamToggleSwitch/" start="disable">
+    <Center/>
+    <Anim id="enable" path="switch" frames="10-2" delay="0.08" goto="enableLoop"/>
+    <Loop id="enableLoop" path="switch" frames="0-1" delay="0.4"/>
+    <Anim id="enableOff" path="switch" frames="10-2,15-16" delay="0.08"/>
+    <Loop id="enableOffLoop" path="switch" frames="16" delay="0.08"/>
+    <Anim id="disable" path="switch" frames="2-10" delay="0.08" goto="disableLoop"/>
+    <Loop id="disableLoop" path="switch" frames="11-12" delay="0.4"/>
+    <Anim id="disableOff" path="switch" frames="2-10,13-14" delay="0.08"/>
+    <Loop id="disableOffLoop" path="switch" frames="14" delay="0.08"/>
+  </ReverseHelper_DreamToggleV2>
 
 </Sprites>

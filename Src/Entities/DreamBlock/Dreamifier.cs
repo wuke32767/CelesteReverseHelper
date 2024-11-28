@@ -109,14 +109,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
 
         //internal DepthTracker depthTracker;
-
+        
         StaticMover staticmover = default!;
         public override void Added(Scene scene)
         {
             base.Added(scene);
             if (Collider.Bounds.IsEmpty)
             {
-                Dreamifier.table.GetOrCreateValue(solid).Remove(this);
                 RemoveSelf();
             }
 
@@ -340,6 +339,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         //prevent_depth_fight_i_g? preventer;
         public override void Removed(Scene scene)
         {
+            Dreamifier.table.GetOrCreateValue(solid).Remove(this);
             base.Removed(scene);
             //preventer?.RemoveSelf();
             tracker.Untrack(this);

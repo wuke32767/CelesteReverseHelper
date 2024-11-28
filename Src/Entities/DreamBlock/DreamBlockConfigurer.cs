@@ -18,22 +18,21 @@ namespace Celeste.Mod.ReverseHelper.Entities
         alwaysEnable = 1 << 1,
         alwaysDisable = 1 << 2,
         highPriority = 1 << 3,
-        [WIP("should be used with other variants. will be wip before they are completed. pre-acllocated id.")]
-        touchMode = 1 << 4,
+        [WIP]
+        ghostMode = 1 << 4,
+        //[WIP("should be used with other variants. will be wip before they are completed. pre-acllocated id.")]
+        //touchMode = 1 << 4,
         useEntryAngle = 1 << 5,
         [WIP]
-        ghostMode = 1 << 6,
-        [WIP]
-        ghostDisableCollidable = 1 << 7,
+        ghostDisableCollidable = 1 << 6,
     }
     public class DreamBlockTrackers
     {
         public DreamBlockTrackers()
         {
             ByIndex = ImmutableArray.Create
-            (Reverse, Enable, Disable, HighPriority, TouchMode,
-            UseEntryAngle, GhostMode, GhostDisableCollidable,
-            DisableIsSolid, DisableIsSolidv2);
+            (Reverse, Enable, Disable, HighPriority, GhostMode, UseEntryAngle,
+              GhostDisableCollidable);
         }
         public static ConditionalWeakTable<Scene, DreamBlockTrackers> Trackers = [];
 
@@ -42,12 +41,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public readonly List<Entity> Enable = [];
         public readonly List<Entity> Disable = [];
         public readonly List<Entity> HighPriority = [];
-        public readonly List<Entity> TouchMode = [];
-        public readonly List<Entity> UseEntryAngle = [];
         public readonly List<Entity> GhostMode = [];
+        public readonly List<Entity> UseEntryAngle = [];
         public readonly List<Entity> GhostDisableCollidable = [];
-        public readonly List<Entity> DisableIsSolid = [];
-        public readonly List<Entity> DisableIsSolidv2 = [];
         public readonly ImmutableArray<List<Entity>> ByIndex;
 
         //according to https://learn.microsoft.com/en-us/dotnet/api/system.enum.getvalues?view=net-8.0 #Remarks,
@@ -177,7 +173,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public bool? enable { get => getter(DreamBlockConfigFlags.alwaysEnable); set => setter(DreamBlockConfigFlags.alwaysEnable, value); }
         public bool? disable { get => getter(DreamBlockConfigFlags.alwaysDisable); set => setter(DreamBlockConfigFlags.alwaysDisable, value); }
         public bool? highpriority { get => getter(DreamBlockConfigFlags.highPriority); set => setter(DreamBlockConfigFlags.highPriority, value); }
-        public bool? touchMode { get => getter(DreamBlockConfigFlags.touchMode); set => setter(DreamBlockConfigFlags.touchMode, value); }
+        //public bool? touchMode { get => getter(DreamBlockConfigFlags.touchMode); set => setter(DreamBlockConfigFlags.touchMode, value); }
         public bool? useEntryAngle { get => getter(DreamBlockConfigFlags.useEntryAngle); set => setter(DreamBlockConfigFlags.useEntryAngle, value); }
         public bool? ghostMode { get => getter(DreamBlockConfigFlags.ghostMode); set => setter(DreamBlockConfigFlags.ghostMode, value); }
         public bool? ghostDisableCollidable { get => getter(DreamBlockConfigFlags.ghostDisableCollidable); set => setter(DreamBlockConfigFlags.ghostDisableCollidable, value); }
@@ -190,22 +186,59 @@ namespace Celeste.Mod.ReverseHelper.Entities
         {
             base.Added(entity);
             Tracker?.TrackListed(this, withas);
+            PatchedAdded();
         }
         public override void Removed(Entity entity)
         {
             base.Removed(entity);
             Tracker?.UntrackListed(this, withas);
+            PatchedRemoved();
+        }
+        bool newAdded = false;
+        void PatchedAdded()
+        {
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            void internals()
+            {
+                if (SceneAs<Level>() is { } level&&!newAdded)
+                {
+                    level.NewDreamBlockCounter++;
+                    newAdded = true;
+                }
+            }
+            if (ReverseHelperModule.PatchInstalled)
+            {
+                internals();
+            }
+        }
+        void PatchedRemoved()
+        {
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            void internals()
+            {
+                if (SceneAs<Level>() is { } level&&newAdded)
+                {
+                    level.NewDreamBlockCounter--;
+                    newAdded = false;
+                }
+            }
+            if (ReverseHelperModule.PatchInstalled)
+            {
+                internals();
+            }
         }
         public override void EntityAdded(Scene scene)
         {
             base.EntityAdded(scene);
             Tracker?.TrackListed(this, withas);
+            PatchedAdded();
         }
 
         public override void EntityRemoved(Scene scene)
         {
             base.EntityRemoved(scene);
             Tracker?.UntrackListed(this, withas);
+            PatchedRemoved();
         }
         public override void Update()
         {
@@ -320,7 +353,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         private static void Player_DreamDashCheckV2(ILContext il)
         {
-            
+
         }
 
         private static bool DreamBlock_Activate(Func<DreamBlock, bool> orig, DreamBlock self)
@@ -401,7 +434,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public static bool dreamblockcheck_extracond(Entity db, Player p)
         {
             var com = db.Components.Get<DreamBlockConfig>();
-            if ((com?.touchMode ?? false) || p.DashAttacking || p.StateMachine == Player.StDreamDash)
+            if (/*(com?.touchMode ?? false) ||*/ p.DashAttacking || p.StateMachine == Player.StDreamDash)
             {
                 if (Player_DreamDashCheck_Helper.IsEntryAngleCorrect || (com?.useEntryAngle ?? false))
                 {
@@ -413,6 +446,10 @@ namespace Celeste.Mod.ReverseHelper.Entities
         [Obsolete]
         public static bool dreamblock_enabled(Entity db)
         {
+            if (ExternalDreamBlockDummy.TryGetValue(db.GetType(), out var dummy))
+            {
+                db = dummy(db);
+            }
             var com = db.Components.Get<DreamBlockConfig>();
             if (com?.enable ?? false)
             {
@@ -427,7 +464,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
         public static bool dreamblock_enabledv2(Entity db, bool orig)
         {
-            var com = db.Components.Get<DreamBlockConfig>();
+            var com = db.Get<DreamBlockConfig>();
             if (com is null)
             {
                 return orig;
@@ -528,7 +565,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
             internal static bool HasDarkMatter(bool b, Player self)
             {
-                return b || DreamBlockTrackers.GetTracker(self.Scene).TouchMode.Count > 0;
+                return b /*|| DreamBlockTrackers.GetTracker(self.Scene).TouchMode.Count > 0*/;
             }
         }
         private static void Player_DreamDashCheck(ILContext il)
@@ -563,8 +600,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 Exception();
                 return;
             }
-            ic.EmitLdarg0();
-            ic.EmitDelegate(Player_DreamDashCheck_Helper.HasDarkMatter);
+            //ic.EmitLdarg0();
+            //ic.EmitDelegate(Player_DreamDashCheck_Helper.HasDarkMatter);
 
             if (!ic.TryGotoNext(MoveType.Before, i => i.MatchBeq(out _)))
             {
@@ -666,6 +703,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         }
         internal static Dictionary<Type, (Action<Entity> activate, Action<Entity> deactivate)> ExternalDreamBlockLike = [];
+        internal static Dictionary<Type, Func<Entity, Entity>> ExternalDreamBlockDummy = [];
+
         public override void Awake(Scene scene)
         {
             base.Awake(scene);
@@ -698,6 +737,19 @@ namespace Celeste.Mod.ReverseHelper.Entities
                             if (playerCollider.Collider.Collide(Collider))
                             {
                                 BindEntity(playerCollider);
+                            }
+                        }
+                    }
+                }
+                foreach (var (t, g) in ExternalDreamBlockDummy)
+                {
+                    if (Scene.Tracker.Entities.TryGetValue(t, out var list))
+                    {
+                        foreach (Entity playerCollider in list)
+                        {
+                            if (playerCollider.Collider.Collide(Collider))
+                            {
+                                BindEntity(g(playerCollider));
                             }
                         }
                     }

@@ -5,11 +5,18 @@ local purpleBooster = {}
 purpleBooster.name = "ReverseHelper/AnotherPurpleBooster"
 purpleBooster.depth = -8500
 purpleBooster.associatedMods = { "ReverseHelper","VortexHelper", }
-
+purpleBooster.fieldInformation =
+{
+    zzdoc = {
+        fieldType = "ReverseHelper.DOCUMENT",
+        important = true,
+    },
+}
 purpleBooster.placements = {
     
         name = "Another Purple Booster",
-        data = {
+    data = {
+        zzdoc = "",
             redirect=true,
             addDashAttack=false,
             --NewAction=false,

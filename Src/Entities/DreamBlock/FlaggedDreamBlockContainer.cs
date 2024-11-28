@@ -39,6 +39,20 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     }
                 }
             }
+            foreach (var (t, g) in DreamBlockConfigurer.ExternalDreamBlockDummy)
+            {
+                if (Scene.Tracker.Entities.TryGetValue(t, out var list))
+                {
+                    foreach (Entity playerCollider in list)
+                    {
+                        if (playerCollider.Collider.Collide(Collider))
+                        {
+                            BindEntity(g(playerCollider));
+                        }
+                    }
+                }
+            }
+
             RemoveSelf();
         }
         private void BindEntity(Entity playerCollider)
@@ -58,7 +72,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
         }
     }
-    [Tracked]
     public class FlaggedDreamBlockContainerComponent(string flag) : Component(true, false)
     {
         FlagMatch Flag = flag;

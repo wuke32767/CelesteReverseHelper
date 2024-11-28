@@ -97,11 +97,6 @@ namespace Celeste.Mod.ReverseHelper.Libraries
             Depth = Solid.Depth;
         }
 
-        public override void Awake(Scene scene)
-        {
-            base.Awake(scene);
-        }
-
         public override void Update()
         {
             base.Update();

@@ -13,10 +13,23 @@ namespace Celeste.Mod.ReverseHelper
         /// for example, Communal Helper Dream Tunnel.
         /// 
         /// anyway, better to ask me for it.
+        /// actually this is not an modinterop. it's customized for the dream tunnel.
         /// </summary>
+        /// [Obsolete Soon]
         public static void RegisterDreamBlockLike(Type targetType, Action<Entity> ActivateNoRoutine, Action<Entity> DeactivateNoRoutine)
         {
             DreamBlockInteropImportTemplate.RegisterDreamBlockLike?.Invoke(targetType, ActivateNoRoutine, DeactivateNoRoutine);
+        }
+        /// <summary>
+        /// if a entity uses an DreamBlock dummy to listen to dream inventory, use this.
+        /// for example, Communal Helper Dream Tunnel.
+        /// 
+        /// anyway, better to ask me for it.
+        /// actually this is not an modinterop. it's customized for the dream tunnel.
+        /// </summary>
+        public static void RegisterDreamBlockDummy(Type targetType, Func<Entity, Entity> GetDummy)
+        {
+            DreamBlockInteropImportTemplate.RegisterDreamBlockDummy?.Invoke(targetType, GetDummy);
         }
         /// <summary> 
         /// or, use this to check if your entity is enabled.
@@ -82,6 +95,7 @@ namespace Celeste.Mod.ReverseHelper
     [ModImportName("ReverseHelper.DreamBlock")]
     public static class DreamBlockInteropImportTemplate
     {
+        public static Action<Type, Func<Entity, Entity>>? RegisterDreamBlockDummy;
         public static Action<Type, Action<Entity>, Action<Entity>>? RegisterDreamBlockLike;
         public static Func<Entity, bool>? PlayerHasDreamDash;
         public static Func<Entity, long, bool?>? ConfigureGetFromEnum;
@@ -97,6 +111,13 @@ namespace Celeste.Mod.ReverseHelper
             if (targetType is not null && ActivateNoRoutine is not null && DeactivateNoRoutine is not null)
             {
                 DreamBlockConfigurer.ExternalDreamBlockLike[targetType] = (ActivateNoRoutine, DeactivateNoRoutine);
+            }
+        }
+        public static void RegisterDreamBlockDummy(Type targetType, Func<Entity, Entity> GetDummy)
+        {
+            if (targetType is not null && GetDummy is not null)
+            {
+                DreamBlockConfigurer.ExternalDreamBlockDummy[targetType] = GetDummy;
             }
         }
         public static bool PlayerHasDreamDash(Entity e)

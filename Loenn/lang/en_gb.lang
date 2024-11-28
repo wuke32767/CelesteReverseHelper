@@ -25,6 +25,8 @@ entities.ReverseHelper/AnotherPurpleBooster.attributes.description.conserveMovin
 entities.ReverseHelper/AnotherPurpleBooster.attributes.description.fixDashDir=changes DashDir when speed dir changes.\nafter you go through portal, your speed direction changed but "DashDir" is not changed. then you go into dreamblock and it only checks your DashDir, so you just moves towards a wrong direction.
 entities.ReverseHelper/AnotherPurpleBooster.placements.description.Another Purple Booster=purple booster, but can work with portal.\nand conserve speed.\nA little different from vortex purple booster, do not use this if you don't teleport it.
 
+entities.ReverseHelper/AnotherPurpleBooster.attributes.description.zzdoc=Make sure you know what you're doing.\n\npurple booster, but can work with portal.\nand conserve speed.\nA little different from vortex purple booster, do not use this if you don't teleport it.
+
 entities.ReverseHelper/SquareSpinner.attributes.description.colorCore=Only used in core mode, determines its color in hot core.
 
 entities.ReverseHelper/CornerBoostArea.attributes.description.cornerHyper=Warnings: Might Not Work As What You Thought. And Might Not Work Properly With Other Mods.\n\nConverts Hyperdash and Superdash to Cornerboosts.
@@ -42,10 +44,14 @@ entities.ReverseHelper/CustomInvisibleBarrier.attributes.description.type=type o
 entities.ReverseHelper/CustomInvisibleBarrier.attributes.description.reversed=if checked, the barrier will NOT block entities you selected.
 entities.ReverseHelper/CustomInvisibleBarrier.placements.description.Custom Invisible Barrier=Block entities in specific type.\nBAD IN PERFORMANCE. make sure you really need it.
 
-entities.ReverseHelper/BarrierInteropHelper.placements.description.Custom Invisible Barrier Fix Controller=Some entities can move other entities, which would break my invisible barrier. so i added this controller to solve this.\n for performance reason, if some action is not used, better to close it.\nfor example, if you don't have any holdable, or invisible can block player and holdable in the same time, you can close "Holdable" option.
+entities.ReverseHelper/CustomInvisibleBarrier.attributes.description.zzdoc=Make sure you know what you're doing.\n\nBlock entities in specific type.\nNot that good in performance. If possible, don't use this.
+
+entities.ReverseHelper/BarrierInteropHelper.attributes.description.zzdoc=Make sure you know what you're doing.\n\nSome entities can move other entities, which would break my invisible barrier. so i added this controller to solve this.\n for performance reason, if some action is not used, better to close it.\nfor example, if you don't have any holdable, or invisible barrier can block player and holdable in the same time, you can close "Holdable" option.
+
+entities.ReverseHelper/BarrierInteropHelper.placements.description.Custom Invisible Barrier Fix Controller=Some entities can move other entities, which would break my invisible barrier. so i added this controller to solve this.\n for performance reason, if some action is not used, better to close it.\nfor example, if you don't have any holdable, or invisible barrier can block player and holdable in the same time, you can close "Holdable" option.
 entities.ReverseHelper/BarrierInteropHelper.attributes.description.actorsolid=Actor moved by solid.
 entities.ReverseHelper/BarrierInteropHelper.attributes.description.jump=Actor moved by jumpthru.
-entities.ReverseHelper/BarrierInteropHelper.attributes.description.mod=Actor moved by modded jumpthru. Contains Attached Jump Thru [VortexHelper]
+entities.ReverseHelper/BarrierInteropHelper.attributes.description.mod=Actor moved by modded jumpthru. Contains Attached Jump Thru [Vortex Helper]
 entities.ReverseHelper/BarrierInteropHelper.attributes.description.jelly=Player throws jelly.
 entities.ReverseHelper/BarrierInteropHelper.attributes.name.actorsolid=Actor Solid
 entities.ReverseHelper/BarrierInteropHelper.attributes.name.jump=Actor Jumpthru
@@ -59,6 +65,10 @@ entities.ReverseHelper/DashConductionJumpThruUpsideDown.attributes.description.w
 entities.ReverseHelper/DashConductionJumpThruUpsideDown.attributes.description.texture=Sorry for that, but please re-put this entity.
 entities.ReverseHelper/DashConductionJumpThruUpsideDown.attributes.description.x=Sorry for that, but please re-put this entity.
 entities.ReverseHelper/DashConductionJumpThruUpsideDown.attributes.description.y=Sorry for that, but please re-put this entity.
+
+entities.ReverseHelper/DashConductionJumpThru.attributes.description.zzdoc=Make sure you know what you're doing.\n\nThis entity is actually a jumpthru version of Dash Collision Panel [Communal Helper].
+entities.GravityHelper/ReverseHelper/DashConductionJumpThruUpsideDown.attributes.description.zzdoc=Make sure you know what you're doing.\n\nThis entity is actually a jumpthru version of Dash Collision Panel [Communal Helper].
+entities.ReverseHelper/DashConductionJumpThruSideways.attributes.description.zzdoc=Make sure you know what you're doing.\n\nThis entity is actually a jumpthru version of Dash Collision Panel [Communal Helper].
 
 entities.ReverseHelper/DashConductionJumpThru.attributes.description.overrideCollisionResult=DoNotOverride means keeps original result. others are vanilla option.\nNormalCollision and NormalOverride: as if madeline dashes to a common wall.(still conduct dashes.) Seems to have no difference.\nIgnore: as if Madeline dashes to nothing. (still being blocked.)\nBounce: Madeline bounces up, as if Madeline dashes to Kevin.\nRebound: as if Madeline dashes to DashBlock.
 entities.GravityHelper/ReverseHelper/DashConductionJumpThruUpsideDown.attributes.description.overrideCollisionResult=DoNotOverride means keeps original result. others are vanilla option.\nNormalCollision and NormalOverride: as if madeline dashes to a common wall.(still conduct dashes.) Seems to have no difference.\nIgnore: as if Madeline dashes to nothing. (still being blocked.)\nBounce: Madeline bounces up, as if Madeline dashes to Kevin.\nRebound: as if Madeline dashes to DashBlock.
