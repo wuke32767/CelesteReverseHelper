@@ -41,7 +41,6 @@
                 ForceUpdate(level);
             }
         }
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ForceUpdateSingle(Level? level, Entity entity)
         {
             if (ReverseHelperModule.PatchInstalled)
@@ -52,7 +51,6 @@
             {
                 Not(level, entity);
             }
-            [MethodImpl(MethodImplOptions.NoInlining)]
             static void Ins(Level? level, Entity entity)
             {
                 if (entity is DreamBlock db)
@@ -64,7 +62,6 @@
                     Not(level, entity);
                 }
             }
-            [MethodImpl(MethodImplOptions.NoInlining)]
             [Obsolete]
             static void Not(Level? level, Entity entity)
             {
@@ -98,7 +95,6 @@
                 }
             }
         }
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ForceUpdate(Level? level)
         {
             if (ReverseHelperModule.PatchInstalled)
@@ -109,7 +105,6 @@
             {
                 Not(level);
             }
-            [MethodImpl(MethodImplOptions.NoInlining)]
             static void Ins(Level? level)
             {
                 level ??= Engine.Scene as Level;
@@ -144,7 +139,6 @@
                     }
                 }
             }
-            [MethodImpl(MethodImplOptions.NoInlining)]
             [Obsolete]
             static void Not(Level? level)
             {

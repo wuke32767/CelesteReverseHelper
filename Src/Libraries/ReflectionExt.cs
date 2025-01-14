@@ -68,6 +68,14 @@ namespace Celeste.Mod.ReverseHelper.Libraries
         {
             return impl(expr);
         }
+        public static MethodInfo methodof<U>(Expression<Action<U>> expr)
+        {
+            return impl(expr);
+        }
+        public static MethodInfo methodof<U>(Expression<Action> expr)
+        {
+            return impl(expr);
+        }
 
         static MethodInfo impl(Expression expr)
         {

@@ -20,8 +20,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
         highPriority = 1 << 3,
         [WIP]
         ghostMode = 1 << 4,
-        //[WIP("should be used with other variants. will be wip before they are completed. pre-acllocated id.")]
-        //touchMode = 1 << 4,
+        //[WIP("impossible now.")]
+        //touchMode,
         useEntryAngle = 1 << 5,
         [WIP]
         ghostDisableCollidable = 1 << 6,
@@ -197,10 +197,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
         bool newAdded = false;
         void PatchedAdded()
         {
-            [MethodImpl(MethodImplOptions.NoInlining)]
             void internals()
             {
-                if (SceneAs<Level>() is { } level&&!newAdded)
+                if (SceneAs<Level>() is { } level && !newAdded)
                 {
                     level.NewDreamBlockCounter++;
                     newAdded = true;
@@ -213,10 +212,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
         void PatchedRemoved()
         {
-            [MethodImpl(MethodImplOptions.NoInlining)]
             void internals()
             {
-                if (SceneAs<Level>() is { } level&&newAdded)
+                if (SceneAs<Level>() is { } level && newAdded)
                 {
                     level.NewDreamBlockCounter--;
                     newAdded = false;
@@ -321,7 +319,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
         //}
         static ILHook? dashcoroutine;
         [SourceGen.Loader.Load]
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void Load()
         {
             On.Celeste.Player.DreamDashCheck += Player_DreamDashCheck1;
@@ -338,13 +335,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
         }
         static Hook? patch_activate;
-        [MethodImpl(MethodImplOptions.NoInlining)]
         private static void UnloadPatched()
         {
             patch_activate?.Dispose();
             //IL.Celeste.Player.DreamDashCheck -= Player_DreamDashCheckV2;
         }
-        [MethodImpl(MethodImplOptions.NoInlining)]
         private static void LoadPatched()
         {
             patch_activate = new(propertyof((DreamBlock db) => db.Activated).GetGetMethod()!, DreamBlock_Activate);
@@ -680,7 +675,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
 
         [SourceGen.Loader.Unload]
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void Unload()
         {
             On.Celeste.Player.DreamDashCheck -= Player_DreamDashCheck1;
