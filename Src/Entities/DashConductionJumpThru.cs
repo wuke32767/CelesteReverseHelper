@@ -91,7 +91,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public static Entity? Ctor(Level level, LevelData levelData, Vector2 offset, EntityData data)
         {
             Entity? js = null;
-            ReverseHelperExtern.MaddieHelpingHandModule.SidewaysJumpThru.activateHooks();
+            //ReverseHelperExtern.MaddieHelpingHandModule.SidewaysJumpThru.activateHooks();
 
             if (Level.EntityLoaders.TryGetValue("MaxHelpingHand/AttachedSidewaysJumpThru", out var entityLoader))
             {

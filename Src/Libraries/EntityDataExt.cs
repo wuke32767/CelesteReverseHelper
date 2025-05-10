@@ -1,10 +1,43 @@
 ﻿using Microsoft.Xna.Framework;
 using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Celeste.Mod.ReverseHelper.Libraries
 {
     internal static class EntityDataExt
     {
+        public struct _FakeJsonType
+        {
+            [JsonExtensionData]
+            public Dictionary<string, JsonElement>? ExtensionData { get; set; }
+        }
+        public static T? JSONS<T>(this EntityData data, string key) where T: struct
+        {
+            try
+            {
+                return JsonSerializer.Deserialize<T>(data.Attr(key, null)!);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+        public static T? JSON<T>(this EntityData data, string key) where T:class
+        {
+            try
+            {
+                return JsonSerializer.Deserialize<T>(data.Attr(key, null)!);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+        public static Dictionary<string, JsonElement>? JSON(this EntityData data, string key)
+        {
+            return data.JSONS<_FakeJsonType>(key)?.ExtensionData;
+        }
         public static bool? OptionalBool(this EntityData data, string key, bool? def = null)
         {
             if (data.Values != null && data.Values.TryGetValue(key, out var value))

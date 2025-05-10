@@ -16,7 +16,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public float CurrentEaser(float t) => t switch
         {
             < 1 => CurrentEaserUnWrapped.Easer(t),
-            _ => (float)(1 + (t - 1) * CurrentEaserUnWrapped.MaxSpeed)
+            _ => (float)(1 + (t - 1) * CurrentEaserUnWrapped.EndSpeed)
         };
 
         public const string NeverUsedZiplineFlag = "ReverseHelper_IsaGrabBag_NeverUsedZipline";
@@ -110,12 +110,36 @@ namespace Celeste.Mod.ReverseHelper.Entities
             conserveMoving = e.Bool("conserveMoving", false);
             conserveReturning = e.Bool("conserveReturning", false);
             IgnoreNegative = e.Bool("ignoreNegative", false);
-            var Times = e.MergingList("time", floatParse, NodeList.Length);
-            var Speeds = e.MergingList("maxSpeed", floatParse, NodeList.Length);
+            NoReturn = e.Bool("noReturn", false);
+            var targetLen = NodeList.Length;
+            if (NoReturn)
+            {
+                targetLen *= 2;
+            }
+            var Times = e.MergingList("time", floatParse, targetLen);
+            var Speeds = e.MergingList("maxSpeed", floatParse, targetLen);
+
+            var all = Times.Zip(Speeds);
+            if (NoReturn)
+            {
+                var pre = all.Take(NodeList.Length);
+                var post = all.Skip(NodeList.Length);
+                all = pre.Concat(post.Zip(pre.Reverse()).Select(x =>
+                {
+                    if (x.Second.First is null && x.Second.Second is null)
+                    {
+                        return x.First;
+                    }
+                    else
+                    {
+                        return x.Second;
+                    }
+                }));
+            }
 
             float last_time = 0.5f;
             float last_speed = -2;
-            foreach (var ((time, speed, start), end) in Times.Zip(Speeds, NodeList).Zip(NodeList.Skip(1)))
+            foreach (var ((time, speed), start, end) in all.Zip(NodeList, NodeList.Skip(1)))
             {
                 var deltaNormalized = end - start;
                 var deltaLength = deltaNormalized.Length();
@@ -218,7 +242,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             fixv3 = e.Bool("fixbugsv2", false);
             ropeLightColor = e.HexColor("ropeLightColor", Calc.HexToColor("9b6157"));
-            NoReturn = e.Bool("noReturn", false);
             //this.nodeSpeeds=e.("nodeSpeeds");
             //this.startDelay=e.("startDelay");
             //this.customSound=e.("customSound");
@@ -415,6 +438,18 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
             UpdateSpeed(pindex - 1);
         }
+        void ResetSeq()
+        {
+            pindex = 0;
+            currenttarget = NodeList[1];
+            currentstart = NodeList[0];
+            deltaNormalized = currenttarget - currentstart;
+            deltaLength = deltaNormalized.Length();
+            deltaNormalized = deltaNormalized.SafeNormalize();
+
+            UpdateSpeed(pindex);
+        }
+
         bool NextSeq()
         {
             pindex++;
@@ -443,19 +478,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
             PrevSeqMethod();
 
             return true;
-        }
-        void ReverseSeq()
-        {
-            pindex = NodeList.Length - pindex;
-            NodeList.Reverse();
-
-            currenttarget = NodeList[pindex + 1];
-            currentstart = NodeList[pindex];
-            deltaNormalized = currenttarget - currentstart;
-            deltaLength = deltaNormalized.Length();
-            deltaNormalized = deltaNormalized.SafeNormalize();
-
-            UpdateSpeed(pindex);
         }
         void UpdateSpeed(int i)
         {
@@ -583,7 +605,14 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     acceptExtraSpeed = true;
                     if (!NextSeq())
                     {
-                        break;
+                        if (NoReturn)
+                        {
+                            ResetSeq();
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
                     SinePosition = ConservedPosition = 0;
                     if (waiting)
@@ -605,18 +634,23 @@ namespace Celeste.Mod.ReverseHelper.Entities
                             {
                                 waitings = 0;
                                 tick++;
+                                Audio.Play(SfxTicking);
                             }
                             conservedSpeed = 0;
                             yield return null;
                         }
                         if (!shouldTrigger)
                         {
+                            if (permanent)
+                            {
+                                Audio.Play(SfxDie);
+                                yield break;
+                            }
                             CancelNextSeq();
                             break;
                         }
                     }
                 } while (true);
-                
                 if (permanent)
                 {
                     yield break;
@@ -700,7 +734,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
             Everest.Events.Level.OnLoadLevel += Level_OnLoadLevel;
             //Everest.Events.Level.OnTransitionTo += Level_OnTransitionTo;
-            On.Celeste.Player.ctor += PlayerInit;
+            Everest.Events.Player.OnRegisterStates += PlayerInit2;
+            //On.Celeste.Player.ctor += PlayerInit;
             On.Celeste.Player.Update += OnPlayerUpdate;
             On.Celeste.Player.UpdateSprite += UpdatePlayerVisuals;
         }
@@ -710,7 +745,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
         {
             Everest.Events.Level.OnLoadLevel -= Level_OnLoadLevel;
             //Everest.Events.Level.OnTransitionTo -= Level_OnTransitionTo;
-            On.Celeste.Player.ctor -= PlayerInit;
+            Everest.Events.Player.OnRegisterStates -= PlayerInit2;
+            //On.Celeste.Player.ctor -= PlayerInit;
             On.Celeste.Player.Update -= OnPlayerUpdate;
             On.Celeste.Player.UpdateSprite -= UpdatePlayerVisuals;
             ReverseHelperExtern.SpeedRunTool_Interop.Unregister?.Invoke(speedrun!);
@@ -733,10 +769,14 @@ namespace Celeste.Mod.ReverseHelper.Entities
             //}
         }
 
-        private static void PlayerInit(On.Celeste.Player.orig_ctor orig, Player self, Vector2 position, PlayerSpriteMode spriteMode)
+        //private static void PlayerInit(On.Celeste.Player.orig_ctor orig, Player self, Vector2 position, PlayerSpriteMode spriteMode)
+        //{
+        //    orig(self, position, spriteMode);
+        //    ZiplineState = self.StateMachine.AddState(ZiplineUpdate, ZiplineCoroutine, ZiplineBegin, ZiplineEnd);
+        //}
+        private static void PlayerInit2(Player self)
         {
-            orig(self, position, spriteMode);
-            ZiplineState = self.StateMachine.AddState(ZiplineUpdate, ZiplineCoroutine, ZiplineBegin, ZiplineEnd);
+            ZiplineState = self.StateMachine.AddState("ZiplineZipMover", ZiplineUpdate, ZiplineCoroutine, ZiplineBegin, ZiplineEnd);
         }
 
         private static void OnPlayerUpdate(On.Celeste.Player.orig_Update orig, Player self)

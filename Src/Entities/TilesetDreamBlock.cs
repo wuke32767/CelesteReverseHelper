@@ -119,7 +119,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
         bool reimpl
         {
-            [MethodImpl(MethodImplOptions.NoInlining)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Activated;
         }
         public override void Render()
@@ -197,7 +197,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             {
                 return has ? Colora : Colord;
             }
-            [MethodImpl(MethodImplOptions.NoInlining)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             bool reimpl(DreamBlock td) => td.Activated;
             public Color Colord;
             public Color Colora;

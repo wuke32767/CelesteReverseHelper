@@ -8,18 +8,19 @@
     }
     public static class EaseEnums
     {
-        public static EaseGroup EasePlus(this EntityData e, string attr, EaseEnum def = EaseEnum.SineIn)
+        public static EaseGroup EasePlus(this EntityData e, string attr, bool bound = true, EaseEnum def = EaseEnum.SineIn)
         {
-            return FromEnum(e.Enum(attr, def));
+            return FromEnum(e.Enum(attr, def), bound);
         }
-        public static EaseGroup FromEnum(EaseEnum easeEnum)
+        public static EaseGroup FromEnum(EaseEnum easeEnum, bool bound = true)
         => easeEnum switch
         {
             EaseEnum.Linear => new(Ease.Linear, 1, 1),
             EaseEnum.SineIn => new(Ease.SineIn, Math.PI / 2, Math.PI / 2),
             EaseEnum.SineOut => new(Ease.SineOut, 0, Math.PI / 2),
             EaseEnum.SineInOut => new(Ease.SineInOut, 0, Math.PI / 2),
-            EaseEnum.ElasticIn => new(Ease.ElasticIn, 0, 15),
+            _ when bound => throw new NotImplementedException(),
+            EaseEnum.ElasticIn => new(Ease.ElasticIn, 15, 15),
             //wip
             EaseEnum.QuadIn => new(Ease.QuadIn, 0, 0),
             EaseEnum.QuadOut => new(Ease.QuadOut, 0, 0),
@@ -30,8 +31,6 @@
             EaseEnum.QuintIn => new(Ease.QuintIn, 0, 0),
             EaseEnum.QuintOut => new(Ease.QuintOut, 0, 0),
             EaseEnum.QuintInOut => new(Ease.QuintInOut, 0, 0),
-            EaseEnum.ExpoIn => new(Ease.ExpoIn, 0, 0),
-            EaseEnum.ExpoOut => new(Ease.ExpoOut, 0, 0),
             EaseEnum.ExpoInOut => new(Ease.ExpoInOut, 0, 0),
             EaseEnum.BackIn => new(Ease.BackIn, 0, 0),
             EaseEnum.BackOut => new(Ease.BackOut, 0, 0),
@@ -45,6 +44,8 @@
             EaseEnum.BounceOut => new(Ease.BounceOut, 0, 0),
             EaseEnum.BounceInOut => new(Ease.BounceInOut, 0, 0),
             _ => throw new NotImplementedException(),
+            //EaseEnum.ExpoIn => new(Ease.ExpoIn, 10 * Math.Log(2), 10*Math.Log(2)),
+            //EaseEnum.ExpoOut => new(Ease.ExpoOut, 10 * Math.Log(2), 0),
         };
     }
 }

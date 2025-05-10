@@ -9,6 +9,16 @@ cbarea.depth = 8500
 cbarea.associatedMods = { "ReverseHelper" }
 cbarea.fieldInformation =
 {
+    jumpThruMode = {
+        options = {
+            "none",
+            "left",
+            "right",
+            "up",
+            "down",
+        },
+        editable = false,
+    },
     zzdoc = {
         fieldType = "ReverseHelper.DOCUMENT",
         important = true,
@@ -20,13 +30,16 @@ cbarea.placements = {
 
     data = {
         zzdoc = "",
-        width = 8, height = 8,
-        type="Player,TheoCrystal",
-        reversed=false,
-        climb=false,
+        width = 8,
+        height = 8,
+        type = "Player,TheoCrystal",
+        reversed = false,
+        climb = false,
     }
-    
-}
 
+}
+if require("mods").requireFromPlugin("libraries.private", "ReverseHelperPrivate") then
+    cbarea.placements.data.jumpThruMode = "none"
+end
 
 return cbarea

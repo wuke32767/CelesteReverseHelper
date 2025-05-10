@@ -1,6 +1,8 @@
 ﻿using Celeste.Mod.Entities;
+using Celeste.Mod.ReverseHelper.Libraries;
 using Microsoft.Xna.Framework;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
@@ -73,10 +75,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         private void Holdable_Release(On.Celeste.Holdable.orig_Release orig, Holdable self, Vector2 force)
         {
-            Guardian(() => orig(self, force), self.Entity.GetType());
+            Guardian(() => orig(self, force), self.Entity);
         }
 
-        static void Guardian(Action act, Type self)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static void Guardian(Action act, Entity self)
         {
             var tar = Engine.Scene.Tracker.Entities[typeof(CustomInvisibleBarrier)].Cast<CustomInvisibleBarrier>();
             foreach (var r in tar)
@@ -89,7 +92,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 r.Restore();
             }
         }
-        static T Guardian<T>(Func<T> act, Type self)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static T Guardian<T>(Func<T> act, Entity self)
         {
             var tar = Engine.Scene.Tracker.Entities[typeof(CustomInvisibleBarrier)].Cast<CustomInvisibleBarrier>();
             foreach (var r in tar)
@@ -157,7 +161,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     var tar = Engine.Scene.Tracker.Entities[typeof(CustomInvisibleBarrier)].Cast<CustomInvisibleBarrier>();
                     foreach (var r in tar)
                     {
-                        r.ApplyTo(a.GetType());
+                        r.ApplyTo(a);
                     }
                     return a;
                 }
@@ -165,13 +169,14 @@ namespace Celeste.Mod.ReverseHelper.Entities
             ic = new ILCursor(il);
             while (ic.TryGotoNext(MoveType.AfterLabel, x => x.MatchRet()))
             {
+                ic.EmitLdarg0();
                 ic.EmitDelegate(nameless2);
-                static void nameless2()
+                static void nameless2(Entity self)
                 {
                     var tar = Engine.Scene.Tracker.Entities[typeof(CustomInvisibleBarrier)].Cast<CustomInvisibleBarrier>();
                     foreach (var r in tar)
                     {
-                        r.Restore();
+                        r.ApplyTo(self);
                     }
                 }
                 ic.Index++;
@@ -203,15 +208,71 @@ namespace Celeste.Mod.ReverseHelper.Entities
         bool awaken = false;
         public bool reversed = false;
         bool killins_unused;
-        public void ApplyTo(Type type)
+        public void ApplyTo(Entity type)
         {
-            Collidable = reversed != typer!.Contains(type);
+            var match = typer!.Contains(type.GetType());
+            Collidable = reversed != match;
+            if (ThruMode != JumpThruMode.none && Collidable)
+            {
+                Rectangle result = OrigSize;
+                switch (ThruMode)
+                {
+                    case JumpThruMode.up:
+                    case JumpThruMode.down:
+                        if (type.Right <= Left || type.Left >= Right)
+                        {
+                            Collidable = false;
+                            return;
+                        }
+                        break;
+                    case JumpThruMode.left:
+                    case JumpThruMode.right:
+                        if (type.Bottom <= Top || type.Top >= Bottom)
+                        {
+                            Collidable = false;
+                            return;
+                        }
+                        break;
+                }
+                switch (ThruMode)
+                {
+                    case JumpThruMode.up:
+                        result.Y = (int)type.Bottom;
+                        break;
+                    case JumpThruMode.down:
+                        result.Y = (int)type.Top - result.Height;
+                        break;
+                    case JumpThruMode.left:
+                        result.X = (int)type.Right;
+                        break;
+                    case JumpThruMode.right:
+                        result.X = (int)type.Left - result.Width;
+                        break;
+                }
+                var t = OrigSize;
+                t = t.ClampTo(result);
+                if (t.Width <= 0 || t.Height <= 0)
+                {
+                    Collidable = false;
+                    return;
+                }
+                Position.X = t.X;
+                Position.Y = t.Y;
+                Collider.Width = t.Width;
+                Collider.Height = t.Height;
+            }
         }
         public void Restore()
         {
             Collidable = reversed;
         }
-        public CustomInvisibleBarrier(Vector2 position, int width, int height, EntityData e, bool rev, bool climb, bool kill, bool attach) : base(position, width, height, true)
+        public enum JumpThruMode
+        {
+            none, left, right, up, down,
+        }
+        JumpThruMode ThruMode;
+        Rectangle OrigSize;
+        public CustomInvisibleBarrier(Vector2 position, int width, int height, EntityData e, bool rev, bool climb, bool kill, bool attach, JumpThruMode js) : base(position, width, height, true)
         {
             if (e.Values.TryGetValue("_resttype", out var a))
             {
@@ -233,9 +294,16 @@ namespace Celeste.Mod.ReverseHelper.Entities
             {
                 Add(new StaticMover());
             }
+            OrigSize = new((int)position.X, (int)position.Y, width, height);
+
+            ThruMode = js;
+            if (ThruMode != JumpThruMode.none && reversed)
+            {
+                throw new InvalidOperationException("CustomInvisibleBarrier JumpThru Mode can't be reversed, or you will comes to the performance hell.");
+            }
         }
 
-        public CustomInvisibleBarrier(EntityData e, Vector2 offset) : this(e.Position + offset, e.Width, e.Height, e, e.Bool("reversed"), e.Bool("climb"), e.Bool("killInside"), e.Bool("attach"))
+        public CustomInvisibleBarrier(EntityData e, Vector2 offset) : this(e.Position + offset, e.Width, e.Height, e, e.Bool("reversed"), e.Bool("climb"), e.Bool("killInside"), e.Bool("attach"), e.Enum("jumpThruMode", JumpThruMode.none))
         {
 
         }
@@ -464,7 +532,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 var tar = Engine.Scene.Tracker.Entities[typeof(CustomInvisibleBarrier)].Cast<CustomInvisibleBarrier>();
                 foreach (var r in tar)
                 {
-                    r.ApplyTo(type);
+                    r.ApplyTo(self);
                 }
 
                 orig(self);

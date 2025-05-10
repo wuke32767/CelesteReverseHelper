@@ -52,8 +52,8 @@ namespace Celeste.Mod.ReverseHelper.Libraries
             {
                 Upd = () =>
                 {
-                    f = Solid.Visible;
-                    Solid.Visible = false;
+                    f = solid.Visible;
+                    solid.Visible = false;
                 }
             };
         }

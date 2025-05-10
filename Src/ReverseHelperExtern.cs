@@ -4,7 +4,7 @@ using MonoMod.ModInterop;
 using System.Reflection;
 
 namespace Celeste.Mod.ReverseHelper
-{ 
+{
     public static class ReverseHelperExtern
     {
         const BindingFlags bf = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
@@ -39,6 +39,24 @@ namespace Celeste.Mod.ReverseHelper
         }
         public static class MaddieHelpingHandModule
         {
+            /// <summary>
+            /// Some Helping Hand entities (such as jumpthrus) only load their hooks when entering a map,
+            /// if entities matching a certain list of names are present in the map.
+            /// This ModInterop class allows other mods to add their own entity names to the lists.
+            /// </summary>
+            [ModImportName("MaddieHelpingHand/EntityIdRegistry")]
+            public static class Interop
+            {
+                public static Action<string>? RegisterSidewaysJumpThru;
+                //public static Action<string>? RegisterUpsideDownJumpThru;
+            }
+            public static class InteropCaller
+            {
+                public static void RegisterSidewaysJumpThru(string name)
+                {
+                    Interop.RegisterSidewaysJumpThru?.Invoke(name);
+                }
+            }
             static Assembly? Assembly;
             public static void LoadContent()
             {
@@ -48,6 +66,7 @@ namespace Celeste.Mod.ReverseHelper
                     .FirstOrDefault();
                 AttachedSidewaysJumpThru.LoadContent();
                 SidewaysJumpThru.LoadContent();
+                InteropCaller.RegisterSidewaysJumpThru("ReverseHelper/DashConductionJumpThruSideways");
             }
             public static class AttachedSidewaysJumpThru
             {

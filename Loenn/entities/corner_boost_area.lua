@@ -23,12 +23,16 @@ cbarea.fieldInformation = {
     },
     lineColor = {
         fieldType = "color",
-    }
+    },
+    zzdoc = {
+        fieldType = "ReverseHelper.DOCUMENT",
+        important = false,
+    },
 }
 
 cbarea.placements = {
 
-    name = "Corner Boost Area",
+    name = "ClimbJumpArea",
 
     data = {
         width = 8, height = 8,
@@ -41,7 +45,8 @@ cbarea.placements = {
         cornerHyper=false,
         fillColor="ffffffff",
         lineColor="ffffffff",
-        legacyTransparent=true,
+        legacyTransparent = true,
+        zzdoc="",
     }
     
 }

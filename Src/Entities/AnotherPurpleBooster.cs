@@ -731,8 +731,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
             [SourceGen.Loader.Load]
             public static void Hook()
             {
-                On.Celeste.Player.ctor += Player_ctor;
-
+                //On.Celeste.Player.ctor += Player_ctor;
+                Everest.Events.Player.OnRegisterStates += Player_ctor;
                 //IL.Celeste.Player.Update += Player_Update;
             }
 
@@ -767,16 +767,17 @@ namespace Celeste.Mod.ReverseHelper.Entities
             [SourceGen.Loader.Unload]
             public static void Unhook()
             {
-                On.Celeste.Player.ctor -= Player_ctor;
+                //On.Celeste.Player.ctor -= Player_ctor;
+                Everest.Events.Player.OnRegisterStates -= Player_ctor;
 
                 //IL.Celeste.Player.Update -= Player_Update;
             }
 
-            private static void Player_ctor(On.Celeste.Player.orig_ctor orig, Player self, Vector2 position, PlayerSpriteMode spriteMode)
+            private static void Player_ctor(Player self)
             {
-                orig(self, position, spriteMode);
                 // Custom Purple Booster State
                 ReverseHelperModule.AnotherPurpleBoosterState = self.StateMachine.AddState(
+                    "AnotherPurpleBoost",
                     new Func<int>(PurpleBoostUpdate),
                     PurpleBoostCoroutine,
                     PurpleBoostBegin,
@@ -784,6 +785,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
                 // Custom Purple Booster State (Arc Motion)
                 ReverseHelperModule.AnotherPurpleBoosterDashState = self.StateMachine.AddState(
+                    "AnotherPurpleDashing",
                     new Func<int>(PurpleDashingUpdate),
                     PurpleDashingCoroutine,
                     PurpleDashingBegin,

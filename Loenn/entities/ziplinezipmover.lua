@@ -25,13 +25,13 @@ zipline.fieldInformation = {
         options = conserveoption
     },
 
-    waitings = {
+    stoppings = {
         fieldType = "list",
     },
     startings = {
         fieldType = "list",
     },
-    returnWaitings = {
+    returnStoppings = {
         fieldType = "list",
     },
     returnStartings = {
@@ -56,7 +56,15 @@ zipline.fieldOrder = {
     "permanent", "waiting", "ticking", --"synced",
     "tickDelay", "ticks",
     --"ropeColor", "syncTag",
-
+    "synced", "noReturn", "_padding", "_padding",
+    "ropeColor", "syncTag",
+    "touchSfx",
+    "impactSfx",
+    "returnSfx",
+    "resetSfx",
+    "tickingSfx",
+    "dieSfx",
+    "adsfcewasdferw",
 
 }
 zipline.placements = {
@@ -85,11 +93,21 @@ zipline.placements = {
         ticking = false,
         tickDelay = 1,
         ticks = 5,
-        --synced = false,
-        --ropeColor = "663931",
-        --syncTag = "",
         _padding = false,
     }
 }
-
+if require("mods").requireFromPlugin("libraries.private", "ReverseHelperPrivate") then
+    zipline.placements.data=($({
+        synced = false,
+        ropeColor = "663931",
+        syncTag = "",
+        noReturn = false,
+        resetSfx = "event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/reset",
+        returnSfx =  "event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/return",
+        impactSfx =  "event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/impact",
+        touchSfx =  "event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/touch",
+        tickingSfx =  "event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/touch",
+        dieSfx =  "event:/ReverseHelper/VanillaTweaks/Zip_Unzipped/touch",
+    }) .. $(zipline.placements.data))()
+end
 return zipline

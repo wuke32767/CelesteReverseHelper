@@ -342,8 +342,64 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
         private static void LoadPatched()
         {
+            IL.Celeste.Player.DreamDashCheck += Player_DreamDashCheck_Patched;
+
             patch_activate = new(propertyof((DreamBlock db) => db.Activated).GetGetMethod()!, DreamBlock_Activate);
             //IL.Celeste.Player.DreamDashCheck += Player_DreamDashCheckV2;
+        }
+
+        private static void Player_DreamDashCheck_Patched(ILContext il)
+        {
+            var ic = new ILCursor(il);
+            void Exception()
+            {
+                ReverseHelperModule.failed_to_hook_reverse_dreamblock = true;
+                Logger.Log(LogLevel.Error, "ReverseHelper", "Failed to load DreamBlockConfigurer");
+                try
+                {
+                    Logger.Log(LogLevel.Error, "ReverseHelper", il.ToString());
+                }
+                catch (Exception)
+                {
+                }
+            }
+            var label = ic.DefineLabel();
+
+            if (!ic.TryGotoNext(MoveType.After, i => i.MatchStloc0()))
+            {
+                Exception();
+                return;
+            }
+
+            ic.Emit(OpCodes.Ldloc_0);
+            //ic.Emit(OpCodes.Ldarg_0);
+            ic.EmitDelegate(Player_DreamDashCheck_Helper.CheckPriority);
+
+            FieldInfo value___ = fieldof((Player p) => p.dreamBlock);
+            ic.Emit(OpCodes.Brtrue, label);
+            var target = ic.Clone();
+            if (!target.TryGotoNext(
+                //i => i.MatchLdarg(0),
+                //i => i.MatchLdloc(0),
+                i => i.MatchStfld(value___)
+                //i => i.MatchLdcI4(1),
+                //i => i.MatchRet()
+                ))
+            {
+                ic.MarkLabel();
+                Exception();
+                return;
+            }
+            if (!target.TryGotoPrev(MoveType.Before,
+                i => i.MatchLdarg(0)
+                ))
+            {
+                ic.MarkLabel();
+                Exception();
+                return;
+            }
+            target.MarkLabel(label);
+
         }
 
         private static void Player_DreamDashCheckV2(ILContext il)
