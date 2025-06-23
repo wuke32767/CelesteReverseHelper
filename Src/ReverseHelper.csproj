@@ -6,6 +6,8 @@
     <RootNamespace>Celeste.Mod.ReverseHelper</RootNamespace>
     <LangVersion>latest</LangVersion>
     <CelesteGamePath Condition="'$(CELESTEGAMEPATH)' == ''">..\..\..</CelesteGamePath>
+    <CelestePath Condition="Exists('..\stripped\Orig\Celeste.dll')">..\stripped\Orig</CelestePath>
+    <CelestePath Condition="'$(CELESTEPATH)' == ''">..\stripped</CelestePath>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <Nullable>enable</Nullable>
     <!--<OutputPath>../bin</OutputPath>-->
@@ -26,7 +28,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="CelesteMod.Publicizer" Version="*" CelesteAssembly="$(CELESTEGAMEPATH)\Celeste.dll" />
+    <PackageReference Include="CelesteMod.Publicizer" Version="*" CelesteAssembly="$(CELESTEPATH)\Celeste.dll" />
     <ProjectReference Include="..\ReverseHelper.SourceGen\ReverseHelper.SourceGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <Reference Include="FNA">
       <HintPath>$(CELESTEGAMEPATH)\FNA.dll</HintPath>
