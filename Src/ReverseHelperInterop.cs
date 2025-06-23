@@ -4,7 +4,8 @@ using System.Collections.Immutable;
 
 namespace Celeste.Mod.ReverseHelper
 {
-    public static class DreamBlockInteropImportCallerTemplate
+    //[GenerateImports("ReverseHelper.DreamBlock")]
+    public static partial class DreamBlockInteropImportCallerTemplate
     {
         /// <summary>
         /// if a entity acts like DreamBlock but is not DreamBlock, use this. 
@@ -16,10 +17,7 @@ namespace Celeste.Mod.ReverseHelper
         /// actually this is not an modinterop. it's customized for the dream tunnel.
         /// </summary>
         /// [Obsolete Soon]
-        public static void RegisterDreamBlockLike(Type targetType, Action<Entity> ActivateNoRoutine, Action<Entity> DeactivateNoRoutine)
-        {
-            DreamBlockInteropImportTemplate.RegisterDreamBlockLike?.Invoke(targetType, ActivateNoRoutine, DeactivateNoRoutine);
-        }
+        public static partial void RegisterDreamBlockLike(Type targetType, Action<Entity> ActivateNoRoutine, Action<Entity> DeactivateNoRoutine);
         /// <summary>
         /// if a entity uses an DreamBlock dummy to listen to dream inventory, use this.
         /// for example, Communal Helper Dream Tunnel.
@@ -27,10 +25,7 @@ namespace Celeste.Mod.ReverseHelper
         /// anyway, better to ask me for it.
         /// actually this is not an modinterop. it's customized for the dream tunnel.
         /// </summary>
-        public static void RegisterDreamBlockDummy(Type targetType, Func<Entity, Entity> GetDummy)
-        {
-            DreamBlockInteropImportTemplate.RegisterDreamBlockDummy?.Invoke(targetType, GetDummy);
-        }
+        public static partial void RegisterDreamBlockDummy(Type targetType, Func<Entity, Entity> GetDummy);
         /// <summary> 
         /// or, use this to check if your entity is enabled.
         /// notice that because of awake order, your entity might awake before reversed.
@@ -38,14 +33,7 @@ namespace Celeste.Mod.ReverseHelper
         /// </summary>
         /// <param name="e">the entity to be checked.</param>
         /// <param name="fallback">if ReverseHelper is not loaded, use fallback instead.</param>
-        public static bool PlayerHasDreamDash(Entity e, Func<bool>? fallback = null)
-        {
-            if (DreamBlockInteropImportTemplate.PlayerHasDreamDash is null)
-            {
-                return fallback?.Invoke() ?? (Engine.Scene as Level)?.Session?.Inventory.DreamDash ?? false;
-            }
-            return DreamBlockInteropImportTemplate.PlayerHasDreamDash(e);
-        }
+        public static partial bool PlayerHasDreamDash(Entity e, Func<bool>? fallback = null);
         /// <summary>
         /// generic version of these options.
         /// https://github.com/wuke32767/CelesteReverseHelper/blob/a4919894497bc501be7f9f8f5c08923a1187af1c/Src/Entities/DreamBlock/DreamBlockConfigurer.cs#L15
@@ -57,28 +45,19 @@ namespace Celeste.Mod.ReverseHelper
         /// null: not set / not loaded.
         /// not null: get flag.
         /// </returns>
-        public static bool? ConfigureGetFromEnum(Entity e, long i)
-        {
-            return DreamBlockInteropImportTemplate.ConfigureGetFromEnum?.Invoke(e, i);
-        }
+        public static partial bool? ConfigureGetFromEnum(Entity e, long i);
         /// <summary>
         /// generic version of these option.
         /// setter.
         /// </summary>
         /// notice that it can clear a flag.
-        public static void ConfigureSetFromEnum(Entity e, long i, bool? value)
-        {
-            DreamBlockInteropImportTemplate.ConfigureSetFromEnum?.Invoke(e, i, value);
-        }
+        public static partial void ConfigureSetFromEnum(Entity e, long i, bool? value);
         /// <summary>
         /// get option from string.
         /// </summary>
         /// <returns> one of Enum.GetValues<DreamBlockConfigFlags>() </returns>
         /// (param) one of Enum.GetNames<DreamBlockConfigFlags>()
-        public static long ConfigureGetEnum(string s)
-        {
-            return DreamBlockInteropImportTemplate.ConfigureGetEnum?.Invoke(s) ?? 0;
-        }
+        public static partial long ConfigureGetEnum(string s);
         /// <summary>
         /// returns trackers for these flags.
         /// </summary>
@@ -86,7 +65,39 @@ namespace Celeste.Mod.ReverseHelper
         /// index it with the enum and you would get all dreamblock that has the flag.
         /// sometimes it contains Dream Tunnel [Communal Helper], which is not DreamBlock. 
         /// </returns>
-        public static ImmutableArray<List<Entity>>? GetDreamBlockTrackers(Scene scene)
+        public static partial ImmutableArray<List<Entity>>? GetDreamBlockTrackers(Scene scene);
+    }
+    public static partial class DreamBlockInteropImportCallerTemplate
+    {
+        public static partial void RegisterDreamBlockLike(Type targetType, Action<Entity> ActivateNoRoutine, Action<Entity> DeactivateNoRoutine)
+        {
+            DreamBlockInteropImportTemplate.RegisterDreamBlockLike?.Invoke(targetType, ActivateNoRoutine, DeactivateNoRoutine);
+        }
+        public static partial void RegisterDreamBlockDummy(Type targetType, Func<Entity, Entity> GetDummy)
+        {
+            DreamBlockInteropImportTemplate.RegisterDreamBlockDummy?.Invoke(targetType, GetDummy);
+        }
+        public static partial bool PlayerHasDreamDash(Entity e, Func<bool>? fallback = null)
+        {
+            if (DreamBlockInteropImportTemplate.PlayerHasDreamDash is null)
+            {
+                return fallback?.Invoke() ?? (Engine.Scene as Level)?.Session?.Inventory.DreamDash ?? false;
+            }
+            return DreamBlockInteropImportTemplate.PlayerHasDreamDash(e);
+        }
+        public static partial bool? ConfigureGetFromEnum(Entity e, long i)
+        {
+            return DreamBlockInteropImportTemplate.ConfigureGetFromEnum?.Invoke(e, i);
+        }
+        public static partial void ConfigureSetFromEnum(Entity e, long i, bool? value)
+        {
+            DreamBlockInteropImportTemplate.ConfigureSetFromEnum?.Invoke(e, i, value);
+        }
+        public static partial long ConfigureGetEnum(string s)
+        {
+            return DreamBlockInteropImportTemplate.ConfigureGetEnum?.Invoke(s) ?? 0;
+        }
+        public static partial ImmutableArray<List<Entity>>? GetDreamBlockTrackers(Scene scene)
         {
             return DreamBlockInteropImportTemplate.GetDreamBlockTrackers?.Invoke(scene);
         }
