@@ -189,9 +189,15 @@
         public static void Load()
         {
             //On.Celeste.Level.Update += Level_Update;
-            sr = ReverseHelperExtern.SpeedRunTool_Interop.RegisterStaticTypes?.Invoke(typeof(DreamToggleListener), [nameof(isactivated)]);
+            sr = ReverseHelperExtern.SpeedRunTool_Interop.RegisterStaticTypes?.Invoke(typeof(DreamToggleListener), [nameof(isactivated), nameof(srT)]);
         }
         static object? sr;
+        static Scene? srT
+        {
+            get => OnScene<DreamToggleListener>.self.Scene;
+            set => OnScene<DreamToggleListener>.self.Scene = value;
+        }
+
         private static void Level_Update(On.Celeste.Level.orig_Update orig, Level self)
         {
             orig(self);
