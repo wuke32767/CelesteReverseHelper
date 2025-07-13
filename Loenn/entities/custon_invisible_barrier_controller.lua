@@ -20,6 +20,7 @@ cbarea.placements = {
         jump=true,
         mod=true,
         jelly=false,
+        wind=false,
     }
     
 }

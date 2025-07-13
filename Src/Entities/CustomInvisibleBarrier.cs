@@ -15,15 +15,17 @@ namespace Celeste.Mod.ReverseHelper.Entities
         bool jump;
         bool mod;
         bool jelly;
+        bool wind;
 
         public CustomInvisibleBarrierManager(bool actorsolid = true, bool jump = true, bool mod = true,
-            bool jelly = false) : base()
+            bool jelly = false, bool wind = false) : base()
         {
             AddTag(Tags.Global);
             this.actorsolid = actorsolid;
             this.jump = jump;
             this.mod = mod;
             this.jelly = jelly;
+            this.wind = wind;
         }
         static ILHook? AttachedJumpThru;
         public override void SceneBegin(Scene scene)
@@ -36,7 +38,41 @@ namespace Celeste.Mod.ReverseHelper.Entities
             base.Added(scene);
             Load();
         }
+        static bool windwrapping = false;
+        static List<WeakReference<WindMover>> windmvr = [];
+        static ILHook? ilh;
+        [SourceGen.Loader.Load]
+        public static void StaticLoad()
+        {
+            On.Celeste.WindMover.ctor += WindMover_ctor1;
+            IL.Celeste.Player.ctor += Refresher;
+            ilh?.Dispose();
+            ilh = new(methodof((Glider g) => g.orig_ctor), Refresher);
+        }
 
+        private static void WindMover_ctor1(On.Celeste.WindMover.orig_ctor orig, WindMover self, Action<Vector2> move)
+        {
+            if (!windwrapping)
+            {
+                orig(self, move);
+                if (windmvr.Capacity == windmvr.Count)
+                {
+                    windmvr.RemoveAll(x => !x.TryGetTarget(out _));
+                }
+                windmvr.Add(new(self));
+            }
+            else
+            {
+                orig(self, Wrapper(move, self));
+            }
+        }
+        [SourceGen.Loader.Unload]
+        public static void StaticUnload()
+        {
+            On.Celeste.WindMover.ctor -= WindMover_ctor1;
+            IL.Celeste.Player.ctor -= Refresher;
+            ilh?.Dispose();
+        }
         private void Load()
         {
             if (Scene.Tracker.GetEntity<CustomInvisibleBarrierManager>() != this)
@@ -71,6 +107,18 @@ namespace Celeste.Mod.ReverseHelper.Entities
             {
                 On.Celeste.Holdable.Release += Holdable_Release;
             }
+            if (wind)
+            {
+                windwrapping = true;
+                foreach (var c in windmvr)
+                {
+                    if (c.TryGetTarget(out var r))
+                    {
+                        r.Move = Wrapper(r.Move, r);
+                    }
+                }
+                windmvr.Clear();
+            }
         }
 
         private void Holdable_Release(On.Celeste.Holdable.orig_Release orig, Holdable self, Vector2 force)
@@ -78,6 +126,30 @@ namespace Celeste.Mod.ReverseHelper.Entities
             Guardian(() => orig(self, force), self.Entity);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static Action<T> Wrapper<T>(Action<T> act, Component _self)
+        {
+            return (p) =>
+            {
+                if (_self.Entity is { } self)
+                {
+                    var tar = Engine.Scene.Tracker.Entities[typeof(CustomInvisibleBarrier)].Cast<CustomInvisibleBarrier>();
+                    foreach (var r in tar)
+                    {
+                        r.ApplyTo(self);
+                    }
+                    act(p);
+                    foreach (var r in tar)
+                    {
+                        r.Restore();
+                    }
+                }
+                else
+                {
+                    act(p);
+                }
+            };
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void Guardian(Action act, Entity self)
         {
@@ -145,6 +217,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             {
                 On.Celeste.Holdable.Release -= Holdable_Release;
             }
+            windwrapping = false;
 
             working = false;
         }
@@ -184,7 +257,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
 
         public CustomInvisibleBarrierManager(EntityData e, Vector2 offset)
-            : this(e.Bool("actorsolid", true), e.Bool("jumpthru", true), e.Bool("moddedjumpthru", true), e.Bool("jelly", false))
+            : this(e.Bool("actorsolid", true), e.Bool("jumpthru", true), e.Bool("moddedjumpthru", true), e.Bool("jelly", false), e.Bool("wind", false))
         {
 
         }

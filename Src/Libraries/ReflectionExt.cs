@@ -135,5 +135,9 @@ namespace Celeste.Mod.ReverseHelper.Libraries
         {
             return new ILHook(info, @delegate);
         }
+        public static void Refresher(ILContext il)
+        {
+        }
+
     }
 }
