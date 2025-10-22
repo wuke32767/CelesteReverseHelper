@@ -3,8 +3,9 @@
 namespace Celeste.Mod.ReverseHelper.Entities
 {
     [SourceGen.Loader.Preload("ReverseHelper/DreamDashToAndFromFlag")]
-    public partial class DreamInventoryToAndFromFlag(string flags, int version) : Entity()
+    public partial class DreamInventoryToAndFromFlag(string flags, int _) : Entity()
     {
+        static readonly int version = 3;
         public string Flags => flags;
 
         Session session => SceneAs<Level>().Session;

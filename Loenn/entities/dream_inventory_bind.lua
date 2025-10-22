@@ -1,6 +1,10 @@
 local utils = require "utils"
 
 local cbarea = {
+    ignoredFields = {
+        "_name", "_id", "originX", "originY", --defaults to
+        "version",
+    },
     fieldInformation = {
         version = {
             options = { 1, 2, 3 },
@@ -19,7 +23,6 @@ cbarea.placements = {
 
     data = {
         flag="PlayerHasDreamDash",
-        version=1,
     }
     
 }

@@ -127,5 +127,5 @@ triggers.ReverseHelper/EnableTrigger.placements.name.DisableTrigger=Disable Trig
 triggers.ReverseHelper/EnableTrigger.attributes.description.mode=Determines how "disable" works.\nDisable: set Active to false.\nCollidable: Set Collidable to false.\nShrink: Resize to (0, 0).\n MoveAway: Move it to somewhere. Add a Enable Trigger Move Mode Target and point at it with a new node to determine where it will be moved to.
 
 
-entities.ReverseHelper/DreamDashToAndFromFlag.attributes.description.version=version 3 can't convert flag and dream dash inventory immediately, but the delay is less than one frame.\nversion 1 improved v3, the delay only happens when you don't use reverse helper to change dream inventory.\nversion 2 can convert them immediately, at the cost of ~5% compatibility.\nv3 has the best performance, followed by v1, and v2 has the worst. But the difference should be less than 1%.
+entities.ReverseHelper/DreamDashToAndFromFlag.attributes.description.version=deprecated.
 entities.ReverseHelper/DreamDashToAndFromFlag.attributes.description.flag=you can't invert this flag by "!". this is intended.
