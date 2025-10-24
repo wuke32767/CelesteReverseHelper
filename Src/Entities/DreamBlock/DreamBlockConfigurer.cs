@@ -318,6 +318,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         //{
         //}
         static ILHook? dashcoroutine;
+        static ILHook? ddcheck;
         [SourceGen.Loader.Load]
         public static void Load()
         {
@@ -329,7 +330,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             else
             {
                 //using var context = new DetourConfigContext(new DetourConfig("ReverseHelper", int.MinValue)).Use();
-                IL.Celeste.Player.DreamDashCheck += Player_DreamDashCheck;
+                ddcheck = new ILHook(methodof<Player>(p => p.DreamDashCheck), Player_DreamDashCheck);
                 //IL.Celeste.Player.DashCoroutine += Player_DashCoroutine;
                 dashcoroutine = new ILHook(methodof<Player>(p => p.DashCoroutine).GetStateMachineTarget()!, Player_DashCoroutine);
             }
@@ -338,11 +339,12 @@ namespace Celeste.Mod.ReverseHelper.Entities
         private static void UnloadPatched()
         {
             patch_activate?.Dispose();
+            ddcheck?.Dispose();
             //IL.Celeste.Player.DreamDashCheck -= Player_DreamDashCheckV2;
         }
         private static void LoadPatched()
         {
-            IL.Celeste.Player.DreamDashCheck += Player_DreamDashCheck_Patched;
+            ddcheck = new ILHook(methodof<Player>(p => p.DreamDashCheck), Player_DreamDashCheck);
 
             patch_activate = new(propertyof((DreamBlock db) => db.Activated).GetGetMethod()!, DreamBlock_Activate);
             //IL.Celeste.Player.DreamDashCheck += Player_DreamDashCheckV2;
@@ -740,8 +742,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             else
             {
-                IL.Celeste.Player.DreamDashCheck -= Player_DreamDashCheck;
-
+                ddcheck?.Dispose();
                 //IL.Celeste.Player.DashCoroutine -= Player_DashCoroutine;
                 dashcoroutine?.Dispose();
                 //grabbag_workaround?.Dispose();
