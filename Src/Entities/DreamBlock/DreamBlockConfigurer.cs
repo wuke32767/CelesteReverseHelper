@@ -318,21 +318,31 @@ namespace Celeste.Mod.ReverseHelper.Entities
         //{
         //}
         static ILHook? dashcoroutine;
+        static Hook? ondashcoroutine;
         static ILHook? ddcheck;
-        [SourceGen.Loader.Load]
+        static bool loaded = false;
+        [SourceGen.Loader.LoadContent]
         public static void Load()
         {
-            On.Celeste.Player.DreamDashCheck += Player_DreamDashCheck1;
-            if (ReverseHelperModule.PatchInstalled)
+            if (!loaded)
             {
-                LoadPatched();
-            }
-            else
-            {
-                //using var context = new DetourConfigContext(new DetourConfig("ReverseHelper", int.MinValue)).Use();
-                ddcheck = new ILHook(methodof<Player>(p => p.DreamDashCheck), Player_DreamDashCheck);
-                //IL.Celeste.Player.DashCoroutine += Player_DashCoroutine;
-                dashcoroutine = new ILHook(methodof<Player>(p => p.DashCoroutine).GetStateMachineTarget()!, Player_DashCoroutine);
+                loaded = true;
+                On.Celeste.Player.DreamDashCheck += Player_DreamDashCheck1;
+                if (ReverseHelperModule.PatchInstalled)
+                {
+                    LoadPatched();
+                }
+                else
+                {
+                    //using var context = new DetourConfigContext(new DetourConfig("ReverseHelper", int.MinValue)).Use();
+                    ddcheck = new ILHook(methodof<Player>(p => p.DreamDashCheck), Player_DreamDashCheck);
+                    //IL.Celeste.Player.DashCoroutine += Player_DashCoroutine;
+
+                    var source = methodof<Player>(p => p.DashCoroutine).GetStateMachineTarget()!;
+                    ondashcoroutine = new Hook(source, Player_DashCoroutine_MoveNext);
+
+                    dashcoroutine = new ILHook(source!, Player_DashCoroutine);
+                }
             }
         }
         static Hook? patch_activate;
@@ -430,7 +440,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         static class Player_DashCoroutine_Helper
         {
-            public static bool hasDreamDash(bool x) => true;
+            public static bool hasDreamDash(bool x, Player self) => Player_DreamDashCheck_Helper.HasDreamDash(x, self);
             public static bool CollideCheck(Player self, Vector2 at)
             {
                 Vector2 position = self.Position;
@@ -455,19 +465,27 @@ namespace Celeste.Mod.ReverseHelper.Entities
             invalid_img.Value?.Draw(Position);
             //base.Render();
         }
+        static List<DreamBlock>? TrackerTemp;
+        static readonly List<DreamBlock> TrackerPoolIGuess = [];
         private static void Player_DashCoroutine(ILContext il)
         {
             ILCursor ic = new(il);
             if (ic.TryGotoNext(MoveType.After, (i) => { i.MatchCallvirt(out var v); return v?.Name == "get_Inventory"; },
                 (i) => { i.MatchLdfld(out var v); return v?.Name == "DreamDash"; }))
             {
+                ic.EmitLdloc1();
                 ic.EmitDelegate(Player_DashCoroutine_Helper.hasDreamDash);
 
                 if (ic.TryGotoNext(MoveType.Before, (i) => { i.MatchCallvirt(out var v); return v?.Name == "CollideCheck"; }))
                 {
-                    ic.Remove();
-
-                    ic.EmitDelegate(Player_DashCoroutine_Helper.CollideCheck);
+                    ic.EmitLdloc1();
+                    ic.EmitDelegate(EvilStart);
+                    VariableDefinition vars = new(il.Import(typeof(List<Entity>)));
+                    ic.EmitStloc(vars);
+                    il.Body.Variables.Add(vars);
+                    ic.Next = ic.Next!.Next;
+                    ic.EmitLdloc(vars);
+                    ic.EmitDelegate(EvilEndFaster);
                     return;
                 }
             }
@@ -482,6 +500,52 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
             }
 
+        }
+
+        static List<Entity> EvilStart(Player self)
+        {
+            TrackerTemp = TrackerPoolIGuess;
+            var arr = self.Scene.Tracker.GetEntities<DreamBlock>();
+            TrackerTemp.AddRange(arr.Cast<DreamBlock>());
+            arr.RemoveAll(d => !dreamblock_enabled(d));
+            return arr;
+        }
+
+        static void EvilEndFaster(List<Entity> self)
+        {
+            if (TrackerTemp is not null)
+            {
+                var arr = self;
+                arr.Clear();
+                arr.AddRange(TrackerTemp);
+                TrackerTemp.Clear();
+                TrackerTemp = null;
+            }
+        }
+        static void EvilEnd(Player self)
+        {
+            if (TrackerTemp is not null)
+            {
+                var arr = self.Scene.Tracker.GetEntities<DreamBlock>();
+                EvilEndFaster(arr);
+            }
+        }
+
+        private static bool Player_DashCoroutine_MoveNext(Func<object, bool> orig, object self)
+        {
+            try
+            {
+                return orig(self);
+            }
+            finally
+            {
+                if (TrackerTemp is not null)
+                {
+                    dynamic s = self;
+                    Player p = s["<>4__this"];
+                    EvilEnd(p);
+                }
+            }
         }
 
         public static bool dreamblockcheck_extracond(Entity db, Player p)
@@ -735,23 +799,27 @@ namespace Celeste.Mod.ReverseHelper.Entities
         [SourceGen.Loader.Unload]
         public static void Unload()
         {
-            On.Celeste.Player.DreamDashCheck -= Player_DreamDashCheck1;
-            if (ReverseHelperModule.PatchInstalled)
+            if (loaded)
             {
-                UnloadPatched();
+                On.Celeste.Player.DreamDashCheck -= Player_DreamDashCheck1;
+                if (ReverseHelperModule.PatchInstalled)
+                {
+                    UnloadPatched();
+                }
+                else
+                {
+                    ddcheck?.Dispose();
+                    //IL.Celeste.Player.DashCoroutine -= Player_DashCoroutine;
+                    dashcoroutine?.Dispose();
+                    //grabbag_workaround?.Dispose();
+                    //grabbag_workaround_img_il?.Dispose();
+                    //grabbag_workaround_img_on?.Dispose();
+                    //grabbag_workaround_img_gt?.Dispose();
+                    //grabbag_workaround_img_rr?.Dispose();
+                    ondashcoroutine?.Dispose();
+                }
+                loaded = false;
             }
-            else
-            {
-                ddcheck?.Dispose();
-                //IL.Celeste.Player.DashCoroutine -= Player_DashCoroutine;
-                dashcoroutine?.Dispose();
-                //grabbag_workaround?.Dispose();
-                //grabbag_workaround_img_il?.Dispose();
-                //grabbag_workaround_img_on?.Dispose();
-                //grabbag_workaround_img_gt?.Dispose();
-                //grabbag_workaround_img_rr?.Dispose();
-            }
-
         }
         internal static Dictionary<Type, (Action<Entity> activate, Action<Entity> deactivate)> ExternalDreamBlockLike = [];
         internal static Dictionary<Type, Func<Entity, Entity>> ExternalDreamBlockDummy = [];
