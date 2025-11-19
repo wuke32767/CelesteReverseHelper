@@ -9,6 +9,10 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
 {
     internal class FakeMethodSymbol(ITypeSymbol ContainingType) : IMethodSymbol
     {
+        public IMethodSymbol? AssociatedExtensionImplementation => throw new NotImplementedException();
+        
+        bool IMethodSymbol.IsIterator => throw new NotImplementedException();
+
         MethodKind IMethodSymbol.MethodKind => throw new NotImplementedException();
 
         int IMethodSymbol.Arity => throw new NotImplementedException();

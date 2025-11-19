@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework;
 using Monocle;
 using System;
 using System.Reflection;
-using static MonoMod.InlineRT.MonoModRule;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {

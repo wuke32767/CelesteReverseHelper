@@ -4,7 +4,6 @@ using Microsoft.Xna.Framework;
 using Monocle;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using static MonoMod.InlineRT.MonoModRule;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
