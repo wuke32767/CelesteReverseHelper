@@ -1,5 +1,5 @@
 - Name: ReverseHelper
-  Version: 1.15.15
+  Version: 1.15.16
   DLL: bin/ReverseHelper.dll
   Dependencies:
     - Name: EverestCore
