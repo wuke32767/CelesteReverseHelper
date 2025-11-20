@@ -36,7 +36,16 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
         public static ConditionalWeakTable<Scene, DreamBlockTrackers> Trackers = [];
 
-        public static DreamBlockTrackers GetTracker(Scene scene) => scene is null ? null! : Trackers.GetOrCreateValue(scene);
+        public static DreamBlockTrackers GetTracker(Scene? scene) => scene is null ? null! : Trackers.GetOrCreateValue(scene);
+        public static DreamBlockTrackers? TryGetTracker(Scene scene)
+        {
+            if (!Trackers.TryGetValue(scene, out var d))
+            {
+                d = null;
+            }
+            return d;
+        }
+
         public readonly List<Entity> Reverse = [];
         public readonly List<Entity> Enable = [];
         public readonly List<Entity> Disable = [];
@@ -104,12 +113,48 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 ByIndex[valuelist.BinarySearch(flag)].Remove(e.Entity);
             }
         }
-        //[SourceGen.Loader.Load]
-        //public static void Load()
-        //{
-        //    On.Celeste.Level.End += Level_End;
-        //}
-        //
+        static object? sr;
+        [SourceGen.Loader.Load]
+        public static void Load()
+        {
+            //On.Celeste.Level.End += Level_End;
+            static void saveState(Dictionary<Type, Dictionary<string, object>> d, Level l)
+            {
+                if (TryGetTracker(l) is { } tracker)
+                {
+                    if (!d.TryGetValue(typeof(DreamBlockTrackers), out var dx))
+                    {
+                        dx = new();
+                        d.Add(typeof(DreamBlockTrackers), dx);
+                    }
+                    foreach (var (k, i) in tracker.ByIndex.Zip(namelist))
+                    {
+                        dx.Add(i, k.ToArray());
+                    }
+                }
+            }
+            static void loadState(Dictionary<Type, Dictionary<string, object>> d, Level l)
+            {
+                if (d.TryGetValue(typeof(DreamBlockTrackers), out var dx))
+                {
+                    var tracker = GetTracker(l);
+                    foreach (var (k, i) in tracker.ByIndex.Zip(namelist))
+                    {
+                        k.Clear();
+                        k.AddRange((Entity[])dx[i]);
+                    }
+                }
+            }
+            static void clearCache(Level l)
+            {
+                foreach (DreamBlockConfig i in l.Tracker.GetComponents<DreamBlockConfig>())
+                {
+                    i.cache = null;
+                }
+            }
+            sr = ReverseHelperExtern.SpeedRunTool_Interop.RegisterSaveLoadAction?.Invoke(saveState, loadState, null, clearCache, clearCache, null);
+        }
+
         //private static void Level_End(On.Celeste.Level.orig_End orig, Level self)
         //{
         //    foreach (var item in ByIndex)
@@ -117,17 +162,22 @@ namespace Celeste.Mod.ReverseHelper.Entities
         //        item.Clear();
         //    }
         //}
-        //
-        //
-        //[SourceGen.Loader.Unload]
-        //public static void Unload()
-        //{
-        //    On.Celeste.Level.End -= Level_End;
-        //}
+
+
+        [SourceGen.Loader.Unload]
+        public static void Unload()
+        {
+            //On.Celeste.Level.End -= Level_End;
+            if (sr is not null)
+            {
+                ReverseHelperExtern.SpeedRunTool_Interop.Unregister?.Invoke(sr);
+            }
+        }
     }
+    [Tracked]
     public class DreamBlockConfig() : Component(true, false)
     {
-        DreamBlockTrackers? cache;
+        internal DreamBlockTrackers? cache;
         DreamBlockTrackers? Tracker => cache ?? (cache = DreamBlockTrackers.GetTracker(Scene));
         //static int hacky= SingleGlobalEntity<DreamBlockConfig>.Register(s=>DreamBlockTrackers.Clear());
         public bool tracked = false;
@@ -187,12 +237,14 @@ namespace Celeste.Mod.ReverseHelper.Entities
             base.Added(entity);
             Tracker?.TrackListed(this, withas);
             PatchedAdded();
+            cache = null;
         }
         public override void Removed(Entity entity)
         {
             base.Removed(entity);
             Tracker?.UntrackListed(this, withas);
             PatchedRemoved();
+            cache = null;
         }
         bool newAdded = false;
         void PatchedAdded()
@@ -230,6 +282,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             base.EntityAdded(scene);
             Tracker?.TrackListed(this, withas);
             PatchedAdded();
+            cache = null;
         }
 
         public override void EntityRemoved(Scene scene)
@@ -237,6 +290,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             base.EntityRemoved(scene);
             Tracker?.UntrackListed(this, withas);
             PatchedRemoved();
+            cache = null;
         }
         public override void Update()
         {

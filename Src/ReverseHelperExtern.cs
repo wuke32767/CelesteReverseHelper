@@ -192,6 +192,10 @@ namespace Celeste.Mod.ReverseHelper
         [ModImportName("SpeedrunTool.SaveLoad")]
         public static class SpeedRunTool_Interop
         {
+            public delegate object DRegisterSaveLoadAction(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState,
+            Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState, Action? clearState,
+            Action<Level>? beforeSaveState, Action<Level>? beforeLoadState, Action? preCloneEntities);
+            public static DRegisterSaveLoadAction? RegisterSaveLoadAction;
             public static Func<Type, string[], object>? RegisterStaticTypes;
             public static Action<object>? Unregister;
         }
