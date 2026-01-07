@@ -138,6 +138,91 @@ namespace Celeste.Mod.ReverseHelper.Libraries
         public static void Refresher(ILContext il)
         {
         }
+        
+        public static ILCursor EmitStaticLambda(this ILCursor self, Delegate d)
+        {
+            var t = d.Target;
+            if (t is { })
+            {
+                if (t.GetType() is { } tp
+                    && tp.GetFields().Where(x => x.IsStatic && x.FieldType == tp).ExactlyOneOrDefault() is { } r
+                    && t == r.GetValue(null)
+                    && r.IsInitOnly // coreclr supports readonly readonly field
+                    )
+                {
+                    self.EmitLdsfld(r);
+                }
+                else
+                {
+                    Logger.Warn(nameof(ReverseHelper), $"can't find singleton instance cache for {t}");
+                    self.EmitLdnull();
+                }
+            }
+            return self.EmitCall(d.Method);
+        }
 
+        public static ILCursor EmitSelfLambda(this ILCursor self, Delegate d)
+        {
+            var @this = self.Context.Method.Parameters.First().ParameterType;
+            if (@this.Name.StartsWith('<'))
+            {
+                @this = self.Context.Body.Variables[1].VariableType;
+                self.EmitLdloc1();
+            }
+            else
+            {
+                self.EmitLdarg0();
+            }
+            var th = @this.ResolveReflection();
+            if (th.IsAssignableTo(typeof(Entity)))
+            {
+                self.EmitDelegate(n);
+                static Scene n(Entity self) => self.Scene;
+            }
+            else if (th.IsAssignableTo(typeof(Component)))
+            {
+                self.EmitDelegate(n);
+                static Scene n(Component self) => self.Scene;
+            }
+            else if (th.IsAssignableTo(typeof(Scene)))
+            {
+            }
+            else
+            {
+                Logger.Warn(nameof(ReverseHelper), $"can't find scene for {th} when hooking {self.Context.Method.Name}");
+                self.EmitDelegate(n);
+                static Scene n(object _) => Engine.Scene;
+            }
+            var t = d.Target;
+            if (t is { })
+            {
+                if (t.GetType() is { } tp
+                    && tp.GetCustomAttributes<Tracked>().Any()
+                    )
+                {
+                    if (t is Entity)
+                    {
+                        var r = n<Entity>;
+                        self.EmitCall(r.Method.GetGenericMethodDefinition().MakeGenericMethod(tp));
+                        static T n<T>(Scene self) where T : Entity => self.Tracker.GetEntity<T>();
+                    }
+                    else if (t is Component)
+                    {
+                        var r = n<Component>;
+                        self.EmitCall(r.Method.GetGenericMethodDefinition().MakeGenericMethod(tp));
+                        static T n<T>(Scene self) where T : Component => self.Tracker.GetComponent<T>();
+                    }
+                    else
+                    {
+                        throw new NotSupportedException($"this type can't be tracked. {t}");
+                    }
+                }
+                else
+                {
+                    throw new NotSupportedException($"closure is not supported. {t}");
+                }
+            }
+            return self.EmitCall(d.Method);
+        }
     }
 }

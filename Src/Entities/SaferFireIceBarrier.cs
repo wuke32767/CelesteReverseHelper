@@ -135,7 +135,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 scene.Add(s, t);
             }
             Collidable = collideable(SceneAs<Level>().CoreMode);
-            if (Collidable)
+            if (Collidable && !ice)
             {
                 idleSfx.Play("event:/env/local/09_core/lavagate_idle", null, 0f);
             }
@@ -169,7 +169,10 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 idleSfx.Stop(true);
                 return;
             }
-            idleSfx.Play("event:/env/local/09_core/lavagate_idle", null, 0f);
+            if (!ice)
+            {
+                idleSfx.Play("event:/env/local/09_core/lavagate_idle", null, 0f);
+            }
         }
 
         // Token: 0x060012DB RID: 4827 RVA: 0x00033690 File Offset: 0x00031890
@@ -291,7 +294,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                         {
                             safe.playertouch(new Vector2(Math.Sign(p.Speed.X), 0));
                         }
-                    };
+                    }
                 }
             }
             ic.Index = 0;
@@ -311,7 +314,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                         {
                             safe.playertouch(new Vector2(0, Math.Sign(p.Speed.Y)));
                         }
-                    };
+                    }
                 }
             }
 

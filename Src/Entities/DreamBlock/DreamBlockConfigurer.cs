@@ -558,6 +558,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         static List<Entity> EvilStart(Player self)
         {
+            TrackerPoolIGuess.Clear();
             TrackerTemp = TrackerPoolIGuess;
             var arr = self.Scene.Tracker.GetEntities<DreamBlock>();
             TrackerTemp.AddRange(arr.Cast<DreamBlock>());

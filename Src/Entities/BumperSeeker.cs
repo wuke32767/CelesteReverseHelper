@@ -29,7 +29,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
             Add(hitWiggler = Wiggler.Create(1.2f, 2f, (float v) =>
             {
-                bumperspriteEvil.Position = hitDir * hitWiggler.Value * 8f;
+                bumperspriteEvil.Position = hitDir * hitWiggler!.Value * 8f;
             }));
             Add(new CoreModeListener(OnBumperChangeMode));
 
@@ -56,7 +56,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                         }
                         else if (respawnTimer <= 0f)
                         {
-                            if ((base.Scene as Level).Session.Area.ID == 9)
+                            if ((SceneAs<Level>()).Session.Area.ID == 9)
                             {
                                 Audio.Play("event:/game/09_core/pinballbumper_hit", Position);
                             }

@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+#nullable disable
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
