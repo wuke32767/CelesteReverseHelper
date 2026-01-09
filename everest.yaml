@@ -1,9 +1,5 @@
 - Name: ReverseHelper
-  Version: 1.15.19
   DLL: bin/ReverseHelper.dll
-  Dependencies:
-    - Name: EverestCore
-      Version: 1.4465.0
   OptionalDependencies:
     - Name: ExtendedVariantMode
       Version: 0.27.0
@@ -13,7 +9,11 @@
       Version: 1.1.45
     - Name: IsaGrabBag
       Version: 1.6.0
-    - Name: SpeedrunTool
-      Version: 3.22.5
+    - Version: 3.24.4
+      Name: SpeedrunTool
+  Version: 1.15.20
+  Dependencies:
+    - Version: 1.4465.0
+      Name: EverestCore
 
 
