@@ -120,6 +120,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             //On.Celeste.Level.End += Level_End;
             static void saveState(Dictionary<Type, Dictionary<string, object>> d, Level l)
             {
+                var dc = ReverseHelperExtern.SpeedRunTool_Interop.DeepClone ?? (x => x);
                 if (TryGetTracker(l) is { } tracker)
                 {
                     if (!d.TryGetValue(typeof(DreamBlockTrackers), out var dx))
@@ -129,19 +130,20 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     }
                     foreach (var (k, i) in tracker.ByIndex.Zip(namelist))
                     {
-                        dx.Add(i, k.ToArray());
+                        dx.Add(i, k.Select(dc).Cast<Entity>().ToArray());
                     }
                 }
             }
             static void loadState(Dictionary<Type, Dictionary<string, object>> d, Level l)
             {
+                var dc = ReverseHelperExtern.SpeedRunTool_Interop.DeepClone ?? (x => x);
                 if (d.TryGetValue(typeof(DreamBlockTrackers), out var dx))
                 {
                     var tracker = GetTracker(l);
                     foreach (var (k, i) in tracker.ByIndex.Zip(namelist))
                     {
                         k.Clear();
-                        k.AddRange((Entity[])dx[i]);
+                        k.AddRange(((Entity[])dx[i]).Select(dc).Cast<Entity>());
                     }
                 }
             }

@@ -198,6 +198,8 @@ namespace Celeste.Mod.ReverseHelper
             public static DRegisterSaveLoadAction? RegisterSaveLoadAction;
             public static Func<Type, string[], object>? RegisterStaticTypes;
             public static Action<object>? Unregister;
+
+            public static Func<object, object>? DeepClone;
         }
         public class BGswitch
         {
