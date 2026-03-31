@@ -33,7 +33,7 @@ namespace Celeste.Mod.ReverseHelper
         /// </summary>
         /// <param name="e">the entity to be checked.</param>
         /// <param name="fallback">if ReverseHelper is not loaded, use fallback instead.</param>
-        public static partial bool PlayerHasDreamDash(Entity e, Func<bool>? fallback = null);
+        public static partial bool PlayerHasDreamDash(Entity e);
         /// <summary>
         /// generic version of these options.
         /// https://github.com/wuke32767/CelesteReverseHelper/blob/a4919894497bc501be7f9f8f5c08923a1187af1c/Src/Entities/DreamBlock/DreamBlockConfigurer.cs#L15
@@ -77,11 +77,15 @@ namespace Celeste.Mod.ReverseHelper
         {
             DreamBlockInteropImportTemplate.RegisterDreamBlockDummy?.Invoke(targetType, GetDummy);
         }
-        public static partial bool PlayerHasDreamDash(Entity e, Func<bool>? fallback = null)
+        public static partial bool PlayerHasDreamDash(Entity e)
+        {
+            return DreamBlockInteropImportTemplate.PlayerHasDreamDash?.Invoke(e) ?? (Engine.Scene as Level)?.Session?.Inventory.DreamDash ?? false;
+        }
+        public static bool PlayerHasDreamDash(Entity e, Func<bool> fallback)
         {
             if (DreamBlockInteropImportTemplate.PlayerHasDreamDash is null)
             {
-                return fallback?.Invoke() ?? (Engine.Scene as Level)?.Session?.Inventory.DreamDash ?? false;
+                return fallback.Invoke();
             }
             return DreamBlockInteropImportTemplate.PlayerHasDreamDash(e);
         }
