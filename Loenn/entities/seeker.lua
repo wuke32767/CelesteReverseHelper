@@ -6,7 +6,10 @@ seeker.nodeLineRenderType = "line"
 seeker.texture = "characters/monsters/predator73"
 seeker.nodeLimits = {1, -1}
 seeker.placements = {
-    name = "Bumper Seeker"
+    name = "Bumper Seeker",
+    data = {
+        flag = "",
+    },
 }
 
 return seeker

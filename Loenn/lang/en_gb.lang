@@ -106,7 +106,9 @@ entities.ReverseHelper/SaferFireIceBarrier.attributes.description.topDangerous=T
 entities.ReverseHelper/SaferFireIceBarrier.attributes.description.topRefillDash=You can refill dash when standing on it.
 entities.ReverseHelper/SaferFireIceBarrier.placements.description.Safer Fire Ice Barrier=Will not kill you at the first frame you touch it.\nExpanded collide box, so would be different from vanilla. Easier to wallbounce for example.
 
-entities.ReverseHelper/ReversedDreamBlockContainer.attributes.description.highPriority=You can't enter a normal dreamblock if it ovarlaps with a wall. If checked, you can enter this one.
+entities.ReverseHelper/ReversedDreamBlockContainer.attributes.description.highPriority=Priority is higher than normal Solid. Dreamblock can work when it ovarlaps with a wall.
+entities.ReverseHelper/ReversedDreamBlockContainer.attributes.description.exactMode=Drops any mod compatibility, to exactly check dreamblock state.\nSomething (f.e. dream lock block) will hate it.
+entities.ReverseHelper/ReversedDreamBlockContainer.attributes.name.exactMode=Exact Mode [Room Wide]
 entities.ReverseHelper/ReversedDreamBlockContainer.placements.description.ReversedDreamBlockContainer=Controls some extra action, similiar to Dream Dash Controller. (container)
 entities.ReverseHelper/ReversedDreamBlockContainer.placements.name.ReversedDreamBlockContainer=Dream Block Configurer (Reversed Dream Block Container)
 

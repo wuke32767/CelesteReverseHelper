@@ -137,6 +137,8 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
 
         bool ISymbol.HasUnsupportedMetadata => throw new NotImplementedException();
 
+        IMethodSymbol? IMethodSymbol.AssociatedExtensionImplementation => throw new NotImplementedException();
+
         void ISymbol.Accept(SymbolVisitor visitor)
         {
             throw new NotImplementedException();
@@ -198,6 +200,11 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
         }
 
         ITypeSymbol? IMethodSymbol.GetTypeInferredDuringReduction(ITypeParameterSymbol reducedFromTypeParameter)
+        {
+            throw new NotImplementedException();
+        }
+
+        IMethodSymbol? IMethodSymbol.ReduceExtensionMember(ITypeSymbol receiverType)
         {
             throw new NotImplementedException();
         }

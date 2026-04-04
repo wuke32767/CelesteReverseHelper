@@ -35,6 +35,9 @@ RefillWallWrapper.fieldInformation = {
     disableIsSolid = {
         fieldType = "ReverseHelper.OptionalBool",
     },
+    exactMode = {
+        fieldType = "ReverseHelper.OptionalBool",
+    },
 }
 
 
@@ -46,6 +49,7 @@ RefillWallWrapper.placements={
             alwaysDisable="",
             highPriority="",
             reverse=true,
+            exactMode="",
             useEntryAngle = "",
             --disableIsSolid = "",
         }

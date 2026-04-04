@@ -1,14 +1,13 @@
 ﻿using Celeste.Mod.Entities;
 using Celeste.Mod.ReverseHelper.Libraries;
 using Microsoft.Xna.Framework;
+using MonoMod;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-class Notice
-{
-    public static void ThisMethodIsGreatlyModifiedByMe_InformMeBeforeYouILHookIt_ToPreventHookCollision() { }
-}
+using System.Runtime.InteropServices;
+
 namespace Celeste.Mod.ReverseHelper.Entities
 {
     [Flags]
@@ -25,6 +24,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         useEntryAngle = 1 << 5,
         [WIP]
         ghostDisableCollidable = 1 << 6,
+        exactMode = 1 << 7,
     }
     public class DreamBlockTrackers
     {
@@ -32,7 +32,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         {
             ByIndex = ImmutableArray.Create
             (Reverse, Enable, Disable, HighPriority, GhostMode, UseEntryAngle,
-              GhostDisableCollidable);
+              GhostDisableCollidable, ExactMode);
         }
         public static ConditionalWeakTable<Scene, DreamBlockTrackers> Trackers = [];
 
@@ -53,6 +53,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public readonly List<Entity> GhostMode = [];
         public readonly List<Entity> UseEntryAngle = [];
         public readonly List<Entity> GhostDisableCollidable = [];
+        public readonly List<Entity> ExactMode = [];
         public readonly ImmutableArray<List<Entity>> ByIndex;
 
         //according to https://learn.microsoft.com/en-us/dotnet/api/system.enum.getvalues?view=net-8.0 #Remarks,
@@ -391,7 +392,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 else
                 {
                     //using var context = new DetourConfigContext(new DetourConfig("ReverseHelper", int.MinValue)).Use();
-                    ddcheck = new ILHook(methodof<Player>(p => p.DreamDashCheck), Player_DreamDashCheck);
+                    ddcheck = new ILHook(methodof<Player>(p => p.DreamDashCheck), Player_DreamDashCheckTwice);
                     //IL.Celeste.Player.DashCoroutine += Player_DashCoroutine;
 
                     var source = methodof<Player>(p => p.DashCoroutine).GetStateMachineTarget()!;
@@ -410,7 +411,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
         private static void LoadPatched()
         {
-            ddcheck = new ILHook(methodof<Player>(p => p.DreamDashCheck), Player_DreamDashCheck);
+            ddcheck = new ILHook(methodof<Player>(p => p.DreamDashCheck), Player_DreamDashCheck_Patched);
 
             patch_activate = new(propertyof((DreamBlock db) => db.Activated).GetGetMethod()!, DreamBlock_Activate);
             //IL.Celeste.Player.DreamDashCheck += Player_DreamDashCheckV2;
@@ -523,6 +524,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
         static List<DreamBlock>? TrackerTemp;
         static readonly List<DreamBlock> TrackerPoolIGuess = [];
+        [MakeFaster]
         private static void Player_DashCoroutine(ILContext il)
         {
             ILCursor ic = new(il);
@@ -530,15 +532,38 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 (i) => { i.MatchLdfld(out var v); return v?.Name == "DreamDash"; }))
             {
                 ic.EmitLdloc1();
-                ic.EmitDelegate(Player_DashCoroutine_Helper.hasDreamDash);
+                ic.EmitStaticLambda([MethodImpl(MethodImplOptions.AggressiveInlining)] (bool x, Player self) =>
+                {
+                    if (DreamBlockTrackers.TryGetTracker(self.Scene)?.ExactMode.Count > 0)
+                    {
+                        return Player_DashCoroutine_Helper.hasDreamDash(x, self);
+                    }
+                    else
+                    {
+                        static bool Extract(bool x, Player self)
+                        {
+                            var u = Vector2.UnitY;
+                            if (ReverseHelperExtern.GravityHelper.IsPlayerInverted())
+                            {
+                                u = -u;
+                            }
+                            if (self.CollideFirst<DreamBlock>(self.Position + u) is { } d)
+                            {
+                                return dreamblock_enabledv2(d, x);
+                            }
+                            return x;
+                        }
+                        return Extract(x, self);
+                    }
+                }, "KeepCool");
 
                 if (ic.TryGotoNext(MoveType.Before, (i) => { i.MatchCallvirt(out var v); return v?.Name == "CollideCheck"; }))
                 {
+                    VariableDefinition vars = new(il.Import(typeof(List<Entity>)));
+                    il.Body.Variables.Add(vars);
                     ic.EmitLdloc1();
                     ic.EmitDelegate(EvilStart);
-                    VariableDefinition vars = new(il.Import(typeof(List<Entity>)));
                     ic.EmitStloc(vars);
-                    il.Body.Variables.Add(vars);
                     ic.Next = ic.Next!.Next;
                     ic.EmitLdloc(vars);
                     ic.EmitDelegate(EvilEndFaster);
@@ -558,14 +583,21 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         }
 
-        static List<Entity> EvilStart(Player self)
+        static List<Entity>? EvilStart(Player self)
         {
-            TrackerPoolIGuess.Clear();
-            TrackerTemp = TrackerPoolIGuess;
-            var arr = self.Scene.Tracker.GetEntities<DreamBlock>();
-            TrackerTemp.AddRange(arr.Cast<DreamBlock>());
-            arr.RemoveAll(d => !dreamblock_enabled(d));
-            return arr;
+            if (DreamBlockTrackers.TryGetTracker(self.Scene)?.ExactMode.Count > 0)
+            {
+                TrackerPoolIGuess.Clear();
+                TrackerTemp = TrackerPoolIGuess;
+                var arr = self.Scene.Tracker.GetEntities<DreamBlock>();
+                TrackerTemp.AddRange(arr.Cast<DreamBlock>());
+                arr.RemoveAll(d => !dreamblock_enabled(d));
+                return arr;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         static void EvilEndFaster(List<Entity> self)
@@ -587,7 +619,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 EvilEndFaster(arr);
             }
         }
-
         private static bool Player_DashCoroutine_MoveNext(Func<object, bool> orig, object self)
         {
             try
@@ -639,6 +670,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public static bool dreamblock_enabledv2(Entity db, bool orig)
         {
             var com = db.Get<DreamBlockConfig>();
+            return dreamblock_enabledv2(com, orig);
+        }
+
+        private static bool dreamblock_enabledv2(DreamBlockConfig? com, bool orig)
+        {
             if (com is null)
             {
                 return orig;
@@ -657,6 +693,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             return orig;
         }
+
         static class Player_DreamDashCheck_Helper
         {
             internal static bool IsEntryAngleCorrect = false;
@@ -757,7 +794,12 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 }
             }
             ILCursor ic = new(il);
-            ic.EmitDelegate(Notice.ThisMethodIsGreatlyModifiedByMe_InformMeBeforeYouILHookIt_ToPreventHookCollision);
+            [MakeFaster]
+            static void Ex(ILCursor ic)
+            {
+                ic.EmitStaticLambda(() => { }, "This method is greatly modified by me. Inform me before you ILHook it, to prevent hook collision.");
+            }
+            Ex(ic);
 
             if (!ic.TryGotoNext(MoveType.After, (i) => { i.MatchCallvirt(out var v); return v?.Name == "get_Inventory"; },
                 (i) => { i.MatchLdfld(out var v); return v?.Name == "DreamDash"; }))
@@ -847,6 +889,312 @@ namespace Celeste.Mod.ReverseHelper.Entities
             {
                 ic.Remove();
                 ic.EmitDelegate(Player_DreamDashCheck_Helper.CollideCheck);
+            }
+
+        }
+
+        struct State
+        {
+            internal bool exact;
+            //internal bool failed;
+            //internal bool success;
+            internal DreamBlock? first;
+            internal DreamBlockConfig? config;
+            internal List<Entity?> multi;
+        }
+        [MakeFaster]
+        private static void Player_DreamDashCheckTwice(ILContext il)
+        {
+            void Exception()
+            {
+                ReverseHelperModule.failed_to_hook_reverse_dreamblock = true;
+                Logger.Log(LogLevel.Error, "ReverseHelper", "Failed to load DreamBlockConfigurer (Compat)");
+                try
+                {
+                    Logger.Log(LogLevel.Error, "ReverseHelper", il.ToString());
+                }
+                catch (Exception)
+                {
+                }
+            }
+            ILCursor ic = new(il);
+            ic.EmitStaticLambda([MethodImpl(MethodImplOptions.AggressiveInlining)] () => { }, "It's still too chaotic here. Please take care of this method.");
+            var defs = new VariableDefinition(il.Import(typeof(State)));
+            ic.Body.Variables.Add(defs);
+            var pos = new VariableDefinition(il.Import(typeof(State)));
+            ic.Body.Variables.Add(pos);
+            ic.EmitLdarg0();
+            ic.EmitLdarg1();
+            ic.EmitStaticLambda((Player p, Vector2 root) =>
+            {
+                if (DreamBlockTrackers.TryGetTracker(p.Scene)?.ExactMode is { } a && a.Count > 0)
+                {
+                    var all = p.CollideAll<DreamBlock>(p.Position + root);
+                    return new State()
+                    {
+                        exact = true,
+                        multi = all,
+                    };
+                }
+                else
+                {
+                    if (p.CollideFirst<DreamBlock>(p.Position + root) is { } d
+                        && DreamBlockConfig.TryGet(d, out var cfg))
+                    {
+                        return new State() { exact = false, first = d, config = cfg, };
+                    }
+                }
+                return default;
+            }, "Precheck");
+            ic.EmitStloc(defs);
+
+            //ic.EmitStfld();
+            if (!ic.TryGotoNext(MoveType.After, (i) => { i.MatchCallvirt(out var v); return v?.Name == "get_Inventory"; },
+                (i) => { i.MatchLdfld(out var v); return v?.Name == "DreamDash"; }))
+            {
+                Exception();
+                return;
+            }
+
+            ic.EmitLdloca(defs);
+            ic.EmitStaticLambda((bool orig, ref State c) =>
+            {
+                static bool Get(bool orig, DreamBlockConfig? c)
+                {
+                    if (c is { })
+                    {
+                        if (c.enable ?? false)
+                        {
+                            return true;
+                        }
+                        else if (c.disable ?? false)
+                        {
+                            return false;
+                        }
+                        else if (c.reverse ?? false)
+                        {
+                            return !orig;
+                        }
+                    }
+                    return orig;
+                }
+                bool r;
+                if (c.exact)
+                {
+                    var span = CollectionsMarshal.AsSpan(c.multi);
+                    foreach (ref var i in span)
+                    {
+                        if (DreamBlockConfig.TryGet(i!, out var cfg))
+                        {
+                            if (!Get(orig, cfg))
+                            {
+                                i = null;
+                            }
+                        }
+                        else if (!orig)
+                        {
+                            i = null;
+                        }
+                    }
+                    c.multi.RemoveAll(x => x is null);
+                    r = c.multi.Count > 0;
+                }
+                else
+                {
+                    r = Get(orig, c.config);
+                    //c.success = c.success && r;
+                }
+                return r;
+            }, "CheckEnabled");
+
+            if (!ic.TryGotoNext(MoveType.After, i => i.MatchCallvirt(out var v) && v.Name == "get_DashAttacking"))
+            {
+                Exception();
+                return;
+            }
+            //ic.EmitLdarg0();
+            //ic.EmitDelegate(Player_DreamDashCheck_Helper.HasDarkMatter);
+
+            ILLabel? _tar = null;
+            if (!ic.TryGotoNext(MoveType.Before, i => i.MatchBrfalse(out _)))
+            {
+                Exception();
+                return;
+            }
+            if (!ic.TryGotoNext(MoveType.After, i => i.MatchBneUn(out _tar)))
+            {
+                Exception();
+                return;
+            }
+            {
+                ILLabel tar = _tar!;
+                var ic2 = new ILCursor(il);
+                ic2.GotoLabel(tar, MoveType.Before);
+                ic2.EmitNop();
+                var otar = il.DefineLabel();
+                otar.Target = tar.Target;
+                tar.Target = ic2.Prev;
+                ic2.EmitLdloca(defs);
+                ic2.EmitStaticLambda((ref State c) =>
+                {
+                    bool r;
+                    if (c.exact)
+                    {
+                        var span = CollectionsMarshal.AsSpan(c.multi);
+                        foreach (ref var i in span)
+                        {
+                            if (!DreamBlockConfig.TryGet(i!, out var cfg) || !(cfg.useEntryAngle ?? false))
+                            {
+                                i = null;
+                            }
+                        }
+                        c.multi.RemoveAll(x => x is null);
+                        r = c.multi.Count > 0;
+                    }
+                    else
+                    {
+                        r = c.config?.useEntryAngle ?? false;
+                        //c.success = c.success && r;
+                    }
+                    return r;
+                }, "CheckEntryAngle");
+                var ne = ic.MarkLabel();
+                ic2.EmitBrtrue(ne);
+                ic2.EmitBr(otar);
+                ic2.EmitNop();
+            }
+
+            if (!ic.TryGotoNext(MoveType.After, (i) => i.MatchCall(out var v) && v.Name == "CollideFirst"))
+            {
+                Exception();
+                return;
+            }
+            ic.EmitLdloca(defs);
+            ic.EmitLdarg0();
+            ic.EmitStaticLambda((DreamBlock? db, ref State c, Player p) =>
+            {
+                if (c.exact)
+                {
+                    var r = c.multi.FirstOrDefault();
+                    // ai-generated
+                    // reviewed
+                    static void ExceptInto<T>(List<T> A, List<T> B) where T : class?
+                    {
+                        int originalCount = B.Count;
+                        int resultCount = A.Count - originalCount;
+
+                        if (resultCount == 0)
+                        {
+                            B.Clear();
+                            return;
+                        }
+
+                        B.EnsureCapacity(A.Count);
+                        for (int i = 0; i < resultCount; i++)
+                        {
+                            B.Add(default!);
+                        }
+                        for (int i = originalCount - 1; i >= 0; i--)
+                        {
+                            B[resultCount + i] = B[i];
+                        }
+
+                        int j = resultCount;
+                        int k = 0;
+
+                        for (int i = 0; i < A.Count; i++)
+                        {
+                            if (j < B.Count && Object.ReferenceEquals(A[i], B[j]))
+                            {
+                                j++;
+                            }
+                            else
+                            {
+                                B[k] = A[i];
+                                k++;
+                            }
+                        }
+
+                        if (k < B.Count)
+                        {
+                            B.RemoveRange(k, B.Count - k);
+                        }
+                    }
+                    ExceptInto(p.Scene.Tracker.GetEntities<DreamBlock>(), c.multi);
+                    return r;
+                }
+                else
+                {
+                    //if (c.first != db && db != null)
+                    //{
+                    //    c.failed = true;
+                    //}
+                    return db;
+                }
+            }, "TryReplace");
+            if (!ic.TryGotoNext(MoveType.After, i => i.MatchStloc0()))
+            {
+                Exception();
+                return;
+            }
+
+            var label = il.DefineLabel();
+            ic.Emit(OpCodes.Ldloc_0);
+            //ic.Emit(OpCodes.Ldarg_0);
+            ic.EmitStaticLambda((DreamBlock? t) =>
+            {
+                if (t is not null && DreamBlockConfig.TryGet(t, out var cfg) && (cfg.highpriority ?? false))
+                {
+                    return true;
+                }
+                return false;
+            }, "CheckPriority");
+            ic.Emit(OpCodes.Brtrue, label);
+
+            FieldInfo value___ = fieldof((Player p) => p.dreamBlock);
+            var target = ic.Clone();
+            if (!target.TryGotoNext(
+                //i => i.MatchLdarg(0),
+                //i => i.MatchLdloc(0),
+                i => i.MatchStfld(value___)
+                //i => i.MatchLdcI4(1),
+                //i => i.MatchRet()
+                ))
+            {
+                Exception();
+                return;
+            }
+            if (!target.TryGotoPrev(MoveType.Before,
+                i => i.MatchLdarg(0)
+                ))
+            {
+                Exception();
+                return;
+            }
+            target.MarkLabel(label);
+            //ic.Emit(OpCodes.Pop);
+            //ic.Emit(OpCodes.Ldc_I4_1);
+            //ic.Emit(OpCodes.Ret);
+            //ic.MarkLabel(label);
+
+            while (ic.TryGotoNext(MoveType.Before, (i) => { i.MatchCall(out var v); return v?.Name == "CollideCheck"; }))
+            {
+                //ic.Remove();
+                //ic.EmitDelegate(Player_DreamDashCheck_Helper.CollideCheck);
+                ic.EmitDup();
+                ic.EmitStloc(pos);
+                ic.Next = ic.Next!.Next;
+                ic.EmitLdloca(defs);
+                ic.EmitLdloc(pos);
+                ic.EmitLdarg0();
+                ic.EmitStaticLambda((bool success, ref State c, Vector2 pos, Player p) =>
+                {
+                    if (!success && c.exact)
+                    {
+                        return Collide.Check(p, c.multi, pos);
+                    }
+                    return success;
+                }, "ExactlyWhatImDoing");
             }
 
         }

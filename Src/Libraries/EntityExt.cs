@@ -306,6 +306,9 @@ namespace Celeste.Mod.ReverseHelper.Libraries
             _update(e);
         }
 
+        [MonoMod.MonoModLinkTo("Celeste.Actor", "System.Void Update()")]
+        internal static extern void Actor_Update(this Actor self);
+
         static Action<Entity>? _render;
 
         [MonoMod.MonoModLinkTo("Monocle.Entity", "System.Void Update()")]

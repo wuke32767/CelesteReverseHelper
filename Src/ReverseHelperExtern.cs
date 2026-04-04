@@ -1,5 +1,6 @@
 ﻿using Celeste.Mod.ReverseHelper.SourceGen.Loader;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using MonoMod.ModInterop;
 using System.Reflection;
 
@@ -218,6 +219,15 @@ namespace Celeste.Mod.ReverseHelper
                 //   Action<bool> action: the delegate that will be called when the BG mode changes
                 public static Func<Action<bool>, Component>? GetBGModeListener;
             }
+        }
+        internal static class GravityHelper
+        {
+            [ModImportName("GravityHelper")]
+            public static class Interop
+            {
+                public static Func<bool>? IsPlayerInverted;
+            }
+            public static bool IsPlayerInverted() => Interop.IsPlayerInverted?.Invoke() ?? false;
         }
         [Load]
         public static void Load()

@@ -7,6 +7,7 @@
 
         public FlagMatch(string s)
         {
+            s = s ?? "";
             if (s.Length != 0 && s[0] == '!')
             {
                 invert = true;

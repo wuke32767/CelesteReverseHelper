@@ -1,10 +1,13 @@
 ﻿#pragma warning disable CS8618
 using Celeste.Mod.Entities;
+using Celeste.Mod.ReverseHelper.Libraries;
 using Microsoft.Xna.Framework;
 using Monocle;
 using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using Cor = System.Collections.IEnumerator;
 
 namespace Celeste.Mod.ReverseHelper.Entities
 {
@@ -12,9 +15,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
     public class BumperSeeker : Seeker
     {
 
+        FlagMatch flag;
         public BumperSeeker(EntityData data, Vector2 offset)
             : base(data, offset)
         {
+            flag = data.Attr("flag");
 
             Add(bumpersprite = GFX.SpriteBank.Create("bumper"));
             Add(bumperspriteEvil = GFX.SpriteBank.Create("bumper_evil"));
@@ -105,6 +110,49 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 //attackSpeed = -30f;
                 //Speed = (FollowTarget - base.Center).SafeNormalize(attackSpeed);
             });
+            for (int i1 = 0; i1 < State.updates.Length; i1++)
+            {
+                ref var i = ref State.updates[i1];
+                var j = i;
+                i = () => cache_waiting || j == null ? i1 : j();
+                ref var c = ref State.coroutines[i1];
+                var k = c;
+                static Cor map(Cor src, Func<Cor, Cor> t)
+                {
+                    if (src is SwapImmediately sw)
+                    {
+                        sw.Inner = t(sw.Inner);
+                    }
+                    else
+                    {
+                        src = t(src);
+                    }
+                    return src;
+                }
+                Cor iwait(Cor src)
+                {
+                iter:
+                    while (cache_waiting)
+                    {
+                        yield return null;
+                    }
+                    if (src.MoveNext())
+                    {
+                        var cur = src.Current;
+                        if (cur is Cor c)
+                        {
+                            yield return map(c, iwait);
+                        }
+                        else
+                        {
+                            yield return cur;
+                        }
+                        goto iter;
+                    }
+                    yield break;
+                }
+                c = () => map(k(), iwait);
+            }
         }
 
 
@@ -159,9 +207,17 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         public Vector2 hitDir;
 
+        bool cache_waiting;
         public override void Update()
         {
-            base.Update();
+            if ((cache_waiting = flag.IsMatch(SceneAs<Level>(), false)))
+            {
+                this.Actor_Update();
+            }
+            else
+            {
+                base.Update();
+            }
             if (respawnTimer > 0f)
             {
                 respawnTimer -= Engine.DeltaTime;
