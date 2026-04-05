@@ -619,6 +619,9 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 EvilEndFaster(arr);
             }
         }
+        [FieldAccessor(typeof(Player), "<DashCoroutine>d__427", "<>4__this")]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static ref Player Like(object self) { throw new System.Diagnostics.UnreachableException(); }
         private static bool Player_DashCoroutine_MoveNext(Func<object, bool> orig, object self)
         {
             try
@@ -629,9 +632,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             {
                 if (TrackerTemp is not null)
                 {
-                    dynamic s = self;
-                    Player p = s["<>4__this"];
-                    EvilEnd(p);
+                    EvilEnd(Like(self));
                 }
             }
         }
