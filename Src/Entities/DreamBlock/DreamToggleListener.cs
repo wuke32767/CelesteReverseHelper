@@ -43,144 +43,75 @@
         }
         public static void ForceUpdateSingle(Level? level, Entity entity)
         {
-            if (ReverseHelperModule.PatchInstalled)
+            level ??= Engine.Scene as Level;
+            if (level is not null)
             {
-                Ins(level, entity);
-            }
-            else
-            {
-                Not(level, entity);
-            }
-            static void Ins(Level? level, Entity entity)
-            {
-                if (entity is DreamBlock db)
+                if (entity is DreamBlock vv)
                 {
-                    db.UpdateNoRoutine();
-                }
-                else
-                {
-                    Not(level, entity);
-                }
-            }
-            [Obsolete]
-            static void Not(Level? level, Entity entity)
-            {
-                level ??= Engine.Scene as Level;
-                if (level is not null)
-                {
-                    if (entity is DreamBlock vv)
+                    if (DreamBlockConfigurer.dreamblock_enabled(vv))
                     {
-                        if (DreamBlockConfigurer.dreamblock_enabled(vv))
-                        {
-                            //vv.playerHasDreamDash = false;//for brokemia
-                            vv.ActivateNoRoutine();
-                        }
-                        else
-                        {
-                            //vv.playerHasDreamDash = true;//for brokemia
-                            vv.DeactivateNoRoutine();
-                        }
+                        //vv.playerHasDreamDash = false;//for brokemia
+                        vv.ActivateNoRoutine();
                     }
-                    else if (DreamBlockConfigurer.ExternalDreamBlockLike.TryGetValue(entity.GetType(), out var call))
+                    else
                     {
-                        if (DreamBlockConfigurer.dreamblock_enabled(entity))
-                        {
-                            call.activate?.Invoke(entity);
-                        }
-                        else
-                        {
-                            call.deactivate?.Invoke(entity);
-                        }
+                        //vv.playerHasDreamDash = true;//for brokemia
+                        vv.DeactivateNoRoutine();
+                    }
+                }
+                else if (DreamBlockConfigurer.ExternalDreamBlockLike.TryGetValue(entity.GetType(), out var call))
+                {
+                    if (DreamBlockConfigurer.dreamblock_enabled(entity))
+                    {
+                        call.activate?.Invoke(entity);
+                    }
+                    else
+                    {
+                        call.deactivate?.Invoke(entity);
                     }
                 }
             }
         }
         public static void ForceUpdate(Level? level)
         {
-            if (ReverseHelperModule.PatchInstalled)
+            level ??= Engine.Scene as Level;
+            if (level is not null)
             {
-                Ins(level);
-            }
-            else
-            {
-                Not(level);
-            }
-            static void Ins(Level? level)
-            {
-                level ??= Engine.Scene as Level;
-                if (level is not null)
+                isactivated = level.Session.Inventory.DreamDash;
+                foreach (var v in level.Tracker.GetComponents<DreamToggleListener>())
                 {
-                    isactivated = level.Session.Inventory.DreamDash;
-                    foreach (var v in level.Tracker.GetComponents<DreamToggleListener>())
+                    (v as DreamToggleListener)!.OnToggle(isactivated);
+                }
+                foreach (var v in level.Tracker.GetEntities<DreamBlock>())
+                {
+                    var vv = (v as DreamBlock)!;
+                    if (DreamBlockConfigurer.dreamblock_enabled(vv))
                     {
-                        (v as DreamToggleListener)!.OnToggle(isactivated);
+                        //vv.playerHasDreamDash = false;//for brokemia
+                        vv.ActivateNoRoutine();
                     }
-                    foreach (DreamBlock v in level.Tracker.GetEntities<DreamBlock>())
+                    else
                     {
-                        v.UpdateNoRoutine();
-                    }
-                    foreach (var (t, call) in DreamBlockConfigurer.ExternalDreamBlockLike)
-                    {
-                        if (level.Tracker.Entities.TryGetValue(t, out var list))
-                        {
-                            foreach (var v in list)
-                            {
-                                if (DreamBlockConfigurer.dreamblock_enabled(v))
-                                {
-                                    call.activate?.Invoke(v);
-                                }
-                                else
-                                {
-                                    call.deactivate?.Invoke(v);
-                                }
-                            }
-
-                        }
+                        //vv.playerHasDreamDash = true;//for brokemia
+                        vv.DeactivateNoRoutine();
                     }
                 }
-            }
-            [Obsolete]
-            static void Not(Level? level)
-            {
-                level ??= Engine.Scene as Level;
-                if (level is not null)
+                foreach (var (t, call) in DreamBlockConfigurer.ExternalDreamBlockLike)
                 {
-                    isactivated = level.Session.Inventory.DreamDash;
-                    foreach (var v in level.Tracker.GetComponents<DreamToggleListener>())
+                    if (level.Tracker.Entities.TryGetValue(t, out var list))
                     {
-                        (v as DreamToggleListener)!.OnToggle(isactivated);
-                    }
-                    foreach (var v in level.Tracker.GetEntities<DreamBlock>())
-                    {
-                        var vv = (v as DreamBlock)!;
-                        if (DreamBlockConfigurer.dreamblock_enabled(vv))
+                        foreach (var v in list)
                         {
-                            //vv.playerHasDreamDash = false;//for brokemia
-                            vv.ActivateNoRoutine();
-                        }
-                        else
-                        {
-                            //vv.playerHasDreamDash = true;//for brokemia
-                            vv.DeactivateNoRoutine();
-                        }
-                    }
-                    foreach (var (t, call) in DreamBlockConfigurer.ExternalDreamBlockLike)
-                    {
-                        if (level.Tracker.Entities.TryGetValue(t, out var list))
-                        {
-                            foreach (var v in list)
+                            if (DreamBlockConfigurer.dreamblock_enabled(v))
                             {
-                                if (DreamBlockConfigurer.dreamblock_enabled(v))
-                                {
-                                    call.activate?.Invoke(v);
-                                }
-                                else
-                                {
-                                    call.deactivate?.Invoke(v);
-                                }
+                                call.activate?.Invoke(v);
                             }
-
+                            else
+                            {
+                                call.deactivate?.Invoke(v);
+                            }
                         }
+
                     }
                 }
             }

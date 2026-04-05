@@ -239,52 +239,19 @@ namespace Celeste.Mod.ReverseHelper.Entities
         {
             base.Added(entity);
             Tracker?.TrackListed(this, withas);
-            PatchedAdded();
             cache = null;
         }
         public override void Removed(Entity entity)
         {
             base.Removed(entity);
             Tracker?.UntrackListed(this, withas);
-            PatchedRemoved();
             cache = null;
         }
         bool newAdded = false;
-        void PatchedAdded()
-        {
-            void internals()
-            {
-                if (SceneAs<Level>() is { } level && !newAdded)
-                {
-                    level.NewDreamBlockCounter++;
-                    newAdded = true;
-                }
-            }
-            if (ReverseHelperModule.PatchInstalled)
-            {
-                internals();
-            }
-        }
-        void PatchedRemoved()
-        {
-            void internals()
-            {
-                if (SceneAs<Level>() is { } level && newAdded)
-                {
-                    level.NewDreamBlockCounter--;
-                    newAdded = false;
-                }
-            }
-            if (ReverseHelperModule.PatchInstalled)
-            {
-                internals();
-            }
-        }
         public override void EntityAdded(Scene scene)
         {
             base.EntityAdded(scene);
             Tracker?.TrackListed(this, withas);
-            PatchedAdded();
             cache = null;
         }
 
@@ -292,7 +259,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
         {
             base.EntityRemoved(scene);
             Tracker?.UntrackListed(this, withas);
-            PatchedRemoved();
             cache = null;
         }
         public override void Update()
@@ -385,90 +351,15 @@ namespace Celeste.Mod.ReverseHelper.Entities
             {
                 loaded = true;
                 On.Celeste.Player.DreamDashCheck += Player_DreamDashCheck1;
-                if (ReverseHelperModule.PatchInstalled)
-                {
-                    LoadPatched();
-                }
-                else
-                {
-                    //using var context = new DetourConfigContext(new DetourConfig("ReverseHelper", int.MinValue)).Use();
-                    ddcheck = new ILHook(methodof<Player>(p => p.DreamDashCheck), Player_DreamDashCheckTwice);
-                    //IL.Celeste.Player.DashCoroutine += Player_DashCoroutine;
+                //using var context = new DetourConfigContext(new DetourConfig("ReverseHelper", int.MinValue)).Use();
+                ddcheck = new ILHook(methodof<Player>(p => p.DreamDashCheck), Player_DreamDashCheckTwice);
+                //IL.Celeste.Player.DashCoroutine += Player_DashCoroutine;
 
-                    var source = methodof<Player>(p => p.DashCoroutine).GetStateMachineTarget()!;
-                    ondashcoroutine = new Hook(source, Player_DashCoroutine_MoveNext);
+                var source = methodof<Player>(p => p.DashCoroutine).GetStateMachineTarget()!;
+                ondashcoroutine = new Hook(source, Player_DashCoroutine_MoveNext);
 
-                    dashcoroutine = new ILHook(source!, Player_DashCoroutine);
-                }
+                dashcoroutine = new ILHook(source!, Player_DashCoroutine);
             }
-        }
-        static Hook? patch_activate;
-        private static void UnloadPatched()
-        {
-            patch_activate?.Dispose();
-            ddcheck?.Dispose();
-            //IL.Celeste.Player.DreamDashCheck -= Player_DreamDashCheckV2;
-        }
-        private static void LoadPatched()
-        {
-            ddcheck = new ILHook(methodof<Player>(p => p.DreamDashCheck), Player_DreamDashCheck_Patched);
-
-            patch_activate = new(propertyof((DreamBlock db) => db.Activated).GetGetMethod()!, DreamBlock_Activate);
-            //IL.Celeste.Player.DreamDashCheck += Player_DreamDashCheckV2;
-        }
-
-        private static void Player_DreamDashCheck_Patched(ILContext il)
-        {
-            var ic = new ILCursor(il);
-            void Exception()
-            {
-                ReverseHelperModule.failed_to_hook_reverse_dreamblock = true;
-                Logger.Log(LogLevel.Error, "ReverseHelper", "Failed to load DreamBlockConfigurer");
-                try
-                {
-                    Logger.Log(LogLevel.Error, "ReverseHelper", il.ToString());
-                }
-                catch (Exception)
-                {
-                }
-            }
-            var label = ic.DefineLabel();
-
-            if (!ic.TryGotoNext(MoveType.After, i => i.MatchStloc0()))
-            {
-                Exception();
-                return;
-            }
-
-            ic.Emit(OpCodes.Ldloc_0);
-            //ic.Emit(OpCodes.Ldarg_0);
-            ic.EmitDelegate(Player_DreamDashCheck_Helper.CheckPriority);
-
-            FieldInfo value___ = fieldof((Player p) => p.dreamBlock);
-            ic.Emit(OpCodes.Brtrue, label);
-            var target = ic.Clone();
-            if (!target.TryGotoNext(
-                //i => i.MatchLdarg(0),
-                //i => i.MatchLdloc(0),
-                i => i.MatchStfld(value___)
-                //i => i.MatchLdcI4(1),
-                //i => i.MatchRet()
-                ))
-            {
-                ic.MarkLabel();
-                Exception();
-                return;
-            }
-            if (!target.TryGotoPrev(MoveType.Before,
-                i => i.MatchLdarg(0)
-                ))
-            {
-                ic.MarkLabel();
-                Exception();
-                return;
-            }
-            target.MarkLabel(label);
-
         }
 
         private static void Player_DreamDashCheckV2(ILContext il)
@@ -649,7 +540,6 @@ namespace Celeste.Mod.ReverseHelper.Entities
             }
             return false;
         }
-        [Obsolete]
         public static bool dreamblock_enabled(Entity db)
         {
             if (ExternalDreamBlockDummy.TryGetValue(db.GetType(), out var dummy))
@@ -1208,22 +1098,15 @@ namespace Celeste.Mod.ReverseHelper.Entities
             if (loaded)
             {
                 On.Celeste.Player.DreamDashCheck -= Player_DreamDashCheck1;
-                if (ReverseHelperModule.PatchInstalled)
-                {
-                    UnloadPatched();
-                }
-                else
-                {
-                    ddcheck?.Dispose();
-                    //IL.Celeste.Player.DashCoroutine -= Player_DashCoroutine;
-                    dashcoroutine?.Dispose();
-                    //grabbag_workaround?.Dispose();
-                    //grabbag_workaround_img_il?.Dispose();
-                    //grabbag_workaround_img_on?.Dispose();
-                    //grabbag_workaround_img_gt?.Dispose();
-                    //grabbag_workaround_img_rr?.Dispose();
-                    ondashcoroutine?.Dispose();
-                }
+                ddcheck?.Dispose();
+                //IL.Celeste.Player.DashCoroutine -= Player_DashCoroutine;
+                dashcoroutine?.Dispose();
+                //grabbag_workaround?.Dispose();
+                //grabbag_workaround_img_il?.Dispose();
+                //grabbag_workaround_img_on?.Dispose();
+                //grabbag_workaround_img_gt?.Dispose();
+                //grabbag_workaround_img_rr?.Dispose();
+                ondashcoroutine?.Dispose();
                 loaded = false;
             }
         }

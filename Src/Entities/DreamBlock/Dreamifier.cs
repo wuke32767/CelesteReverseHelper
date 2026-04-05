@@ -333,9 +333,8 @@ namespace Celeste.Mod.ReverseHelper.Entities
         public new bool playerHasDreamDash
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => ReverseHelperModule.PatchInstalled?PatchedActivated: DreamBlockConfigurer.dreamblock_enabled(this);
+            get => DreamBlockConfigurer.dreamblock_enabled(this);
         }
-        bool PatchedActivated => Activated;
 
         //prevent_depth_fight_i_g? preventer;
         public override void Removed(Scene scene)

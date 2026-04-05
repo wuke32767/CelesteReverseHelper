@@ -115,12 +115,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
         public new bool playerHasDreamDash
         {
-            get => ReverseHelperModule.PatchInstalled ? reimpl : DreamBlockConfigurer.dreamblock_enabled(this);
-        }
-        bool reimpl
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => Activated;
+            get => DreamBlockConfigurer.dreamblock_enabled(this);
         }
         public override void Render()
         {
@@ -190,15 +185,13 @@ namespace Celeste.Mod.ReverseHelper.Entities
 
             public Color Color(DreamBlock td)
             {
-                bool v = ReverseHelperModule.PatchInstalled ? reimpl(td) : DreamBlockConfigurer.dreamblock_enabled(td);
+                bool v = DreamBlockConfigurer.dreamblock_enabled(td);
                 return v ? Colora : Colord;
             }
             public Color Color(bool has)
             {
                 return has ? Colora : Colord;
             }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            bool reimpl(DreamBlock td) => td.Activated;
             public Color Colord;
             public Color Colora;
 

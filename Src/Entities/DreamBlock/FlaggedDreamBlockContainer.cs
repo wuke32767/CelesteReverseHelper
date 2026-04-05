@@ -6,9 +6,9 @@ using System.Runtime.CompilerServices;
 namespace Celeste.Mod.ReverseHelper.Entities
 {
     [CustomEntity("ReverseHelper/FlaggedDreamBlockContainer")]
-    public class FlaggedDreamBlockContainer(Vector2 position, float width, float height, string flag,bool legacy) : Entity(position)
+    public class FlaggedDreamBlockContainer(Vector2 position, float width, float height, string flag, bool legacy) : Entity(position)
     {
-        public FlaggedDreamBlockContainer(EntityData e, Vector2 offset) : this(e.Position + offset, e.Width, e.Height, e.Attr("flag"),e.Bool("legacy",true))
+        public FlaggedDreamBlockContainer(EntityData e, Vector2 offset) : this(e.Position + offset, e.Width, e.Height, e.Attr("flag"), e.Bool("legacy", true))
         {
         }
         public override void Added(Scene scene)
@@ -57,19 +57,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
         }
         private void BindEntity(Entity playerCollider)
         {
-            if (ReverseHelperModule.PatchInstalled && playerCollider is DreamBlock db&&!legacy)
-            {
-                NewMethod(flag, db);
-            }
-            else
-            {
-                playerCollider.Add(new FlaggedDreamBlockContainerComponent(flag));
-            }
-            [MethodImpl(MethodImplOptions.NoInlining)]
-            static void NewMethod(string flag, DreamBlock db)
-            {
-                db.Flag = flag;
-            }
+            playerCollider.Add(new FlaggedDreamBlockContainerComponent(flag));
         }
     }
     public class FlaggedDreamBlockContainerComponent(string flag) : Component(true, false)
