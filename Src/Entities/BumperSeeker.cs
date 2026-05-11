@@ -117,15 +117,18 @@ namespace Celeste.Mod.ReverseHelper.Entities
                 i = () => cache_waiting || j == null ? i1 : j();
                 ref var c = ref State.coroutines[i1];
                 var k = c;
-                static Cor map(Cor src, Func<Cor, Cor> t)
+                static Cor? map(Cor? src, Func<Cor, Cor> t)
                 {
-                    if (src is SwapImmediately sw)
+                    if (src is { })
                     {
-                        sw.Inner = t(sw.Inner);
-                    }
-                    else
-                    {
-                        src = t(src);
+                        if (src is SwapImmediately sw)
+                        {
+                            sw.Inner = map(sw.Inner, t);
+                        }
+                        else
+                        {
+                            src = t(src);
+                        }
                     }
                     return src;
                 }
@@ -151,7 +154,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     }
                     yield break;
                 }
-                c = () => map(k(), iwait);
+                c = () => map(k?.Invoke(), iwait);
             }
         }
 
