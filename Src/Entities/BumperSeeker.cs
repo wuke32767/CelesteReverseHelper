@@ -130,6 +130,11 @@ namespace Celeste.Mod.ReverseHelper.Entities
                             src = t(src);
                         }
                     }
+                    else
+                    {
+                        static Cor Empty() { yield break; }
+                        return Empty();
+                    }
                     return src;
                 }
                 Cor iwait(Cor src)
