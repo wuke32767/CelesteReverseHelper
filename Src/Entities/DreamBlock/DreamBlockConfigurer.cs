@@ -143,8 +143,12 @@ namespace Celeste.Mod.ReverseHelper.Entities
                     var tracker = GetTracker(l);
                     foreach (var (k, i) in tracker.ByIndex.Zip(namelist))
                     {
+                        if (!dx.TryGetValue(i, out var entities) || entities is not Entity[] arr)
+                        {
+                            continue;
+                        }
                         k.Clear();
-                        k.AddRange(((Entity[])dx[i]).Select(dc).Cast<Entity>());
+                        k.AddRange(arr.Select(dc).Cast<Entity>());
                     }
                 }
             }
