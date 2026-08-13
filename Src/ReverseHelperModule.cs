@@ -208,8 +208,4 @@ public class ReverseHelperILHookException : Exception
     public ReverseHelperILHookException(string message, Exception innerException) : base(message, innerException)
     {
     }
-
-    protected ReverseHelperILHookException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
 }

@@ -204,7 +204,7 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
                     }
                 }
             }
-            Dictionary<IMethodSymbol, string> lazyloadep = new();
+            Dictionary<ITypeSymbol, string> lazyloadep = new();
             Dictionary<IMethodSymbol, string> lazyunloadep = new();
             StringBuilder lazy_tocreate = new();
             foreach (var type in lazylist)
@@ -232,7 +232,7 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
                         }
                     """
                     );
-                lazyloadep[ll] = $"SourceGenHelper.Lazy{type.Name}.Load(context);";
+                lazyloadep[type] = $"SourceGenHelper.Lazy{type.Name}.Load(context);";
                 loadendpoint.Remove(ll);
                 lazyunloadep[uu] = unloadendpoint[uu] = $"SourceGenHelper.Lazy{type.Name}.Unload(context);";
             }
@@ -243,7 +243,7 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
             {
                 if (!loads.TryGetValue(v, out var ll))
                 {
-                    ll = new FakeMethodSymbol(v);
+                    //ll = new FakeMethodSymbol(v);
 
                 }
 
@@ -255,17 +255,17 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
                             {
                                 public static void Load(Context context)
                                 {
-                                    {{(lazyloadep.TryGetValue(ll, out var ep) ? ep : "")}}
+                                    {{(lazyloadep.TryGetValue(v, out var ep) ? ep : "")}}
                                     {{string.Concat(l.Select(x => typedeps.ContainsKey(x) ?
                         $""" 
                                     SourceGenHelper.Dep{x.Name}.Load(context);
                         """
-                                : (lazyloadep.TryGetValue(loads[x], out var ep) ? ep : "")))}}
+                                : (lazyloadep.TryGetValue(x, out var ep) ? ep : "")))}}
                                 }
                             }
                         """
                 );
-                lazyloadep[ll] = $"SourceGenHelper.Dep{v.Name}.Load(context);";
+                lazyloadep[v] = $"SourceGenHelper.Dep{v.Name}.Load(context);";
             }
 
             if (Preload.Count > 0 || lazyloadep.Count > 0)
@@ -293,7 +293,7 @@ namespace Celeste.Mod.ReverseHelper.SourceGen
                     """
                             )))}}
                             {{string.Concat(lazyloadep.SelectMany(x =>
-                                revnames.TryGetValue(x.Key.ContainingType, out var qwe) ? qwe.Select(y =>
+                                revnames.TryGetValue(x.Key, out var qwe) ? qwe.Select(y =>
                     $$"""
 
                                 if(ed.Name == "{{y}}")
