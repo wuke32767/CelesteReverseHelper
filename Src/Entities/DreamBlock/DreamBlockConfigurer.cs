@@ -816,7 +816,7 @@ namespace Celeste.Mod.ReverseHelper.Entities
             ic.EmitStaticLambda([MethodImpl(MethodImplOptions.AggressiveInlining)] () => { }, "It's still too chaotic here. Please take care of this method.");
             var defs = new VariableDefinition(il.Import(typeof(State)));
             ic.Body.Variables.Add(defs);
-            var pos = new VariableDefinition(il.Import(typeof(State)));
+            var pos = new VariableDefinition(il.Import(typeof(Vector2)));
             ic.Body.Variables.Add(pos);
             ic.EmitLdarg0();
             ic.EmitLdarg1();
