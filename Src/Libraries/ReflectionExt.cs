@@ -141,9 +141,13 @@ namespace Celeste.Mod.ReverseHelper.Libraries
         {
         }
 
-        public static int EmitStaticLambda(this ILCursor self, Delegate d, string? name = null)
+        public static int EmitStaticLambda<T>(this ILCursor self, T d, string? name = null) where T : Delegate
         {
+#if DEBUG
+            return self.EmitDelegate(d);
+#else
             throw new UnreachableException();
+#endif
         }
 
         public static int EmitStaticLambdaReallyQuick(this ILCursor self, RuntimeMethodHandle func)

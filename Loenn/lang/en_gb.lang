@@ -131,3 +131,12 @@ triggers.ReverseHelper/EnableTrigger.attributes.description.mode=Determines how 
 
 entities.ReverseHelper/DreamDashToAndFromFlag.attributes.description.version=deprecated.
 entities.ReverseHelper/DreamDashToAndFromFlag.attributes.description.flag=you can't invert this flag by "!". this is intended.
+
+style.effects.ReverseHelper/ThetaAndParalldoxsOnWorldlines/Sea.name=Sea of Worldlines
+style.effects.ReverseHelper/ThetaAndParalldoxsOnWorldlines/Sea.description.chapter=Sea of which chapter in the game Theta and Paralldoxs on Worldlines.
+style.effects.ReverseHelper/ThetaAndParalldoxsOnWorldlines/Sea.description.hires=Enable high resolution mode.\nSee Hires Background Parallax [Reverse Helper] for side effects.
+
+style.effects.ReverseHelper/YetAnotherHiresBackgroundParallax.name=Hires BG Parallax
+style.effects.ReverseHelper/YetAnotherHiresBackgroundParallax.description.motionSmoothingHires=Does not work.
+style.effects.ReverseHelper/YetAnotherHiresBackgroundParallax.description.zzdoc=High resolution background parallax.\nThis can't interact with distort, bloom, additive purplesunset, other mods, etc.\nIf not reordered to the bottom (that is, the top of the bgs list), will promote bgs below it to lowres hires bgs and also prevent them from interacting with distort... .
+style.effects.ReverseHelper/YetAnotherHiresBackgroundParallax.description.name=High resolution background parallax.\nThis can't interact with distort, bloom, additive purplesunset, other mods, etc.\nIf not reordered to the bottom (that is, the top of the bgs list), will promote bgs below it to lowres hires bgs and also prevent them from interacting with distort... .

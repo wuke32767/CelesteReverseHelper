@@ -16,7 +16,9 @@
     <PackageReference PrivateAssets="all" ExcludeAssets="runtime" />
     <Reference Private="false" />
   </ItemDefinitionGroup>
-
+  <ItemGroup>
+    <None Include="paralldox.fx" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CelesteAnalyzer" Version="1.0.3.1" />
     <PackageReference Include="MonoMod.Patcher" Version="25.0.0-prerelease.2" />
@@ -26,9 +28,12 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="CelesteMod.Publicizer" Version="*" CelesteAssembly="$(CELESTEGAMEPATH)\Celeste.dll" />
+    <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.2" PrivateAssets="all" />
+    <Reference Include="Celeste" Publicize="true">
+      <HintPath>$(CELESTEGAMEPATH)\Celeste.dll</HintPath>
+    </Reference>
     <ProjectReference Include="..\ReverseHelper.SourceGen\ReverseHelper.SourceGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <Reference Include="FNA">
+    <Reference Include="FNA" Publicize="true">
       <HintPath>$(CELESTEGAMEPATH)\FNA.dll</HintPath>
     </Reference>
     <Reference Include="MMHOOK_Celeste" HintPath="$(CELESTEGAMEPATH)\MMHOOK_Celeste.dll" />
